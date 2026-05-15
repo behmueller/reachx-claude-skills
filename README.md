@@ -12,30 +12,32 @@ Weitere Plugins können hier in Zukunft hinzukommen (z.B. Outreach-Tools, Report
 
 ## Installation für Kollegen
 
-**Voraussetzung:** Claude Code CLI installiert (`claude --version` funktioniert). Falls nicht: https://docs.claude.com/claude-code/setup
+**👉 Vollständige Schritt-für-Schritt-Anleitung: [SETUP-KOLLEGEN.md](SETUP-KOLLEGEN.md)**
 
-**Marketplace einmalig hinzufügen:**
+Dort steht alles: Voraussetzungen, einmalige Einrichtung (gws-CLI + Auth + API-Tokens + Plugin-Install), wie du deine erste MTA startest, wie du fortsetzt, Update-Mechanik und Troubleshooting für häufige Probleme.
+
+### TL;DR
 
 ```bash
+# 1. gws CLI installieren und mit REACHX-Google-Account authentifizieren
+gws auth login
+
+# 2. API-Tokens in ~/.claude/settings.json eintragen (env-Block: APIFY_TOKEN, SISTRIX_API_KEY)
+
+# 3. In Claude Code:
 /plugin marketplace add behmueller/reachx-claude-skills
-```
-
-(Wenn das Repo später in eine REACHX-Org wandert, ändert sich der Pfad entsprechend.)
-
-**Plugin installieren:**
-
-```bash
 /plugin install marke-und-ting-analyse-reachx@reachx-skills
+
+# 4. Für jede MTA: MTA-Folder im Drive anlegen, dann
+/01-01-mta-projekt-init
 ```
 
-**Updates ziehen (wenn Hinweis beim Session-Start auftaucht):**
+**Updates ziehen** (wenn Hinweis beim Session-Start auftaucht):
 
 ```bash
 /plugin marketplace update reachx-skills
 /plugin update marke-und-ting-analyse-reachx@reachx-skills
 ```
-
-Der erste Befehl refresht den Marketplace-Index (sagt Claude "es gibt eine neue Version"); der zweite zieht die neue Version tatsächlich in den lokalen Plugin-Cache.
 
 ## MCP-Voraussetzungen
 
