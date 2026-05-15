@@ -10,8 +10,19 @@ Versionierung nach [Semver](https://semver.org/lang/de/).
 ### Geplant für 1.0.0
 
 - Live-Test mit echtem Kundenprojekt durchlaufen, ggf. Korrekturen
-- Subagent-Routing in Echtlauf verifizieren (Hauptthread → Subagent-Aufruf wirklich automatisch?)
 - Setup-Doku für nicht-technische Kollegen schreiben (gws-Auth, Plugin-Install)
+
+## [0.1.1] — 2026-05-15
+
+### Geändert
+
+- **`mta-stratege`-Subagent: Denk-Modus-Block ergänzt.** Pflicht-Reflexions-Loop vor jeder strategischen Empfehlung (Daten-Sichtung → 3+ Hypothesen → Gegen-Argumente → Entscheidung mit Begründung → Bandbreiten). Begründung: Subagent-Frontmatter unterstützt kein `effort`-Feld; der Effort wird vom Hauptthread vererbt. Der Denk-Modus zwingt Opus zu mehrdimensionaler Reflexion unabhängig vom Hauptthread-Effort und verhindert "erste plausible Antwort"-Pattern. Im Hauptthread auf `high effort` läuft der Loop als strukturierte Leitplanke, damit Opus seine Tokens auf die richtigen Fragen lenkt.
+
+### Verifiziert beim Live-Test 01-01
+
+- Subagent-Routing funktioniert: Hauptthread erkennt `## Ausführungs-Modus`-Block und startet automatisch `mta-rechercheur` für 01-01-mta-projekt-init.
+- Plugin-Pfad-Auflösung sauber: `${CLAUDE_PLUGIN_ROOT}` wird in der Plugin-Cache-Lokation `~/.claude/plugins/cache/reachx-skills/marke-und-ting-analyse-reachx/<version>/skills/...` aufgelöst.
+- Drive-Schreibvorgänge via `gws` über `drive.py` laufen aus dem Plugin-Kontext heraus.
 
 ## [0.1.0] — 2026-05-14 — Alpha-Release
 
