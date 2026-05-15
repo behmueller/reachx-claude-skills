@@ -10,7 +10,18 @@ Versionierung nach [Semver](https://semver.org/lang/de/).
 ### Geplant für 1.0.0
 
 - Live-Test mit echtem Kundenprojekt durchlaufen, ggf. Korrekturen
-- Setup-Doku für nicht-technische Kollegen schreiben (gws-Auth, Plugin-Install)
+
+## [0.2.1] — 2026-05-15
+
+### Geändert — Bot-Protector-Handling für Branchenportale
+
+- **`02-04-branchenportal-recherche` nutzt jetzt `apify/website-content-crawler` für Jameda.** Live-Test ist bei Jameda auf einen Bot-Protector gestoßen (vermutlich Datadome/Cloudflare-Variante), direkte HTTP-Crawls bekommen 403/429. Neue Methode A2 im Mapping eingeführt: `apify/website-content-crawler` mit `crawlerType: playwright:chrome` + Residential-Proxy + `removeCookieWarnings: true`. Wickelt JavaScript ab, rotiert IPs, umgeht damit die meisten Bot-Schutze (Cloudflare-Challenge, Datadome, PerimeterX, JS-Cookie-Walls). Profil-URL wird vorab über Web-Search ermittelt und dem Crawler als `startUrls` übergeben.
+- **`portal-scraper-mapping.md`** Methoden-Glossar um Methode A2 erweitert. Standard-Config dokumentiert (10-Felder JSON-Snippet). Jameda-Eintrag explizit auf A2 umgestellt mit Hinweis "Bot-Protector erkannt 2026-05-15, A2 ist hier Pflicht, kein Fallback auf B".
+- **`02-04` SKILL.md** Schritt 4 erweitert: Mapping-Reihenfolge wird strikt befolgt (kein B-Fallback, wenn Mapping A2 vorschreibt). Wenn ein Lauf trotz B in einen Bot-Protector läuft (403/429/Cloudflare-Challenge), wird das Portal automatisch ins Mapping als A2 dokumentiert und erneut versucht. Output-Datei trackt `methode: A2_after_bot_protector_fallback`.
+
+### Setup-Doku
+
+- **`SETUP-KOLLEGEN.md`** in v0.2.0 ergänzt (war im Tag noch nicht drin). Vollständige Schritt-für-Schritt-Anleitung für Onboarding nicht-technischer Kollegen — Voraussetzungen, gws-Setup, Plugin-Install, erste MTA, Resume, Troubleshooting.
 
 ## [0.2.0] — 2026-05-15
 

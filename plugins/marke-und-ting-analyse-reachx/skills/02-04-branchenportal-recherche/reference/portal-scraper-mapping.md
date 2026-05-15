@@ -8,10 +8,44 @@ Pro Branchenportal: welche Recherche-Methode ist die zuverlässigste, welcher Ap
 
 | Methode | Wann nutzen |
 |---|---|
-| **A — Apify-Portal-Scraper** | Es existiert ein zuverlässiger, gepflegter Apify-Actor für dieses Portal. Erste Wahl, weil strukturierte Daten und niedrigste Fehlerquote. |
-| **B — Web-Search + URL-Pattern** | Kein Apify-Actor verfügbar oder Portal akzeptiert direkte URL-Patterns. Skill nutzt Web-Search mit `site:<portal-domain>` plus den Akteurs-Namen, nimmt den Top-Treffer als Profil-URL und scraped die Seite (falls öffentlich zugänglich). |
-| **C — Apify-Puppeteer mit Portal-interner Suche** | Portal hat keine direkten URL-Patterns ODER ist hinter JS-Wall / Cookie-Wall. `apify/puppeteer-scraper` mit Custom Page-Function, simuliert die Portal-eigene Suche. |
-| **D — Manuelle Recherche** | Login-Wall oder Anti-Bot-Schutz, der keine der drei automatischen Methoden zulässt. Skill markiert die Task als `recherche_fehlgeschlagen` mit Empfehlung an den Strategen. |
+| **A — Apify-Portal-Scraper (dediziert)** | Es existiert ein zuverlässiger, gepflegter Apify-Actor speziell für dieses Portal. Erste Wahl, weil strukturierte Daten und niedrigste Fehlerquote. |
+| **A2 — Apify Website Content Crawler (generisch, Bot-Protector-fähig)** | Kein dedizierter Apify-Actor verfügbar **und** Portal hat einen Bot-Protector (Cloudflare-Challenge, Datadome, PerimeterX, JS-Cookie-Wall etc.), der direkte HTTP-Crawls blockiert. Nutze `apify/website-content-crawler` (id: `aYG0l9s7dbB7j3gbS`) mit Playwright-Chrome + Residential-Proxy — wickelt JavaScript ab, rotiert IPs, entfernt Cookie-Warnings, gibt Markdown-Output. Die Profil-URL wird vorab über Web-Search (Methode B) ermittelt und dem Crawler als `startUrls` übergeben. |
+| **B — Web-Search + URL-Pattern** | Kein Apify-Actor verfügbar oder Portal akzeptiert direkte URL-Patterns ohne Bot-Schutz. Skill nutzt Web-Search mit `site:<portal-domain>` plus den Akteurs-Namen, nimmt den Top-Treffer als Profil-URL und scraped die Seite. |
+| **C — Apify-Puppeteer mit Portal-interner Suche** | Portal hat keine direkten URL-Patterns (Profile nicht via Google indexiert) und benötigt eine Custom-Suche im Portal selbst. `apify/puppeteer-scraper` mit Custom Page-Function. |
+| **D — Manuelle Recherche** | Login-Wall oder Anti-Bot-Schutz, den auch A2 nicht zuverlässig umgeht (z.B. Captcha-Walls). Skill markiert die Task als `recherche_fehlgeschlagen` mit Empfehlung an den Strategen. |
+
+### Standard-Konfiguration für Methode A2 (Website Content Crawler)
+
+Verwende diese Input-JSON für den `apify/website-content-crawler` Actor bei Bot-protected Portalen:
+
+```json
+{
+  "startUrls": [{"url": "<profil-url-aus-web-search>"}],
+  "crawlerType": "playwright:chrome",
+  "proxyConfiguration": {"useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"]},
+  "maxCrawlPages": 1,
+  "maxCrawlDepth": 0,
+  "dynamicContentWaitSecs": 5,
+  "removeCookieWarnings": true,
+  "saveMarkdown": true,
+  "saveHtml": false,
+  "blockMedia": true,
+  "respectRobotsTxtFile": false
+}
+```
+
+**Wichtige Punkte:**
+- `playwright:chrome` aktiviert echten Chrome-Browser (umgeht User-Agent-Bot-Detektion)
+- `RESIDENTIAL`-Proxy umgeht IP-basierte Sperren — wichtig bei Cloudflare/Datadome
+- `dynamicContentWaitSecs: 5` wartet auf JS-Rendering (Bewertungs-Widgets etc.)
+- `removeCookieWarnings: true` klickt Cookie-Banner automatisch weg
+- `maxCrawlPages: 1, maxCrawlDepth: 0` — wir wollen nur die EINE Profil-Seite, kein Folge-Crawl
+- `blockMedia: true` spart Traffic (keine Bilder/Videos laden)
+- `respectRobotsTxtFile: false` weil viele Portale per robots.txt alle Crawler ausschließen, der Stratege hat aber öffentliche Daten manuell auch lesen dürfen
+
+Output-Parsing: Das Actor-Ergebnis enthält pro Seite ein `markdown`-Feld. Daraus extrahieren wir die portal-spezifischen Zusatz-Felder (Note, Reviews-Count, etc.) via Regex oder einfaches Pattern-Matching im Skill.
+
+**Kosten-Hinweis:** Website Content Crawler ist FREE (kein PAY_PER_EVENT) im Compute-Modell — kosten fallen nur über Compute-Units an, typisch <$0.01 pro Profil-Crawl. Residential-Proxy fällt separat an (eigenes Apify-Limit beachten).
 
 ## Portal-Übersicht
 
@@ -21,11 +55,13 @@ Pro Branchenportal: welche Recherche-Methode ist die zuverlässigste, welcher Ap
 
 | | |
 |---|---|
-| Methode | A (Apify Jameda-Scraper) ODER B (Web-Search) |
-| Apify-Actor | `apify/jameda-scraper` (falls nicht vorhanden: Methode B) |
-| URL-Pattern (B) | `<akteurs-name> site:jameda.de` |
+| Methode | **A2** (Apify Website Content Crawler mit Playwright + Residential-Proxy) |
+| Apify-Actor | `apify/website-content-crawler` (id: `aYG0l9s7dbB7j3gbS`) |
+| URL-Auflösung | Vorab via Web-Search (Methode B): `<akteurs-name> site:jameda.de` → Top-Treffer als `startUrls`-Input für den Crawler |
+| Actor-Config | Standard-A2-Config (siehe Methoden-Glossar oben). `crawlerType: playwright:chrome`, `RESIDENTIAL`-Proxy Pflicht — Jameda hat einen aktiven Bot-Protector, der HTTP-Crawls und Standard-User-Agents abblockt. |
 | Zusatz-Felder | Note-Skala (1.0 = beste, 6.0 = schlechteste), Anzahl Patientenbewertungen, Fachrichtungen, Kassen-Privat, Sprechzeiten |
 | Aktivitäts-Indikator | Datum der letzten Bewertung |
+| Hinweise | Bot-Protector erkannt 2026-05-15 (Skill-Test). Direkte Crawls über `curl`/`fetch` bekommen 403/429 — A2 ist hier nicht Best-Practice, sondern **Pflicht**. Bei wiederholten Fehlschlägen trotz A2 (z.B. Captcha-Challenge): Methode D markieren, kein Fallback auf B. |
 
 #### doctolib.de
 

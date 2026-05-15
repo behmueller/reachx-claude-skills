@@ -165,13 +165,14 @@ Reihenfolge der Portale: nach `relevanz` absteigend (hoch → mittel → niedrig
 
 Für jedes Portal die Recherche-Methode aus `reference/portal-scraper-mapping.md` ableiten:
 
-- **Methode A — Apify-Portal-Scraper** (wenn verfügbar): direkter Scraper-Aufruf mit Akteurs-Liste
-- **Methode B — Web-Search + URL-Pattern** (wenn Portal-Scraper fehlt): `<akteurs-name> site:<portal-domain>`, Top-Treffer als Profil-URL nehmen
-- **Methode C — Portal-interne Suche via Apify-Browser-Actor** (wenn Portal hinter Login / JS-Wall): `apify/puppeteer-scraper` mit Custom Page-Function, sucht im Portal nach dem Akteur
+- **Methode A — Apify-Portal-Scraper (dediziert)** (wenn ein portal-spezifischer Apify-Actor existiert): direkter Scraper-Aufruf mit Akteurs-Liste
+- **Methode A2 — Apify Website Content Crawler (generisch, Bot-Protector-fähig)** (wenn kein dedizierter Actor existiert UND das Portal einen Bot-Protector hat — z.B. Jameda, Cloudflare-geschützte Portale): `apify/website-content-crawler` mit Playwright-Chrome + Residential-Proxy. Profil-URL vorab via Web-Search ermitteln, dann an den Crawler als `startUrls` übergeben. Standard-Config siehe `reference/portal-scraper-mapping.md` → Methoden-Glossar.
+- **Methode B — Web-Search + URL-Pattern** (wenn Portal ohne Bot-Schutz öffentlich crawlbar): `<akteurs-name> site:<portal-domain>`, Top-Treffer als Profil-URL nehmen
+- **Methode C — Portal-interne Suche via Apify-Browser-Actor** (wenn Portal hinter Login / JS-Wall ohne öffentliche URL-Pattern): `apify/puppeteer-scraper` mit Custom Page-Function, sucht im Portal nach dem Akteur
 
 Pro (Portal, Akteur):
 
-1. **Profil-Auffindung**: Methode A/B/C versuchen, **in dieser Reihenfolge** (A bevorzugt, weil schnellster + zuverlässigster)
+1. **Profil-Auffindung**: Methode A/A2/B/C versuchen — in der Reihenfolge, die im Mapping für dieses Portal explizit dokumentiert ist. **Niemals Methode B versuchen, wenn das Mapping A2 vorschreibt** (das Portal hat Bot-Schutz, B würde zu 403/429 führen).
 2. **Bei Fund**:
    - Profil-URL extrahieren
    - Bewertung (Score, z. B. 4.3/5 oder 87/100 — Portal-Skala bewahren)
@@ -179,7 +180,7 @@ Pro (Portal, Akteur):
    - Letzte Aktivität (letzte Review-Datum, letzter Profil-Update, falls erkennbar)
    - Zusätzliche portal-spezifische Felder (siehe Tabelle in `reference/portal-scraper-mapping.md`, z. B. Sieger-/Top-Listen-Plakette, Verifizierungs-Status, Premium-Eintrag ja/nein)
 3. **Bei keinem Fund**: Status `nicht_gelistet`, kurze Begründung (z. B. "Portal-Suche zu generisch" oder "Profil offline")
-4. **Bei Fehler**: Status `recherche_fehlgeschlagen`, Fehler-Typ notieren, weiter mit nächster Kombination
+4. **Bei Fehler**: Status `recherche_fehlgeschlagen`, Fehler-Typ notieren. **Wenn der Fehler ein Bot-Protector-Signal ist** (403/429/Cloudflare-Challenge im Response-HTML) und die genutzte Methode war B oder ein direkter Crawl: dokumentiere im Mapping-File einen neuen Eintrag mit Methode A2 und führe den Lauf für dieses Portal mit A2 erneut aus. Skill setzt den `methode`-Eintrag in der Output-Datei auf `A2_after_bot_protector_fallback`.
 
 **Wichtig**: das Schema in `reference/portale-output-schema.md` definiert das Output-Format pro Eintrag. Strikt einhalten — die Synthese-Skills lesen das.
 

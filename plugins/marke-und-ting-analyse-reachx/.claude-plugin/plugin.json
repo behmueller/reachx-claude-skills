@@ -1,7 +1,7 @@
 {
   "name": "marke-und-ting-analyse-reachx",
   "description": "Automatisiert die REACHX MARKE&TING-Analyse (MTA) — 33 Skills decken Briefing-Verarbeitung, Marken-Profile, Wettbewerbs-Identifikation, Audits (SEO, SEA, Social, Web-Tech, Local), Synthese (Positionierung, Kanal-Chancen, Forecast) und Output-Aufbereitung (90-Tage-Plan, Retainer-Empfehlung, Slides, Drive-Export) ab. Routet Recherche-Schritte auf Sonnet- und Synthese-Schritte auf Opus-Subagents, um Token-Verbrauch und Kontextfenster der Haupt-Session schlank zu halten.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "REACHX GmbH",
     "url": "https://reachx.de"
