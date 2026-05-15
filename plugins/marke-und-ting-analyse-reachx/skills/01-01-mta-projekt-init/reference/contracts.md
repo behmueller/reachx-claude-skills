@@ -459,6 +459,52 @@ if file_meta["modifiedTime"] > my_last_read_time:
 
 ---
 
+## 10. Token-Tracking pro MTA
+
+**Zweck:** Live-Tracking des Token-Verbrauchs pro Modell und pro Skill, mit EUR-Cost-Schätzung. Sichtbar auf dem Dashboard und im Footer jedes Skill-Reports.
+
+### Architektur
+
+- **Datenquelle:** Claude Code logged pro Message in `~/.claude/projects/<cwd-encoded>/*.jsonl` (mit `usage`-Block: `input_tokens`, `output_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens` und Modell-Name).
+- **Helper:** `01-01-mta-projekt-init/scripts/token-tracker.py` aggregiert die Daten inkrementell (Cursor in lokalem State), rechnet EUR-Cost auf Basis Anthropic-Pricing (Stand Mai 2026, FX `REACHX_USD_TO_EUR` Env, Default 0.92).
+- **Speicherort:** Lokaler Cache `~/.cache/reachx-mta/<slug>/token-usage.json` (Live nach jedem Prompt), Drive `meta/token-usage.json` (gedrosselt alle ~5 Min via Stop-Hook).
+- **Stop-Hook:** `${CLAUDE_PLUGIN_ROOT}/scripts/post-stop-token-sync.sh` läuft nach jeder Claude-Antwort, non-blocking, silent-fail.
+
+### Render-Punkte
+
+- **Dashboard (`reports/index.html`):** Voller Breakdown via `token-tracker.py render-counter <slug> --style breakdown` als `{{TOKEN_BREAKDOWN}}`-Slot. Plus kompakter Stat-Strip via `--style stat-strip` im `{{MAIN_CONTENT}}`-Stat-Bereich. Wird beim Dashboard-Re-Render durch Folge-Skills aktualisiert.
+- **Skill-Reports (`reports/<nummer>-<slug>.html`):** Skill-spezifischer Footer-Counter via `token-tracker.py render-skill-counter <slug> <skill-name>` als `{{TOKEN_FOOTER}}`-Slot in der Shell. Wenn der Skill den Slot nicht befüllt: leer.
+
+### Skill-Pflicht: Mark-Start / Mark-End
+
+Damit `pro_skill`-Aufschlüsselung korrekt zugeordnet wird, muss jeder Folge-Skill am Anfang und Ende seines Laufs Events absetzen:
+
+```bash
+TRACKER="${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/scripts/token-tracker.py"
+python3 "$TRACKER" mark-skill-start "<slug>" "<skill-name>"
+# ... Skill-Logik ...
+python3 "$TRACKER" mark-skill-end "<slug>" "<skill-name>"
+```
+
+Die Events landen in `~/.cache/reachx-mta/<slug>/skill-log.jsonl`. Beim nächsten Aggregate werden alle Messages, deren Timestamp zwischen `start` und `end` liegen, dem Skill zugeordnet. Messages ohne aktiven Skill (z.B. freie User-Interaktion zwischen Skill-Läufen) landen unter `_kein_skill_aktiv`.
+
+### Pricing-Tabelle aktualisieren
+
+Wenn Anthropic die Preise ändert, bearbeite `PRICING_USD_PER_MTOK` in `token-tracker.py`. Aktuelle Werte (Mai 2026, pro 1M Tokens, USD):
+
+| Modell | Input | Output | Cache-Read | Cache-Write 5m | Cache-Write 1h |
+|---|---:|---:|---:|---:|---:|
+| Opus 4.7 | $15 | $75 | $1.50 | $18.75 | $30 |
+| Sonnet 4.6 | $3 | $15 | $0.30 | $3.75 | $6 |
+| Haiku 4.5 | $0.80 | $4 | $0.08 | $1.00 | $1.60 |
+
+### Was NICHT getrackt wird
+
+- Token aus Drittanbieter-APIs (Apify, Sistrix, Ahrefs, gws): Claude Code-Tokens only.
+- Sehr alte Sessions vor dem ersten `aggregate`-Lauf: Cursor-based, also nur Messages seit Skill-Installation werden mitgezählt. Für Bestandsprojekte: einmaliger Full-Re-Aggregate möglich via `rm ~/.cache/reachx-mta/<slug>/token-tracker-cursor.json && python3 token-tracker.py aggregate <slug>`.
+
+---
+
 ## Versionierung dieses Dokuments
 
 Wenn sich Konventionen ändern, `schema_version` in `meta.json` und in betroffenen Schemas hochzählen. Alte Projekte bleiben auf ihrer Version — Skills sollten Versions-Check machen, bevor sie auf alte Schemas zugreifen.

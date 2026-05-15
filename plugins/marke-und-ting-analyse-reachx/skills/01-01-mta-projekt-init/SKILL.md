@@ -255,7 +255,9 @@ Lies das vollständige `status.md`-Schema aus `reference/contracts.md`.
    - `{{EYEBROW}}` → "MARKE&TING® Analyse"
    - `{{DISPLAY_NAME}}` → Kundenname
    - `{{META_LINE}}` → "Branche: [Branche] · Region: [Region] · Gestartet: [Datum]"
-   - `{{MAIN_CONTENT}}` → Status-Übersicht aus `status.md` als HTML (siehe `reference/contracts.md`, Abschnitt "Dashboard-Rendering")
+   - `{{MAIN_CONTENT}}` → Status-Übersicht aus `status.md` als HTML (siehe `reference/contracts.md`, Abschnitt "Dashboard-Rendering"). **Im Dashboard-Modus zusätzlich** den Stat-Strip-Counter einbauen — Stat-Strip kommt aus `python3 scripts/token-tracker.py render-counter <slug> --style stat-strip`.
+   - `{{TOKEN_BREAKDOWN}}` → Output von `python3 scripts/token-tracker.py render-counter <slug> --style breakdown` (im Dashboard prominent, in Skill-Reports leer lassen)
+   - `{{TOKEN_FOOTER}}` → Im Dashboard leer (Breakdown-Sektion ist da schon ausführlich), bei Skill-Reports: Output von `python3 scripts/token-tracker.py render-skill-counter <slug> <skill-name>`
    - `{{FOOTER_TEXT}}` → "MTA · [Kunde] · [Projekt-Slug]"
    - **Zusätzlich:** ersetze `<body>` durch `<body class="is-dashboard">` — blendet den Back-Link im Hero aus, weil das Dashboard sonst auf sich selbst verlinkt.
 
@@ -266,6 +268,20 @@ Lies das vollständige `status.md`-Schema aus `reference/contracts.md`.
      /tmp/dashboard-content.html "text/html"
    ```
 
+### Schritt 9b: Initiales `meta/token-usage.json` anlegen
+
+Erstelle einen `meta/`-Sub-Folder im MTA-Drive (`find-or-create-folder "<folder-id>" "meta"`) und lade dort ein initiales `token-usage.json` mit Schema-Stub hoch — der Stop-Hook wird das von Stop-zu-Stop füllen:
+
+```bash
+META_FOLDER_ID=$(python3 scripts/drive.py find-or-create-folder "<folder-id>" "meta")
+cat > /tmp/token-usage-init.json <<EOF
+{"schema_version": "1.0", "slug": "<slug>", "letzte_aktualisierung": "<iso-now>", "gesamt": {"input_tokens": 0, "output_tokens": 0, "cache_creation_5m_tokens": 0, "cache_creation_1h_tokens": 0, "cache_read_tokens": 0, "message_count": 0, "cost_usd": 0.0, "cost_eur": 0.0}, "pro_modell": {}, "pro_skill": {}, "fx_usd_to_eur": 0.92}
+EOF
+python3 scripts/drive.py upsert-text "$META_FOLDER_ID" "token-usage.json" /tmp/token-usage-init.json "application/json"
+```
+
+Die laufende Befüllung passiert ab jetzt automatisch via Stop-Hook (`post-stop-token-sync.sh`) — lokal nach jedem Prompt, Drive-Push gedrosselt alle ~5 Minuten.
+
 ### Schritt 10: MTA im lokalen Cache registrieren
 
 ```bash
@@ -273,7 +289,7 @@ python3 scripts/drive.py register-mta "mta-mueller-hausverwaltung-gmbh-2026-05" 
   "<folder-id>" "Müller Hausverwaltung GmbH"
 ```
 
-Damit Folge-Skills die MTA-Folder-ID ohne erneute URL-Eingabe wiederfinden.
+`working_dir` wird vom Skript automatisch als `os.getcwd()` mitgespeichert — wichtig für die robuste Token-Tracker-Auflösung. Folge-Skills (und der Stop-Hook) finden so die MTA-Folder-ID **und** das passende `~/.claude/projects/`-Verzeichnis ohne Heuristik.
 
 ### Schritt 11: Status-Pflichtschluss
 

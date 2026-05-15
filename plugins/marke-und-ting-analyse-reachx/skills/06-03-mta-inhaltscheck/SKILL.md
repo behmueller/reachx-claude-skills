@@ -22,6 +22,28 @@ Aufrufmuster aus dem Hauptthread:
 - Übergabe: MTA-Slug + Phase-Flag (A/B) falls Schema-vor-Lauf
 - Erwarteter Rückgabe-Status: siehe Standard-Schlussformat in `contracts.md` Abschnitt 6.
 
+## Token-Tracking
+
+Vor und nach dem Skill-Lauf den Token-Tracker markieren, damit der Verbrauch dem Skill zugeordnet werden kann (siehe `contracts.md` Sektion 10):
+
+```bash
+TRACKER="${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/scripts/token-tracker.py"
+SLUG="<mta-slug-aus-schritt-0>"
+SKILL_NAME="<name-dieses-skills>"
+python3 "$TRACKER" mark-skill-start "$SLUG" "$SKILL_NAME"
+# ... Skill-Logik ...
+python3 "$TRACKER" mark-skill-end "$SLUG" "$SKILL_NAME"
+```
+
+Beim HTML-Report-Render zusätzlich den `{{TOKEN_FOOTER}}`-Platzhalter mit dem Skill-spezifischen Counter befüllen:
+
+```bash
+TOKEN_FOOTER=$(python3 "$TRACKER" render-skill-counter "$SLUG" "$SKILL_NAME")
+# In den HTML-Render-Schritt einbauen: {{TOKEN_FOOTER}} → $TOKEN_FOOTER ersetzen
+```
+
+Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese Marker sind nur für die saubere Pro-Skill-Aufschlüsselung nötig.
+
 ## Verhältnis zu den anderen Skills
 
 - **06-01-action-titles-check**: bewertet einzelne Folientitel (Mikro).

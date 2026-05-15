@@ -10,7 +10,7 @@
       "name": "marke-und-ting-analyse-reachx",
       "description": "Automatisiert die MARKE&TING-Analyse (MTA) — 32 Skills für Marken-Profil, Wettbewerbs-Recherche, Audits (SEO/SEA/Social/Web), Synthese (Positionierung, Kanal-Chancen) und Output (Forecast, 90-Tage-Plan, Retainer).",
       "source": "./plugins/marke-und-ting-analyse-reachx",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "category": "marketing",
       "tags": ["mta", "marketing-analyse", "marken-profil", "seo", "wettbewerbsanalyse", "reachx"]
     }

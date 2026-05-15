@@ -303,13 +303,23 @@ def _save_active_mtas(data: dict) -> None:
     ACTIVE_MTAS_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def register_active_mta(slug: str, folder_id: str, kunde: str) -> None:
-    """Registriert eine aktive MTA im lokalen Cache (pro Kollege)."""
+def register_active_mta(slug: str, folder_id: str, kunde: str, working_dir: Optional[str] = None) -> None:
+    """Registriert eine aktive MTA im lokalen Cache (pro Kollege).
+
+    `working_dir` ist optional, aber für robustes Token-Tracking empfohlen: damit
+    kann der Token-Tracker das passende `~/.claude/projects/`-Verzeichnis eindeutig
+    auflösen, ohne auf Heuristik zurückzufallen. Wenn nicht gesetzt, nimmt der
+    Skill den aktuellen `os.getcwd()`.
+    """
+    import os as _os
     from datetime import datetime, timezone
     data = _load_active_mtas()
+    if working_dir is None:
+        working_dir = _os.getcwd()
     data[slug] = {
         "folder_id": folder_id,
         "kunde": kunde,
+        "working_dir": working_dir,
         "zuletzt_aktiv": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     _save_active_mtas(data)
@@ -359,8 +369,16 @@ def _cli() -> None:
             delete(args[0])
             print("deleted")
         elif cmd == "register-mta":
-            slug, folder_id, kunde = args[0], args[1], " ".join(args[2:])
-            register_active_mta(slug, folder_id, kunde)
+            # CLI: register-mta <slug> <folder_id> [--working-dir <pfad>] <kunde-name...>
+            slug, folder_id = args[0], args[1]
+            rest = args[2:]
+            working_dir = None
+            if "--working-dir" in rest:
+                i = rest.index("--working-dir")
+                working_dir = rest[i + 1] if i + 1 < len(rest) else None
+                rest = rest[:i] + rest[i + 2:]
+            kunde = " ".join(rest)
+            register_active_mta(slug, folder_id, kunde, working_dir=working_dir)
             print("registered")
         elif cmd == "get-mta":
             mta = get_active_mta(args[0])

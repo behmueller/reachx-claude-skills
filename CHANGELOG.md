@@ -10,6 +10,26 @@ Versionierung nach [Semver](https://semver.org/lang/de/).
 ### Geplant für 1.0.0
 
 - Live-Test mit echtem Kundenprojekt durchlaufen, ggf. Korrekturen
+- First-Party-Google-Ads-Skill (siehe MTA-SKILLS-PLAN: bekannte Lücken)
+
+## [0.3.0] — 2026-05-15 — Token-Tracking pro MTA
+
+### Hinzugefügt — Live-Token-Tracking mit EUR-Cost-Aufschlüsselung
+
+Du siehst jetzt pro MTA live, wieviele Tokens verbraucht wurden — total, pro Modell (Opus/Sonnet/Haiku) und pro Skill — und was das in Euro kostet. Sichtbar im Dashboard (`reports/index.html`) und im Footer jedes Skill-Reports.
+
+- **`token-tracker.py`** (neu, in `01-01-mta-projekt-init/scripts/`) — Aggregiert Claude-Code-Session-JSONLs (`~/.claude/projects/<cwd>/*.jsonl`) inkrementell mit Cursor-State. CLI: `tick`, `aggregate <slug>`, `render-counter <slug> --style {stat-strip|breakdown|md}`, `render-skill-counter <slug> <skill-name>`, `mark-skill-start`, `mark-skill-end`. Pricing-Tabelle Opus 4.7/Sonnet 4.6/Haiku 4.5 hardcoded (USD), EUR-Konversion via Env `REACHX_USD_TO_EUR` (Default 0.92).
+- **Stop-Hook** (`hooks/hooks.json` + `scripts/post-stop-token-sync.sh`) — Läuft nach jedem Prompt non-blocking. Lokale Aggregation immer, Drive-Push gedrosselt alle 5 Minuten (`token-usage.json` im neuen `meta/`-Sub-Folder).
+- **`01-01-mta-projekt-init`** — Schritt 9b initialisiert `meta/token-usage.json` auf Drive. `register-mta` speichert jetzt automatisch `working_dir` (aus `os.getcwd()`) für robuste Project-Resolution ohne Heuristik. Dashboard-Render bindet Stat-Strip- und Breakdown-Counter ein.
+- **`report-shell.html`** — Zwei neue Platzhalter: `{{TOKEN_BREAKDOWN}}` (für Dashboard-Detail-Sektion) und `{{TOKEN_FOOTER}}` (für Skill-Report-Footer). Wenn nicht befüllt: leerer String.
+- **32 Folge-SKILL.md** — Token-Tracking-Block nach `## Ausführungs-Modus` eingefügt, mit `mark-skill-start`/`mark-skill-end`-Pattern und Hinweis zum `{{TOKEN_FOOTER}}`-Render.
+- **`contracts.md` Sektion 10** — Volle Doku der Token-Tracking-Konvention inklusive Pricing-Tabelle und Pflicht-Pattern.
+
+### Bekanntes
+
+- Tokens aus Drittanbieter-APIs (Apify, Sistrix, Ahrefs, gws) werden NICHT getrackt — nur Claude-Code-Tokens.
+- Bestands-MTAs vor diesem Release: Token-Cursor startet leer, Re-Aggregate für Vollständigkeit via `rm ~/.cache/reachx-mta/<slug>/token-tracker-cursor.json && python3 token-tracker.py aggregate <slug>`.
+- Drive-Push frequenz fest auf 300s gedrosselt — falls Drive-Volumen zu hoch wird, lieber Pushen auf nur "am Skill-Ende" umstellen.
 
 ## [0.2.1] — 2026-05-15
 

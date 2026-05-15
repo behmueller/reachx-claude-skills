@@ -1,5 +1,5 @@
 {
-  "description": "REACHX MTA-Plugin — Update-Check beim Session-Start",
+  "description": "REACHX MTA-Plugin — SessionStart-Update-Check + Stop-Hook-Token-Sync",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,16 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/check-version.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/post-stop-token-sync.sh"
           }
         ]
       }
