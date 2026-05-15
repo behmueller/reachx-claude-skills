@@ -9,10 +9,12 @@ Das Output-Format, das `01-02-kickoff-transcript-parser` schreibt und das alle F
 # === Skill-Metadaten ===
 skill: 01-02-kickoff-transcript-parser
 generiert_am: <ISO-8601>
-schema_version: "1.0"
+schema_version: "1.1"
 transkript_quelle:
-  pfad: <relativer Pfad zur Transkript-Datei>
-  sha256: <Hash der Quell-Datei>
+  drive_file_id: <Drive-File-ID des Transkripts in input/transkripte/>
+  drive_url: <https://drive.google.com/file/d/<id>/view>
+  dateiname: <Original-Dateiname auf Drive, z.B. kickoff-2026-05-15.md>
+  sha256: <Hash der Quell-Datei (berechnet auf der lokalen Cache-Kopie)>
   meeting_titel: <aus Transkript-Header>
   meeting_datum: <ISO-8601, aus Transkript-Header>
   meeting_dauer: <HH:MM:SS oder MM:SS>
@@ -123,6 +125,24 @@ Was wurde nicht geklärt — Liste mit Verweisen auf den Kontext.
 ```
 
 ## Feld-Erläuterungen
+
+### `transkript_quelle.drive_file_id` / `drive_url` / `dateiname`
+
+Die Transkript-Datei liegt seit Schema 2.1 immer auf Drive im Sub-Folder `input/transkripte/`. `drive_file_id` ist die Drive-File-ID (stabil über Umbenennungen), `drive_url` die offene Browser-URL (`https://drive.google.com/file/d/<id>/view`), `dateiname` der zum Verarbeitungszeitpunkt gültige Dateiname. Lokale Cache-Pfade werden **nicht** im Briefing referenziert — sie sind nicht reproduzierbar für andere Kollegen, die später denselben Briefing-State auf ihrer Maschine rekonstruieren wollen.
+
+Bei Append-Modus (zweites Meeting für denselben Kunden, siehe Edge Case in SKILL.md): `transkript_quelle` wird zur Liste umgewandelt, mit einem Eintrag pro verarbeitetes Transkript-File. Frontmatter dann:
+
+```yaml
+transkript_quelle:
+  - drive_file_id: ...
+    drive_url: ...
+    dateiname: kickoff-2026-05-15.md
+    # ...
+  - drive_file_id: ...
+    drive_url: ...
+    dateiname: folgetermin-2026-06-02.docx
+    # ...
+```
 
 ### `meeting_typ`
 

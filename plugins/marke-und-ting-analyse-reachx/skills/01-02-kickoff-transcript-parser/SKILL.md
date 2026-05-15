@@ -31,8 +31,11 @@ Aufrufmuster aus dem Hauptthread:
 
 | Parameter | Pflicht | Beschreibung |
 |---|---|---|
-| Transkript-Datei | ja | Lokaler Pfad zur Fireflies-Markdown-Datei (oder Plaud-DOCX-Zusammenfassung, oder TXT) — bleibt lokal |
+| Transkript-File | ja | Liegt im Drive-Sub-Folder `input/transkripte/` (Fireflies-Markdown, Plaud-DOCX-Zusammenfassung, TXT oder VTT). Der Stratege legt es vor dem Skill-Aufruf dort ab. |
 | MTA-Slug | nein | Auto-Detect aus dem Active-MTA-Cache, oder explizit übergeben |
+| Transkript-Dateiname | nein | Wenn mehrere Files in `input/transkripte/` liegen: konkreter Dateiname, sonst nimmt der Skill das jüngste File und fragt bei Mehrdeutigkeit nach |
+
+**Pre-Step beim Strategen (außerhalb des Skills):** Transkript-Datei in den MTA-Drive-Folder unter `input/transkripte/` hochladen — per Drive-Web-UI (Drag&Drop), gws CLI (`gws drive files create --upload ...`) oder Google-Drive-Desktop. Der Skill liest die Datei dann aus Drive, parst sie und schreibt das Briefing zurück nach `data/`.
 
 ## Ablauf
 
@@ -59,8 +62,19 @@ META_ID=$(python3 "$DRIVE_PY" list-children "$FOLDER_ID" | jq -r '.[] | select(.
 python3 "$DRIVE_PY" read "$META_ID" > /tmp/meta.json
 
 SLUG=$(jq -r '.projekt_slug' /tmp/meta.json)
+SCHEMA_VERSION=$(jq -r '.schema_version' /tmp/meta.json)
 DATA_ID=$(jq -r '.drive.subfolders.data' /tmp/meta.json)
 REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
+TRANSKRIPTE_ID=$(jq -r '.drive.input_subfolders.transkripte // empty' /tmp/meta.json)
+```
+
+**Schema-Version-Check:** Wenn `TRANSKRIPTE_ID` leer ist (Schema 2.0 ohne `input/transkripte/`), abbrechen mit:
+
+```
+✗ MTA-Projekt läuft auf Schema 2.0, dieser Skill benötigt 2.1.
+Bitte 01-01-mta-projekt-init im Resume-Modus erneut aufrufen — er ergänzt
+den Sub-Folder `input/transkripte/` automatisch und hebt das Schema.
+Danach diesen Skill wiederholen.
 ```
 
 ### Schritt 1: Voraussetzungs-Check und Idempotenz
@@ -84,9 +98,44 @@ Wenn vorhanden, frage:
 - **Append** (zweites Meeting an dasselbe Briefing anhängen — Felder werden ergänzt, nicht ersetzt)
 - **Abbrechen**
 
-### Schritt 2: Transkript-Format erkennen und parsen
+### Schritt 2: Transkript-File aus Drive auswählen und runterladen
 
-Lies die Transkript-Datei (lokaler Pfad — die Datei liegt nicht auf Drive, sie kommt vom Nutzer-Filesystem). Erkenne das Format:
+Liste die Files in `input/transkripte/` und wähle das richtige aus:
+
+```bash
+TRANSKRIPTE_FILES=$(python3 "$DRIVE_PY" list-children "$TRANSKRIPTE_ID")
+ANZAHL=$(echo "$TRANSKRIPTE_FILES" | jq 'length')
+
+if [ "$ANZAHL" = "0" ]; then
+  cat <<MSG
+✗ Keine Transkripte im Drive-Sub-Folder gefunden.
+Bitte das Meeting-Transkript (Fireflies-MD, Plaud-DOCX, TXT oder VTT) in
+   <MTA-Folder>/input/transkripte/
+auf Drive ablegen und den Skill erneut aufrufen.
+MSG
+  exit 1
+fi
+```
+
+**File-Auswahl:**
+
+- **Genau ein File:** automatisch nehmen, im Chat melden ("Transkript erkannt: `<name>`").
+- **Mehrere Files & explizit übergebener Dateiname:** das angegebene File nehmen. Wenn nicht vorhanden: Liste ausgeben und nachfragen.
+- **Mehrere Files & kein Name übergeben:** die Top-3 nach `modifiedTime desc` ausgeben und nachfragen, welches verarbeitet werden soll. Niemals raten.
+
+Lade das gewählte File in den lokalen Cache:
+
+```bash
+mkdir -p ~/.cache/reachx-mta/"$SLUG"/transkripte
+FILE_ID=$(echo "$TRANSKRIPTE_FILES" | jq -r '.[] | select(.name == "<gewaehlter-name>") | .id')
+FILE_NAME=$(echo "$TRANSKRIPTE_FILES" | jq -r '.[] | select(.id == "'"$FILE_ID"'") | .name')
+python3 "$DRIVE_PY" read "$FILE_ID" > ~/.cache/reachx-mta/"$SLUG"/transkripte/"$FILE_NAME"
+TRANSKRIPT_LOCAL=~/.cache/reachx-mta/"$SLUG"/transkripte/"$FILE_NAME"
+```
+
+`TRANSKRIPT_LOCAL` ist der lokale Cache-Pfad für die Verarbeitung — das Drive-Original bleibt unverändert. Im Briefing-Frontmatter trägst du in `transkript_quelle` die **Drive-File-ID + Drive-URL** ein (nicht den Cache-Pfad — das wäre nicht reproduzierbar für andere Kollegen).
+
+**Format erkennen** anhand des Dateinamens und/oder des ersten Inhalt-Blocks:
 
 | Erkennungsmuster | Format | Parser |
 |---|---|---|
@@ -95,7 +144,7 @@ Lies die Transkript-Datei (lokaler Pfad — die Datei liegt nicht auf Drive, sie
 | Strukturierter DOCX-Bericht (Plaud) | Plaud.ai-Zusammenfassung | Lies als reinen Text, behandle wie strukturierten Bericht (kein Speaker-Diarisation) |
 | Reiner Fließtext | TXT / Copy-Paste | Plaintext-Modus, kein Speaker-Mapping |
 
-Wenn das Format `Fireflies-Markdown` ist, rufe `python3 scripts/parse_fireflies_md.py <pfad> --json` auf und nutze den strukturierten Output (`meta` + `turns`).
+Wenn das Format `Fireflies-Markdown` ist, rufe `python3 scripts/parse_fireflies_md.py "$TRANSKRIPT_LOCAL" --json` auf und nutze den strukturierten Output (`meta` + `turns`).
 
 Für andere Formate: lies die Datei direkt und behandle den Inhalt als unstrukturierten Text — die Extraktion läuft dann ohne Speaker-Tags.
 
@@ -272,7 +321,8 @@ Sag mir, welcher als nächster.
 Alle in `contracts.md` definierten Konventionen sind verbindlich — insbesondere:
 
 - Outputs leben in Google Drive (über `drive.py upsert-text`), nicht im lokalen Filesystem
-- In `transkript_quelle.pfad` wird der **lokale Original-Pfad** der Transkript-Datei festgehalten (das Transkript bleibt lokal beim Strategen, nur der Briefing-Output wandert nach Drive)
+- **Transkript-Quelle liegt auf Drive** in `input/transkripte/` — der Stratege legt das File vor dem Skill-Aufruf dort ab. In `transkript_quelle.drive_file_id` und `transkript_quelle.drive_url` werden die Drive-Referenzen festgehalten (kein lokaler Pfad — der lokale Cache ist nur Arbeits-Kopie, nicht reproduzierbar zwischen Kollegen)
+- `input/`-Sub-Folder werden **nie** vom Skill geschrieben — sie sind reine Lese-Quelle
 - Markdown + YAML-Frontmatter Hybrid-Format
 - Standard-Schlussformat im Chat
 - `status.md` und Dashboard `index.html` werden in jedem Lauf aktualisiert (in-place Update auf Drive via `upsert-text`)

@@ -34,8 +34,10 @@ Eine vollständige MTA-Struktur im REACHX Shared Drive unter dem vom Projektleit
 
 ```
 [Drive] <Kunde>/<MTA-Folder>/
-├── meta.json                    # Stammdaten + Drive-Folder-IDs (Schema 2.0)
+├── meta.json                    # Stammdaten + Drive-Folder-IDs (Schema 2.1)
 ├── status.md                    # Fortschritts-Tracker für alle Folge-Skills
+├── input/                       # vom Strategen bereitgestellte Quell-Files (Input für Skills)
+│   └── transkripte/             # Kickoff-/Folge-Meeting-Transkripte (.md, .docx, .txt, .vtt)
 ├── data/                        # für Skill-Outputs (briefing.md, kunde.md, etc.)
 ├── wettbewerber/                # für Wettbewerber-Profile
 ├── audits/                      # für Kanal-Audit-Outputs
@@ -45,6 +47,8 @@ Eine vollständige MTA-Struktur im REACHX Shared Drive unter dem vom Projektleit
 │   └── _shell.html              # Template für andere Skills (HTML-Reports)
 └── assets/                      # Screenshots, Logos, Rohdaten
 ```
+
+Der `input/`-Sub-Folder ist der **einzige Ort, in den der Stratege selbst Files ablegt** (per Drive-Web-UI, Drag&Drop oder gws). Alles andere wird ausschließlich von Skills geschrieben. Aktuell genutzt von `01-02-kickoff-transcript-parser` (liest aus `input/transkripte/`); zukünftige Skills können weitere Sub-Sub-Folder unter `input/` ergänzen (z.B. `input/screenshots/`, `input/dokumente/`).
 
 Plus lokal beim Kollegen, der die MTA leitet: ein Eintrag in `~/.cache/reachx-mta/active-mtas.json` mit `<slug> → {folder_id, kunde, zuletzt_aktiv}`, damit Folge-Skills den Drive-Folder ohne erneute URL-Eingabe wiederfinden.
 
@@ -140,19 +144,26 @@ OK so?
 
 ### Schritt 6: Sub-Ordner anlegen
 
-Lege die sechs Sub-Folders unter dem MTA-Folder an. Idempotent (existierende werden wiederverwendet, nicht überschrieben):
+Lege die sieben Sub-Folders unter dem MTA-Folder an, plus die definierten Sub-Sub-Folder unter `input/`. Idempotent (existierende werden wiederverwendet, nicht überschrieben):
 
 ```bash
-for sub in data wettbewerber audits synthese reports assets; do
+# Top-Level Sub-Folder
+for sub in input data wettbewerber audits synthese reports assets; do
   python3 scripts/drive.py find-or-create-folder "<folder-id>" "$sub"
 done
+
+# Sub-Sub-Folder unter input/
+# Die input-Folder-ID kommt aus dem find-or-create-folder-Lauf oben
+python3 scripts/drive.py find-or-create-folder "<input-folder-id>" "transkripte"
 ```
 
-Sammle die zurückgegebenen Folder-IDs für `meta.json`.
+Sammle alle zurückgegebenen Folder-IDs für `meta.json` — sowohl die Top-Level-Sub-Folder als auch die Sub-Sub-Folder unter `input/`.
+
+**Resume-Fall (Schritt 4 hatte schon eine `meta.json` gefunden):** Auch im Resume-Lauf rufst du `find-or-create-folder` für **alle** Top-Level-Sub-Folder und `input/transkripte` auf — das ist idempotent. Damit werden fehlende Sub-Folder (z.B. weil das Projekt mit einem älteren Schema initialisiert wurde) automatisch ergänzt. Anschließend aktualisierst du die `drive.subfolders`-Map in der bestehenden `meta.json` und hebst die `schema_version` ggf. auf den aktuellen Stand.
 
 ### Schritt 7: `meta.json` schreiben
 
-Erstelle die `meta.json` (Schema-Version 2.0 — enthält jetzt Drive-IDs):
+Erstelle die `meta.json` (Schema-Version 2.1 — enthält Drive-IDs inklusive `input`-Sub-Folder und dessen Sub-Sub-Folder):
 
 ```json
 {
@@ -166,20 +177,26 @@ Erstelle die `meta.json` (Schema-Version 2.0 — enthält jetzt Drive-IDs):
     "folder_id": "<root-mta-folder-id>",
     "folder_url": "https://drive.google.com/drive/folders/<id>",
     "subfolders": {
+      "input": "<id>",
       "data": "<id>",
       "wettbewerber": "<id>",
       "audits": "<id>",
       "synthese": "<id>",
       "reports": "<id>",
       "assets": "<id>"
+    },
+    "input_subfolders": {
+      "transkripte": "<id>"
     }
   },
   "kickoff_datum": null,
   "mta_deadline": null,
   "erstellt_am": "2026-05-14T14:30:00Z",
-  "schema_version": "2.0"
+  "schema_version": "2.1"
 }
 ```
+
+`drive.input_subfolders` ist als eigener Block angelegt (statt verschachtelt unter `subfolders.input`), damit Folge-Skills ohne Sonderfall-Logik darauf zugreifen können: `meta["drive"]["input_subfolders"]["transkripte"]`. Spätere Erweiterungen (z.B. `input_subfolders.screenshots`) bleiben rückwärtskompatibel.
 
 Hochladen via:
 
@@ -276,7 +293,9 @@ Lokal:
 - Im Active-MTA-Cache registriert. Folge-Skills finden die MTA automatisch.
 
 Nächste Schritte:
-1. 01-02-kickoff-transcript-parser — Briefing aus dem Kickoff-Meeting-Transkript extrahieren (empfohlen, wenn ein Transkript vorhanden ist)
+1. 01-02-kickoff-transcript-parser — Briefing aus dem Kickoff-Meeting-Transkript extrahieren
+   (Hinweis: Lege das Transkript vorab in den Drive-Sub-Folder `input/transkripte/` —
+   Drive-Web-UI → in den MTA-Folder → input/transkripte → Drag&Drop.)
 2. 02-01-kunden-marken-profil — Markenprofil aus der Website erstellen (direkt möglich, auch ohne Transkript)
 
 Sag mir, welcher als nächster — oder beide nacheinander.

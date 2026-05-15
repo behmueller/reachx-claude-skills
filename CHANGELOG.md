@@ -12,6 +12,20 @@ Versionierung nach [Semver](https://semver.org/lang/de/).
 - Live-Test mit echtem Kundenprojekt durchlaufen, ggf. Korrekturen
 - Setup-Doku für nicht-technische Kollegen schreiben (gws-Auth, Plugin-Install)
 
+## [0.2.0] — 2026-05-15
+
+### Geändert — Schema-Erweiterung 2.0 → 2.1
+
+- **Neuer Drive-Sub-Folder `input/` mit `input/transkripte/`.** Quell-Files (z.B. Meeting-Transkripte), die der Stratege selbst bereitstellt, leben jetzt nicht mehr lokal beim Strategen, sondern direkt auf Drive im MTA-Folder. Skills lesen daraus, schreiben aber niemals dort hinein. Begründung: Reproduzierbarkeit für alle Kollegen (kein "liegt nur auf einer Maschine"), Audit-Trail, einheitliche Datenheimat. Aktuell genutzt von `01-02-kickoff-transcript-parser`; weitere Sub-Sub-Folder unter `input/` (z.B. `screenshots/`, `dokumente/`) können in späteren Versionen ergänzt werden.
+- **`01-01-mta-projekt-init`** legt den `input/`-Sub-Folder und `input/transkripte/` beim Init und beim Resume idempotent an. `meta.json` Schema-Version auf `2.1` mit neuem `drive.subfolders.input` plus `drive.input_subfolders.transkripte`-Block. Resume-Pfad ergänzt fehlende Sub-Folder bei bestehenden Schema-2.0-Projekten automatisch und hebt das Schema.
+- **`01-02-kickoff-transcript-parser`** liest das Transkript jetzt aus Drive `input/transkripte/` statt vom lokalen Filesystem. Schritt 2 lädt das gewählte File in den lokalen Cache, parst dort und schreibt Briefing nach `data/`. Bei mehreren Files in `input/transkripte/` fragt der Skill nach (oder akzeptiert einen `Transkript-Dateiname`-Parameter). Schema-Version-Check: bricht bei 2.0 mit klarem Hinweis auf 01-01-Resume ab.
+- **`briefing-schema.md`** (`schema_version: 1.1`): `transkript_quelle.pfad` ersetzt durch `drive_file_id` + `drive_url` + `dateiname`. Append-Modus (mehrere Meetings pro Kunde) klar dokumentiert.
+- **`contracts.md`** (Schema 2.1): neue Sektion "Input-Sub-Folder" mit Tabelle (Sub-Sub-Folder × Befüller × Leser), Dateinamen-Empfehlung `<typ>-<YYYY-MM-DD>.<ext>`, Migrations-Hinweis 2.0 → 2.1 via 01-01-Resume.
+
+### Hinweis für laufende Projekte
+
+Bestehende Schema-2.0-MTAs (falls bereits live angelegt) werden automatisch migriert: `01-01-mta-projekt-init` mit derselben Drive-URL erneut aufrufen — der Resume-Pfad ergänzt `input/transkripte/` idempotent und hebt das Schema in der `meta.json`.
+
 ## [0.1.1] — 2026-05-15
 
 ### Geändert

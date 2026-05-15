@@ -2,7 +2,7 @@
 
 Dieses Dokument legt die gemeinsamen Regeln fest, an die sich **alle Skills im MTA-Workflow** halten müssen. Wenn du einen neuen MTA-Skill baust oder einen bestehenden anpasst, ist das hier die Pflichtlektüre.
 
-**Stand 2026-05-14:** Schema-Version 2.0. Alle MTA-Outputs leben jetzt in Google Drive (über die `gws` CLI), nicht mehr lokal. Schema 1.0-Projekte (lokaler Filesystem-Pfad) sind gleichbedeutend mit Vorgänger-Status — neue Skills sollten die unterstützen oder zumindest sauber abbrechen.
+**Stand 2026-05-15:** Schema-Version 2.1. Alle MTA-Outputs leben in Google Drive (über die `gws` CLI), nicht mehr lokal. Neu in 2.1: dedizierter `input/`-Sub-Folder für vom Strategen bereitgestellte Quell-Files (z.B. Meeting-Transkripte in `input/transkripte/`). Schema 2.0-Projekte (ohne `input/`) werden beim nächsten `01-01-mta-projekt-init`-Resume-Lauf automatisch ergänzt. Schema 1.0-Projekte (lokaler Filesystem-Pfad) sind gleichbedeutend mit Vorgänger-Status — neue Skills sollten die unterstützen oder zumindest sauber abbrechen.
 
 Inhaltsverzeichnis:
 
@@ -44,7 +44,7 @@ Bitte 01-01-mta-projekt-init mit der Drive-URL des MTA-Ordners aufrufen.
 
 ## 2. `meta.json`-Schema
 
-Liegt direkt im Drive-MTA-Root. Pflichtfelder (Schema 2.0):
+Liegt direkt im Drive-MTA-Root. Pflichtfelder (Schema 2.1):
 
 ```json
 {
@@ -58,24 +58,33 @@ Liegt direkt im Drive-MTA-Root. Pflichtfelder (Schema 2.0):
     "folder_id": "string (Drive-Folder-ID des MTA-Roots)",
     "folder_url": "string (https://drive.google.com/drive/folders/...)",
     "subfolders": {
-      "data": "string (Drive-Folder-ID)",
+      "input": "string (Drive-Folder-ID)",
+      "data": "string",
       "wettbewerber": "string",
       "audits": "string",
       "synthese": "string",
       "reports": "string",
       "assets": "string"
+    },
+    "input_subfolders": {
+      "transkripte": "string (Drive-Folder-ID)"
     }
   },
   "kickoff_datum": "string (YYYY-MM-DD) | null",
   "mta_deadline": "string (YYYY-MM-DD) | null",
   "erstellt_am": "string (ISO-8601)",
-  "schema_version": "2.0"
+  "schema_version": "2.1"
 }
 ```
 
 - `meta.json` ist **read-only** für alle Folge-Skills. Nur `01-01-mta-projekt-init` schreibt diese Datei.
 - Die `drive.subfolders`-Map ist die Single Source of Truth für die Folder-IDs, in die Folge-Skills ihre Outputs schreiben.
+- `drive.input_subfolders` enthält die Sub-Sub-Folder unter `input/`, in denen der **Stratege selbst Files ablegt** (kein Skill schreibt dort hinein, Skills lesen nur). Aktuell: `transkripte`. Weitere Einträge können in späteren Schema-Versionen ergänzt werden.
 - Bei Schema-Änderungen in zukünftigen Versionen: `schema_version` hochzählen.
+
+### Migration von Schema 2.0
+
+Schema-2.0-Projekte (ohne `input/`-Sub-Folder und ohne `drive.input_subfolders`) können einfach migriert werden: Beim nächsten Resume-Lauf von `01-01-mta-projekt-init` legt der Skill die fehlenden Folder per `find-or-create-folder` an (idempotent), aktualisiert die `drive`-Map in der `meta.json` und hebt `schema_version` auf `2.1`. Folge-Skills, die auf Schema-2.0-Projekte stoßen und neue Felder brauchen (`input_subfolders.transkripte`), brechen mit Hinweis ab: "Projekt auf Schema 2.0. Bitte 01-01-mta-projekt-init im Resume-Modus erneut aufrufen, dann diesen Skill wiederholen."
 
 ### Migration von Schema 1.0
 
@@ -206,6 +215,20 @@ Für temporäre Zwischenergebnisse (Apify-Roh-JSONs, CSV-Generierung, HTML-Templ
 | Synthese (Stufe 4) | `synthese` |
 | HTML-Reports (alle) | `reports` |
 | Screenshots, Logos, Rohdaten-Caches | `assets` |
+
+### Input-Sub-Folder (vom Strategen befüllt)
+
+| Sub-Sub-Folder | Pfad (`meta.drive.input_subfolders.*`) | Wer befüllt | Wer liest |
+|---|---|---|---|
+| `input/transkripte/` | `transkripte` | Stratege (Drive-Web-UI / gws / Drag&Drop) | `01-02-kickoff-transcript-parser` |
+
+**Konvention für `input/`-Inhalte:**
+
+- Skills schreiben **niemals** in `input/`-Sub-Folder — sie sind reine Lese-Quelle.
+- Der Stratege lädt Files direkt in den passenden Sub-Sub-Folder hoch, bevor er den verarbeitenden Skill aufruft.
+- Erlaubte Datei-Endungen pro Sub-Sub-Folder regelt der verarbeitende Skill (z.B. `transkripte/`: `.md` Fireflies, `.docx` Plaud, `.txt`, `.vtt`).
+- Mehrere Files pro Sub-Sub-Folder sind erlaubt (z.B. mehrere Meeting-Transkripte) — der verarbeitende Skill listet die Files und fragt den Strategen, wenn unklar welches er meint.
+- Dateinamens-Empfehlung für Transkripte: `<typ>-<YYYY-MM-DD>.<ext>`, z.B. `kickoff-2026-05-15.md`, `folgetermin-2026-06-02.docx`, `verkaufsgespraech-2026-04-10.txt`. Wird nicht erzwungen, aber das jüngste File wird per `modifiedTime` ermittelt — sprechende Namen helfen.
 
 ### Dateinamen für inhaltliche Outputs
 
@@ -440,5 +463,5 @@ if file_meta["modifiedTime"] > my_last_read_time:
 
 Wenn sich Konventionen ändern, `schema_version` in `meta.json` und in betroffenen Schemas hochzählen. Alte Projekte bleiben auf ihrer Version — Skills sollten Versions-Check machen, bevor sie auf alte Schemas zugreifen.
 
-Aktuelle Version: **2.0** (Drive-basiert, seit 2026-05-14)
-Vorgänger: 1.0 (lokal-Filesystem-basiert, bis 2026-05-13)
+Aktuelle Version: **2.1** (Drive-basiert mit `input/`-Sub-Folder für Stratege-Quell-Files, seit 2026-05-15)
+Vorgänger: 2.0 (Drive-basiert, 2026-05-14 — automatische Migration via 01-01-Resume), 1.0 (lokal-Filesystem-basiert, bis 2026-05-13)
