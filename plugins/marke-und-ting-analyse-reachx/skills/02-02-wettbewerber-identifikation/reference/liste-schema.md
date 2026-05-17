@@ -41,6 +41,7 @@ wettbewerber:
     - name: <Wettbewerber-Name>
       website: <URL>
       kategorie: regional
+      quelle_zusatz: <optional: first_party_signal — gesetzt, wenn der Akteur über ein GA4-Referral-Signal gefunden wurde>
       standort:
         adresse: <Adresse aus Google Maps>
         plz: <PLZ>
@@ -57,6 +58,7 @@ wettbewerber:
     - name: <Wettbewerber-Name>
       website: <URL>
       kategorie: best_practice_ueberregional
+      quelle_zusatz: <optional: first_party_signal — gesetzt, wenn der Akteur über ein GA4-Referral-Signal gefunden wurde>
       sistrix_visibility_index: <float>
       sistrix_top_keywords: [<liste der Top-5-Keywords, für die der WB rankt>]
       online_marketing_signale: [<liste>]
@@ -178,6 +180,10 @@ Default-Logik des Skills:
 - Alle `kunde_genannt` mit Bedrohungsgrad `inspiration` → `optional`
 - Regional: top 3 nach Google-Maps-Reviews → `ja`, Rest → `optional`
 - Best-Practice: alle → `ja` (sind ja absichtlich kuratiert)
+
+### `quelle_zusatz`
+
+Optionales Feld auf Einträgen der Kategorien `regional` und `best_practice_ueberregional`. Wert `first_party_signal`, wenn der Akteur ursprünglich über einen First-Party-Hinweis (GA4-Referral-Domain aus `identifikation-schema.md.first_party_hinweise`) gefunden und in Phase B als echter Wettbewerber bestätigt wurde. Macht nachvollziehbar, dass der Akteur nicht aus Google Maps / Sistrix, sondern aus dem echten Referral-Traffic des Kunden stammt. Fehlt das Feld, kam der Akteur über den normalen Weg (Maps / Sistrix-Toplist) in die Liste. Es entsteht **keine eigene Kategorie** — `quelle_zusatz` ist nur ein Vermerk.
 
 ### `sistrix_visibility_index`
 

@@ -8,3 +8,9 @@
 node_modules/
 dist/
 *.log
+
+# Secrets — gehoeren nach ~/.config/reachx-mta/, niemals ins Repo
+google-credentials.yaml
+google-ads.yaml
+client_secret*.json
+.env

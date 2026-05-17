@@ -1,0 +1,17 @@
+# Abhaengigkeiten fuer die Google-API-Wrapper im scripts/-Ordner.
+# Installation:  pip3 install -r requirements-google.txt
+
+# google-ads.py — First-Party Google Ads
+google-ads>=25.0.0
+
+# google-analytics.py — First-Party GA4 (Reporting + Property-Liste)
+google-analytics-data>=0.18.0
+google-analytics-admin>=0.22.0
+
+# google-oauth.py — einmalige refresh_token-Erzeugung
+google-auth-oauthlib>=1.2.0
+
+# Von google-analytics.py zum Lesen der Credential-YAML genutzt
+# (google-ads bringt PyYAML ohnehin transitiv mit — hier explizit fuer den Fall,
+#  dass nur die Analytics-Wrapper installiert werden).
+PyYAML>=6.0

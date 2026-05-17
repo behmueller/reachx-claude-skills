@@ -18,6 +18,9 @@ status: vorgeschlagen   # Stratege ändert nach Review zu: bestaetigt
 # Seed-Keywords für Sistrix-Toplist-Recherche
 # Diese Keywords definieren, in welchem Markt-Segment der Skill nach Best-Practice-Wettbewerbern sucht
 # 3-5 Keywords, möglichst spezifisch für die Branche, aber generisch genug für Sistrix
+# seed_keywords_quelle: gsc        → aus echten GSC-Non-Brand-Top-Queries des Kunden abgeleitet (höhere Treffsicherheit)
+#                       abgeleitet → aus Briefing/Branche abgeleitet (First-Party-Daten lagen nicht vor)
+seed_keywords_quelle: <gsc | abgeleitet>
 branchen_seed_keywords:
   - <keyword 1>
   - <keyword 2>
@@ -69,17 +72,43 @@ vom_briefing_uebernommen:
   - name: <Wettbewerber-Name>
     quelle_turn: <timestamp im Briefing>
     bedrohungsgrad_aus_briefing: <direkt | indirekt | inspiration>
+
+# === Optional: First-Party-Akteurs-Hinweise (GA4-Referral) ===
+# Wird automatisch aus der GA4-source/medium-Analyse (audits/ga4-first-party.md) gefüllt, falls 03-18 gelaufen ist.
+# Fremd-Domains mit relevantem Referral-Traffic, die KEINE bekannten Portale/Bewertungsplattformen/
+# Social-Netze/Suchmaschinen sind — potenzielle Wettbewerber-Kandidaten.
+# Stratege prüft: unzutreffende Domains streichen. Bestätigte Domains durchlaufen in Phase B
+# den normalen Website-Check + Signal-Check und werden in die passende bestehende Kategorie
+# (regional bzw. best_practice_ueberregional) einsortiert — mit Vermerk quelle_zusatz: first_party_signal.
+# Leer lassen, wenn keine GA4-Daten vorlagen.
+first_party_hinweise:
+  - domain: <Referral-Domain>
+    referral_sessions: <int — Sessions aus GA4, aktuelle Periode>
+    begruendung: <warum als Akteurs-Kandidat aufgenommen — z.B. "Fremd-Domain mit relevantem Referral-Traffic, kein bekanntes Portal/Social/Suchmaschine">
 ---
 
 # Identifikations-Schema: <Kundenname>
 
 ## Begründung der Seed-Keywords
 
-Warum genau diese 3-5 Keywords? Beleg-Logik aus Briefing + kunde.md:
+Quelle dieser Keywords: **<gsc | abgeleitet>**.
 
-1. **<keyword 1>**: <warum dieses Keyword — bezug zum Portfolio>
+- Bei `gsc`: aus den echten GSC-Non-Brand-Top-Queries des Kunden abgeleitet (Output von `03-04-seo-first-party-gsc`). Vorteil: der Markt wird aus den realen Suchanfragen des Kunden bestimmt statt geraten — höhere Treffsicherheit der Toplist-Recherche.
+- Bei `abgeleitet`: aus Briefing + kunde.md + Branche abgeleitet (First-Party-Daten lagen nicht vor). Eine vorherige First-Party-Erhebung (GSC) würde die Keyword-Qualität deutlich verbessern.
+
+Warum genau diese 3-5 Keywords? Beleg-Logik:
+
+1. **<keyword 1>**: <warum dieses Keyword — bezug zum Portfolio bzw. zur GSC-Query>
 2. **<keyword 2>**: <…>
 3. **<keyword 3>**: <…>
+
+## First-Party-Akteurs-Hinweise (GA4-Referral)
+
+<Wenn 03-18-web-analytics-ga4 gelaufen ist: Liste der Fremd-Domains mit relevantem Referral-Traffic, die kein bekanntes Portal/Social/Suchmaschine sind. Pro Domain Referral-Sessions und Begründung. Hinweis an den Strategen: bitte die Liste durchgehen und Domains streichen, die offensichtlich keine Wettbewerber sind — die verbleibenden werden in Phase B geprüft.>
+
+<Wenn keine GA4-Daten vorlagen: "Keine GA4-Referral-Daten verfügbar — Sektion leer. Eine vorherige Erhebung mit 03-18-web-analytics-ga4 würde zusätzliche Akteurs-Kandidaten aus dem echten Referral-Traffic liefern.">
+
+
 
 ## Begründung der Region
 
@@ -93,11 +122,12 @@ Warum genau diese 3-5 Keywords? Beleg-Logik aus Briefing + kunde.md:
 
 Bitte folgende Punkte prüfen, bevor Phase B startet:
 
-- [ ] **Seed-Keywords**: decken sie wirklich die Hauptmärkte des Kunden ab, oder fehlen Cluster?
+- [ ] **Seed-Keywords**: decken sie wirklich die Hauptmärkte des Kunden ab, oder fehlen Cluster? (Bei `seed_keywords_quelle: gsc` aus echten Queries — bei `abgeleitet` geraten, kritischer prüfen.)
 - [ ] **Branchenportale**: ist die Liste vollständig für diese Branche? Fehlt ein wichtiges Portal?
 - [ ] **Region**: deckt die Definition den geographischen Aktionsradius wirklich ab?
 - [ ] **Online-Marketing-Filter**: ist der Schwellwert realistisch — nicht zu hoch (verliert echte Wettbewerber), nicht zu niedrig (zu viel Rauschen)?
 - [ ] **Vom Briefing übernommene Wettbewerber**: alle aufgenommen, oder noch welche ergänzen?
+- [ ] **First-Party-Hinweise**: sind die GA4-Referral-Domains plausible Wettbewerber-Kandidaten? Offensichtliche Nicht-Wettbewerber (Partner, Verzeichnisse, technische Referrer) streichen.
 
 **Nach dem Review:** Setze `status: bestaetigt` im Frontmatter, dann läuft Phase B.
 ```
@@ -106,13 +136,19 @@ Bitte folgende Punkte prüfen, bevor Phase B startet:
 
 ### Seed-Keywords
 
-Quellen für die Generierung in Phase A:
+**Primärquelle, wenn `audits/gsc-performance.csv` vorliegt** (Output von `03-04-seo-first-party-gsc`): die echten Non-Brand-Top-Queries des Kunden nach Klicks/Impressionen — Brand-Queries (Marken-Name + Synonyme) ausgeschlossen. Dann `seed_keywords_quelle: gsc`.
+
+**Fallback, wenn keine GSC-Daten vorliegen** — Quellen für die Generierung in Phase A:
 
 1. Aus `data/briefing.md`: `produkte_dienstleistungen` (Kategorie + Name)
 2. Aus `data/kunde.md`: `portfolio_wie_kommuniziert.kategorie`
 3. Aus `meta.json`: `branche` (für branchen-generische Keywords)
 
-Pragmatisch: 1-2 Keywords sind sehr spezifisch (Produktkategorie), 1-2 sind branchen-generisch (für Sistrix-Toplist).
+Pragmatisch: 1-2 Keywords sind sehr spezifisch (Produktkategorie), 1-2 sind branchen-generisch (für Sistrix-Toplist). Dann `seed_keywords_quelle: abgeleitet`.
+
+### First-Party-Hinweise
+
+Quelle: die GA4-source/medium-Analyse aus `audits/ga4-first-party.md` (Output von `03-18-web-analytics-ga4`). Der Skill scannt die Top-Referral-Domains und nimmt alle auf, die KEINE bekannten Portale/Bewertungsplattformen/Social-Netze/Suchmaschinen sind (Abgleich u. a. mit `aggregatoren-blocklist.md`). Pro Kandidat `domain`, `referral_sessions`, `begruendung`. Leer lassen, wenn `03-18` nicht gelaufen ist. Der Stratege kuratiert die Liste; bestätigte Domains werden in Phase B geprüft und ggf. mit `quelle_zusatz: first_party_signal` in `regional` oder `best_practice_ueberregional` einsortiert — es entsteht keine neue Kategorie.
 
 **Beispiel Aufmaster:**
 
