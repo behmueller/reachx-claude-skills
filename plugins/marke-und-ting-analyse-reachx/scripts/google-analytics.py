@@ -5,10 +5,11 @@ REACHX MTA-Skills — Google-Analytics-Helper (GA4, First-Party)
 Wrappt die GA4 Data API (Reporting) und die GA4 Admin API (Property-Liste)
 in eine CLI mit JSON-Output, analog zu google-ads.py / drive.py.
 
-Auth: OAuth-User-Credentials aus ~/.config/reachx-mta/google-credentials.yaml
-— dieselbe Datei wie google-ads.py. Der refresh_token deckt beide APIs ab;
-google-analytics.py liest daraus nur client_id, client_secret, refresh_token.
-Pfad ueberschreibbar via REACHX_GOOGLE_CREDENTIALS.
+Auth: OAuth-User-Credentials aus ~/.config/reachx-mta/google-analytics.yaml
+(chmod 600), erzeugt via `google-oauth.py --service analytics`. Enthaelt
+client_id, client_secret, refresh_token. Faellt auf das fruehere gemeinsame
+google-credentials.yaml zurueck, falls vorhanden. Pfad ueberschreibbar via
+REACHX_GOOGLE_ANALYTICS_CREDENTIALS.
 
 CLI:
     python3 google-analytics.py list-properties
@@ -30,12 +31,24 @@ import re
 import sys
 from pathlib import Path
 
-CONFIG_PATH = Path(
-    os.environ.get(
-        "REACHX_GOOGLE_CREDENTIALS",
-        str(Path.home() / ".config" / "reachx-mta" / "google-credentials.yaml"),
-    )
-)
+# gRPC nutzt per Default den c-ares-DNS-Resolver, der in manchen Umgebungen
+# (Sandboxes, restriktive Netzwerke) die DNS-Server nicht erreicht, obwohl der
+# System-Resolver funktioniert. Den nativen OS-Resolver erzwingen — muss vor
+# dem Import der grpc-/google-Libraries gesetzt sein. Via Env-Var überschreibbar.
+os.environ.setdefault("GRPC_DNS_RESOLVER", "native")
+
+def _config_path() -> Path:
+    """Credential-Datei: Env-Override, sonst die dedizierte google-analytics.yaml,
+    sonst (Fallback) das fruehere gemeinsame google-credentials.yaml."""
+    env = os.environ.get("REACHX_GOOGLE_ANALYTICS_CREDENTIALS")
+    if env:
+        return Path(env)
+    base = Path.home() / ".config" / "reachx-mta"
+    dedicated = base / "google-analytics.yaml"
+    return dedicated if dedicated.exists() else base / "google-credentials.yaml"
+
+
+CONFIG_PATH = _config_path()
 
 ANALYTICS_SCOPE = "https://www.googleapis.com/auth/analytics.readonly"
 DEFAULT_RANGE = "30daysAgo"
@@ -48,12 +61,12 @@ class AnalyticsHelperError(RuntimeError):
 # ---------- Auth / Low-Level ----------
 
 def _credentials():
-    """Baut OAuth-User-Credentials aus der geteilten google-credentials.yaml."""
+    """Baut OAuth-User-Credentials aus der google-analytics.yaml."""
     if not CONFIG_PATH.exists():
         raise AnalyticsHelperError(
             f"Credential-Datei fehlt: {CONFIG_PATH}\n"
-            f"  Einmalig mit google-oauth.py erzeugen. Pfad ueberschreibbar\n"
-            f"  via REACHX_GOOGLE_CREDENTIALS."
+            f"  Einmalig erzeugen mit:  google-oauth.py --service analytics ...\n"
+            f"  Pfad ueberschreibbar via REACHX_GOOGLE_ANALYTICS_CREDENTIALS."
         )
     try:
         import yaml

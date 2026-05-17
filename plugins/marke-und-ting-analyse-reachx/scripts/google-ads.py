@@ -15,8 +15,10 @@ Designprinzipien (analog drive.py):
   - Listen-Befehle geben ein Wrapper-Objekt zurueck:
         {"customer_id", "currency", "range", "count", "rows": [...]}
 
-Auth-Credentials: ~/.config/reachx-mta/google-credentials.yaml (chmod 600), Pfad
-ueberschreibbar via REACHX_GOOGLE_CREDENTIALS. NIEMALS ins Repo committen.
+Auth-Credentials: ~/.config/reachx-mta/google-ads.yaml (chmod 600), erzeugt via
+`google-oauth.py --service ads`. Faellt auf das fruehere gemeinsame
+google-credentials.yaml zurueck, falls vorhanden. Pfad ueberschreibbar via
+REACHX_GOOGLE_ADS_CREDENTIALS. NIEMALS ins Repo committen.
 
 CLI:
     python3 google-ads.py list-accounts
@@ -39,14 +41,26 @@ import os
 import sys
 from pathlib import Path
 
+# gRPC nutzt per Default den c-ares-DNS-Resolver, der in manchen Umgebungen
+# (Sandboxes, restriktive Netzwerke) die DNS-Server nicht erreicht, obwohl der
+# System-Resolver funktioniert. Den nativen OS-Resolver erzwingen — muss vor
+# dem Import der grpc-/google-Libraries gesetzt sein. Via Env-Var überschreibbar.
+os.environ.setdefault("GRPC_DNS_RESOLVER", "native")
+
 # ---------- Konfiguration ----------
 
-CONFIG_PATH = Path(
-    os.environ.get(
-        "REACHX_GOOGLE_CREDENTIALS",
-        str(Path.home() / ".config" / "reachx-mta" / "google-credentials.yaml"),
-    )
-)
+def _config_path() -> Path:
+    """Credential-Datei: Env-Override, sonst die dedizierte google-ads.yaml,
+    sonst (Fallback) das fruehere gemeinsame google-credentials.yaml."""
+    env = os.environ.get("REACHX_GOOGLE_ADS_CREDENTIALS")
+    if env:
+        return Path(env)
+    base = Path.home() / ".config" / "reachx-mta"
+    dedicated = base / "google-ads.yaml"
+    return dedicated if dedicated.exists() else base / "google-credentials.yaml"
+
+
+CONFIG_PATH = _config_path()
 
 # Gaengige GAQL-Datums-Literale. Fuer beliebige Zeitraeume (z.B. 12 Monate)
 # stattdessen "YYYY-MM-DD:YYYY-MM-DD" an --range uebergeben.
@@ -67,13 +81,13 @@ class GoogleAdsHelperError(RuntimeError):
 # ---------- Auth / Low-Level ----------
 
 def _client():
-    """Laedt den GoogleAdsClient aus der lokalen google-credentials.yaml."""
+    """Laedt den GoogleAdsClient aus der google-ads.yaml."""
     if not CONFIG_PATH.exists():
         raise GoogleAdsHelperError(
             f"Credential-Datei fehlt: {CONFIG_PATH}\n"
-            f"  Lege dort eine google-credentials.yaml an (chmod 600) mit den Feldern\n"
-            f"  developer_token, client_id, client_secret, refresh_token,\n"
-            f"  login_customer_id. Pfad ueberschreibbar via REACHX_GOOGLE_CREDENTIALS."
+            f"  Einmalig erzeugen mit:  google-oauth.py --service ads ...\n"
+            f"  (Felder: developer_token, client_id, client_secret, refresh_token,\n"
+            f"  login_customer_id.) Pfad ueberschreibbar via REACHX_GOOGLE_ADS_CREDENTIALS."
         )
     try:
         from google.ads.googleads.client import GoogleAdsClient
@@ -154,7 +168,7 @@ def cmd_list_accounts(client) -> list:
     """Alle Kundenkonten (Level <= 1) unter dem MCC aus der config."""
     mcc = getattr(client, "login_customer_id", None)
     if not mcc:
-        raise GoogleAdsHelperError("login_customer_id (MCC) fehlt in der google-credentials.yaml.")
+        raise GoogleAdsHelperError("login_customer_id (MCC) fehlt in der google-ads.yaml.")
     query = """
         SELECT customer_client.id, customer_client.descriptive_name,
                customer_client.currency_code, customer_client.manager,

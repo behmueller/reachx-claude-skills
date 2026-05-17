@@ -1,6 +1,6 @@
 ---
 name: 03-17-sea-first-party-google-ads
-description: Erhebt für den Kunden den First-Party-Google-Ads-Status-Quo direkt aus dessen echtem Google-Ads-Konto - über den CLI-Wrapper google-ads.py (Befehle list-accounts, account-overview, campaign-performance, search-terms, keyword-performance, conversion-actions, run-gaql), der die offizielle google-ads-Python-Library wrappt und gegen den REACHX-MCC authentifiziert. Liefert die echten Spend-, Klick-, Conversion- und Quality-Score-Daten des Kundenkontos - im Gegensatz zu 03-05-sea-google-ads-check, das via Transparency Center nur die öffentlich sichtbaren Anzeigen der WETTBEWERBER sieht. Default-Zeitraum 12 Monate plus letzte 30 Tage. Kern-Analysen: Account- und Kampagnen-Performance (Spend, Impressionen, Klicks, CTR, CPC, Conversions, Conversion-Value, ROAS, Kampagnentyp-Mix), Search-Terms-Analyse mit Streuverlust-Hinweisen und Brand-vs-Non-Brand-Split, Quality-Score-Verteilung als Optimierungs-Hebel, und ein leichter Conversion-Plausibilitäts-Check (welche Conversion-Actions, Status, Typ, Kategorie, mögliche GA4-Doppelzählung). Output ist audits/sea-first-party.md mit Aggregat plus audits/sea-kampagnen.csv und audits/sea-suchbegriffe.csv als Roh-Datenbasis plus HTML-Report reports/05c-sea-first-party.html. Die Suchbegriffe-CSV ist zusätzlich Roh-Keyword-Quelle für 03-02-seo-keyword-recherche und 03-03-seo-keyword-kategorisierung. Nutze diesen Skill IMMER, wenn der Nutzer im MTA-Kontext das echte Google-Ads-Konto des Kunden auswerten will - auch bei Phrasen wie "Google Ads First-Party", "echtes Ads-Konto auswerten", "Kampagnen-Performance des Kunden", "wie performt das Kundenkonto", "Search-Terms-Report", "Suchbegriffe-Analyse", "Quality Score prüfen", "Ads-Conversion-Setup", "SEA First-Party", "Streuverlust im Konto", "ROAS der Kampagnen", "Google-Ads-Audit des eigenen Kontos". Setzt 01-01-mta-projekt-init voraus; bei fehlender google-credentials.yaml oder keinem Konto-Match freundlicher Skip mit Anleitung, KEIN Abbruch des MTA-Workflows.
+description: Erhebt für den Kunden den First-Party-Google-Ads-Status-Quo direkt aus dessen echtem Google-Ads-Konto - über den CLI-Wrapper google-ads.py (Befehle list-accounts, account-overview, campaign-performance, search-terms, keyword-performance, conversion-actions, run-gaql), der die offizielle google-ads-Python-Library wrappt und gegen den REACHX-MCC authentifiziert. Liefert die echten Spend-, Klick-, Conversion- und Quality-Score-Daten des Kundenkontos - im Gegensatz zu 03-05-sea-google-ads-check, das via Transparency Center nur die öffentlich sichtbaren Anzeigen der WETTBEWERBER sieht. Default-Zeitraum 12 Monate plus letzte 30 Tage. Kern-Analysen: Account- und Kampagnen-Performance (Spend, Impressionen, Klicks, CTR, CPC, Conversions, Conversion-Value, ROAS, Kampagnentyp-Mix), Search-Terms-Analyse mit Streuverlust-Hinweisen und Brand-vs-Non-Brand-Split, Quality-Score-Verteilung als Optimierungs-Hebel, und ein leichter Conversion-Plausibilitäts-Check (welche Conversion-Actions, Status, Typ, Kategorie, mögliche GA4-Doppelzählung). Output ist audits/sea-first-party.md mit Aggregat plus audits/sea-kampagnen.csv und audits/sea-suchbegriffe.csv als Roh-Datenbasis plus HTML-Report reports/05c-sea-first-party.html. Die Suchbegriffe-CSV ist zusätzlich Roh-Keyword-Quelle für 03-02-seo-keyword-recherche und 03-03-seo-keyword-kategorisierung. Nutze diesen Skill IMMER, wenn der Nutzer im MTA-Kontext das echte Google-Ads-Konto des Kunden auswerten will - auch bei Phrasen wie "Google Ads First-Party", "echtes Ads-Konto auswerten", "Kampagnen-Performance des Kunden", "wie performt das Kundenkonto", "Search-Terms-Report", "Suchbegriffe-Analyse", "Quality Score prüfen", "Ads-Conversion-Setup", "SEA First-Party", "Streuverlust im Konto", "ROAS der Kampagnen", "Google-Ads-Audit des eigenen Kontos". Setzt 01-01-mta-projekt-init voraus; bei fehlender google-ads.yaml oder keinem Konto-Match freundlicher Skip mit Anleitung, KEIN Abbruch des MTA-Workflows.
 ---
 
 # SEA-First-Party-Google-Ads
@@ -83,10 +83,10 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json` mit `kunde`, `website`, `kunden_slug`, `region` vorhanden
 - **Google-Ads-Wrapper installierbar**: `${CLAUDE_PLUGIN_ROOT}/scripts/google-ads.py` mit der `google-ads`-Python-Library (`pip3 install -r ${CLAUDE_PLUGIN_ROOT}/scripts/requirements-google.txt`)
-- **Auth-Credentials**: `~/.config/reachx-mta/google-credentials.yaml` (chmod 600) mit `developer_token`, `client_id`, `client_secret`, `refresh_token`, `login_customer_id` (REACHX-MCC). Pfad überschreibbar via `REACHX_GOOGLE_CREDENTIALS`. Wird einmalig pro Mac angelegt — siehe `reference/google-ads-api-nutzung.md` Abschnitt "Auth-Setup".
+- **Auth-Credentials**: `~/.config/reachx-mta/google-ads.yaml` (chmod 600) mit `developer_token`, `client_id`, `client_secret`, `refresh_token`, `login_customer_id` (REACHX-MCC). Pfad überschreibbar via `REACHX_GOOGLE_ADS_CREDENTIALS`. Wird einmalig pro Mac angelegt — siehe `reference/google-ads-api-nutzung.md` Abschnitt "Auth-Setup". Ads und Analytics nutzen seit der Wrapper-Umstellung getrennte Credential-Dateien (und ggf. getrennte Google-Accounts) — so kann jeder Service mit dem Account laufen, der dort Zugriff hat. Fehlt `google-ads.yaml` noch, fällt `google-ads.py` automatisch auf das frühere gemeinsame `google-credentials.yaml` zurück.
 - **Kunde hat ein Google-Ads-Konto unter dem REACHX-MCC** — der Wrapper sieht ~70 Konten unter dem MCC, der Skill matcht den Kundennamen aus `meta.json` gegen die Kontonamen.
 
-**Wichtig:** Wenn die `google-credentials.yaml` fehlt, die Library nicht installiert ist oder kein Konto zur Kunden-Domain matcht → **freundlicher Skip mit Anleitung, KEIN Abbruch.** Der MTA-Workflow läuft mit `03-05-sea-google-ads-check` (Wettbewerber-Transparency-Sicht) und den übrigen Audit-Skills nahtlos weiter. First-Party-SEA ist ein **Bonus**, kein Blocker — analog zur GSC-Skip-Logik in `03-04-seo-first-party-gsc`.
+**Wichtig:** Wenn die `google-ads.yaml` fehlt (und auch kein Rückfall-`google-credentials.yaml` vorhanden ist), die Library nicht installiert ist oder kein Konto zur Kunden-Domain matcht → **freundlicher Skip mit Anleitung, KEIN Abbruch.** Der MTA-Workflow läuft mit `03-05-sea-google-ads-check` (Wettbewerber-Transparency-Sicht) und den übrigen Audit-Skills nahtlos weiter. First-Party-SEA ist ein **Bonus**, kein Blocker — analog zur GSC-Skip-Logik in `03-04-seo-first-party-gsc`.
 
 **Reihenfolge — bewusst früh:** Der Skill läuft als Teil des First-Party-Blocks bewusst **früh** im MTA-Ablauf: nach den Setup-Skills (`01-01`, `01-02`, `02-01`) und idealerweise **vor `02-02-wettbewerber-identifikation`** sowie vor den Third-Party- und Wettbewerbs-Audits. Grund: Die First-Party-Outputs (echte Suchbegriffe, Kampagnen-Themen, was tatsächlich konvertiert) **schärfen die Wettbewerber-Identifikation** und verankern alle Folge-Audits an der Realität. Die einzige *harte* Voraussetzung bleibt `01-01-mta-projekt-init` — `02-02` ist ausdrücklich keine Vorbedingung, sondern profitiert umgekehrt von diesem Skill.
 
@@ -112,7 +112,7 @@ REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
 
 Lokaler Arbeits-Cache für Wrapper-Roh-JSONs und CSV-Generierung: `~/.cache/reachx-mta/<slug>/`.
 
-**Wichtig:** Der Google-Ads-Wrapper-Zugang ist **unabhängig von Drive/gws** — `google-ads.py` nutzt eigene OAuth-Credentials in `~/.config/reachx-mta/google-credentials.yaml`. Die Drive-Anpassung betrifft nur die Speicher-Stellen der Outputs.
+**Wichtig:** Der Google-Ads-Wrapper-Zugang ist **unabhängig von Drive/gws** — `google-ads.py` nutzt eigene OAuth-Credentials in `~/.config/reachx-mta/google-ads.yaml` (mit automatischem Rückfall auf das frühere gemeinsame `google-credentials.yaml`). Die Drive-Anpassung betrifft nur die Speicher-Stellen der Outputs.
 
 ### Schritt 1: Projekt-Auffindung und Voraussetzungs-Check
 
@@ -126,7 +126,7 @@ Bitte zuerst 01-01-mta-projekt-init aufrufen.
 Prüfe in dieser Reihenfolge, ob der Wrapper einsatzbereit ist:
 
 1. **Wrapper-Datei vorhanden** — `${CLAUDE_PLUGIN_ROOT}/scripts/google-ads.py` existiert.
-2. **Credentials vorhanden** — `~/.config/reachx-mta/google-credentials.yaml` existiert (oder der via `REACHX_GOOGLE_CREDENTIALS` gesetzte Pfad).
+2. **Credentials vorhanden** — `~/.config/reachx-mta/google-ads.yaml` existiert (oder der via `REACHX_GOOGLE_ADS_CREDENTIALS` gesetzte Pfad). Fehlt sie, fällt `google-ads.py` automatisch auf das frühere gemeinsame `google-credentials.yaml` zurück — auch das zählt hier als vorhanden.
 3. **Library + Auth funktionieren** — Probe-Call `python3 google-ads.py list-accounts`. Liefert er eine Konto-Liste → Modus **direkt**.
 
 Wenn ein Schritt scheitert → **freundlicher Skip, kein Abbruch:**
@@ -137,9 +137,12 @@ Wenn ein Schritt scheitert → **freundlicher Skip, kein Abbruch:**
 So beheben (einmalig pro Mac):
 1. Python-Library installieren:
    pip3 install -r ${CLAUDE_PLUGIN_ROOT}/scripts/requirements-google.txt
-2. Credential-Datei anlegen: ~/.config/reachx-mta/google-credentials.yaml (chmod 600)
+2. Credential-Datei anlegen: ~/.config/reachx-mta/google-ads.yaml (chmod 600)
    mit developer_token, client_id, client_secret, refresh_token, login_customer_id
-   (REACHX-MCC). refresh_token einmalig via google-oauth.py erzeugen.
+   (REACHX-MCC). refresh_token einmalig via google-oauth.py --service ads erzeugen
+   (der Account beim Browser-Login braucht MCC-Zugriff). Ads und Analytics nutzen
+   getrennte Credential-Dateien; google-ads.py faellt notfalls auf das alte
+   gemeinsame google-credentials.yaml zurueck.
 3. Test: python3 ${CLAUDE_PLUGIN_ROOT}/scripts/google-ads.py list-accounts
 4. Diesen Skill erneut aufrufen.
 
@@ -578,7 +581,7 @@ Sag mir, welcher als nächster.
 
 - **API-Rate-Limit / 5xx** → der Wrapper gibt den lesbaren API-Fehler aus (`_explain()`). Bei transientem Fehler 30-60s warten, einmal retry. Bei wiederholtem Limit: bisher erhobene Daten schreiben, Rest als offen markieren, Hinweis im Schluss-Format.
 
-- **OAuth-Refresh-Token abgelaufen/revoked** → der Wrapper-Call schlägt mit Auth-Fehler fehl. Hinweis "Refresh-Token ungültig — bitte einmal `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/google-oauth.py` ausführen und `refresh_token` in der `google-credentials.yaml` aktualisieren". Skill bricht für diesen Lauf sauber ab (kein MTA-Abbruch), `status.md`-Vermerk `geskippt — auth_fehlgeschlagen`.
+- **OAuth-Refresh-Token abgelaufen/revoked** → der Wrapper-Call schlägt mit Auth-Fehler fehl. Hinweis "Refresh-Token ungültig — bitte einmal `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/google-oauth.py --service ads` ausführen (Browser-Login-Account braucht MCC-Zugriff) und `refresh_token` in der `google-ads.yaml` aktualisieren". Skill bricht für diesen Lauf sauber ab (kein MTA-Abbruch), `status.md`-Vermerk `geskippt — auth_fehlgeschlagen`.
 
 - **Abgrenzung zu `03-05`** → läuft `03-05-sea-google-ads-check` parallel, ist das kein Konflikt: `03-05` sieht die Wettbewerber von außen (Transparency Center), `03-17` sieht das Kundenkonto von innen. `04-02-kanal-chancen-analyse` kombiniert beide. Der Skill produziert KEINE Wettbewerber-Daten — First-Party ist konto-only.
 
@@ -592,7 +595,7 @@ Alle in `contracts.md` definierten Konventionen sind verbindlich:
 - `status.md` und Dashboard werden in jedem Lauf aktualisiert (auch bei Skip), via `drive.py upsert-text`
 - HTML-Report basiert auf `reports/_shell.html` (aus Drive lesen, Platzhalter ersetzen, zurückschreiben)
 - **Wrapper-Roh-Daten** lokal im Arbeits-Cache `~/.cache/reachx-mta/<slug>/audits/raw/sea-*.json`, am Ende komprimiert nach Drive `assets/raw/`
-- **Google-Ads-Auth ist unabhängig von gws** — der `google-ads.py`-Wrapper nutzt eigene OAuth-Credentials in `~/.config/reachx-mta/google-credentials.yaml`, separat von der Drive-Authentifizierung
+- **Google-Ads-Auth ist unabhängig von gws** — der `google-ads.py`-Wrapper nutzt eigene OAuth-Credentials in `~/.config/reachx-mta/google-ads.yaml`, separat von der Drive-Authentifizierung. Ads und Analytics nutzen getrennte Credential-Dateien (und ggf. getrennte Google-Accounts); `google-ads.py` fällt notfalls auf das alte gemeinsame `google-credentials.yaml` zurück
 - **Geld-Werte unverändert lassen** — der Wrapper normalisiert Micros bereits in Konto-Währungs-Einheiten und liefert `currency` mit. Keine eigene Umrechnung, keine Währungs-Konvertierung — das ist Aufgabe der Synthese-Skills
 - **First-Party vs. Third-Party**: Dieser Skill ist das First-Party-Pendant zu `03-05-sea-google-ads-check`. `03-05` = Wettbewerber öffentlich, `03-17` = eigenes Konto echt. Beide ergänzen sich in `04-02-kanal-chancen-analyse`
 - **Conversion-Plausibilitäts-Check ist ein Inline-Check**, kein zweiphasiges Schema-vor-Lauf-Gate. Das volle Datenqualitäts-Gate führt der Schwester-Skill `03-18-web-analytics-ga4`

@@ -12,15 +12,17 @@ Kein MCP, kein Fallback-Pfad. Wenn der Wrapper nicht einsatzbereit ist → freun
 
 1. **Wrapper-Datei prüfen** — `${CLAUDE_PLUGIN_ROOT}/scripts/google-ads.py` existiert.
 2. **Library prüfen** — `google-ads`-Python-Library installiert (`pip3 install -r ${CLAUDE_PLUGIN_ROOT}/scripts/requirements-google.txt`). Der Wrapper meldet eine fehlende Library selbst mit klarer Anleitung.
-3. **Credentials prüfen** — `~/.config/reachx-mta/google-credentials.yaml` existiert (oder der via `REACHX_GOOGLE_CREDENTIALS` gesetzte Pfad).
+3. **Credentials prüfen** — `~/.config/reachx-mta/google-ads.yaml` existiert (oder der via `REACHX_GOOGLE_ADS_CREDENTIALS` gesetzte Pfad). Fehlt sie, fällt `google-ads.py` automatisch auf das frühere gemeinsame `google-credentials.yaml` zurück.
 4. **Probe-Call** — `python3 google-ads.py list-accounts`. Liefert er eine Konto-Liste → einsatzbereit. Schlägt er fehl → Skip mit der jeweiligen Fehlermeldung.
 
 ## Auth-Setup (einmalig pro Mac)
 
+Ads und Analytics nutzen seit der Wrapper-Umstellung **getrennte Credential-Dateien** (und ggf. getrennte Google-Accounts) — so kann jeder Service mit dem Account laufen, der dort Zugriff hat. Dieser Skill nutzt `google-ads.py`, die zugehörige Datei ist `google-ads.yaml`. Fehlt sie noch, fällt `google-ads.py` automatisch auf das frühere gemeinsame `google-credentials.yaml` zurück — der Skill bricht also nicht, wenn nur die alte Datei da ist.
+
 Der Wrapper liest seine Zugangsdaten aus einer YAML-Datei. Pflichtfelder:
 
 ```yaml
-# ~/.config/reachx-mta/google-credentials.yaml  (chmod 600 — NIEMALS ins Repo committen)
+# ~/.config/reachx-mta/google-ads.yaml  (chmod 600 — NIEMALS ins Repo committen)
 developer_token: "<Google-Ads-API-Developer-Token>"
 client_id: "<OAuth-Client-ID>"
 client_secret: "<OAuth-Client-Secret>"
@@ -30,10 +32,10 @@ login_customer_id: "<REACHX-MCC-ID, 10-stellig, ohne Bindestriche>"
 
 - `developer_token` — aus dem Google-Ads-API-Center des MCC. Basic Access reicht für die MTA-Pulls.
 - `client_id` / `client_secret` — aus einem OAuth-Desktop-Client in der Google Cloud Console.
-- `refresh_token` — einmalig erzeugen via `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/google-oauth.py` (OAuth-Browser-Flow, gibt den `refresh_token` aus). In die YAML eintragen.
+- `refresh_token` — einmalig erzeugen via `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/google-oauth.py --service ads` (OAuth-Browser-Flow, gibt den `refresh_token` aus). Der Account beim Browser-Login braucht **MCC-Zugriff**. In die YAML eintragen.
 - `login_customer_id` — die Manager-Account-ID (MCC), unter dem die ~70 Kundenkonten hängen. Ohne dieses Feld scheitert `list-accounts` mit klarer Meldung.
 
-**Sicherheit:** Die YAML mit `chmod 600` schützen. Pfad überschreibbar via Environment-Variable `REACHX_GOOGLE_CREDENTIALS`. Die Datei darf nie ins Git-Repo gelangen.
+**Sicherheit:** Die YAML mit `chmod 600` schützen. Pfad überschreibbar via Environment-Variable `REACHX_GOOGLE_ADS_CREDENTIALS`. Die Datei darf nie ins Git-Repo gelangen.
 
 **Token-Storage:** Es gibt keinen MCP und keine Keychain — die Credentials liegen als Datei. Das `refresh_token` ist langlebig; bei Revoke (Passwort-Wechsel, Account-Entzug) neu erzeugen.
 
@@ -310,11 +312,11 @@ Der Wrapper gibt API-Fehler als lesbare Meldung aus (`_explain()` extrahiert die
 |---|---|
 | Wrapper-Datei fehlt | Freundlicher Skip mit Setup-Anleitung (`SKILL.md` Schritt 1) |
 | `google-ads`-Library nicht installiert | Wrapper meldet `pip3 install`-Hinweis selbst → Skip mit dieser Anleitung |
-| `google-credentials.yaml` fehlt | Wrapper meldet den Pfad und die Pflichtfelder → Skip mit dieser Anleitung |
+| `google-ads.yaml` fehlt (und kein Rückfall-`google-credentials.yaml`) | Wrapper meldet den Pfad und die Pflichtfelder → Skip mit dieser Anleitung |
 | `login_customer_id` fehlt in der YAML | `list-accounts` scheitert mit klarer Meldung → Skip |
 | Kein passendes Konto unter dem MCC | Freundlicher Skip, Override `customer_id=<ID>` anbieten (`SKILL.md` Schritt 2.4) |
 | Permission-Error bei `customer_id`-Override | Konto liegt nicht unter dem MCC → Skip |
-| Auth-Fehler / Refresh-Token revoked | Hinweis "Refresh-Token erneuern via `google-oauth.py`", sauberer Skip, `status.md`-Vermerk `geskippt — auth_fehlgeschlagen` |
+| Auth-Fehler / Refresh-Token revoked | Hinweis "Refresh-Token erneuern via `google-oauth.py --service ads`", sauberer Skip, `status.md`-Vermerk `geskippt — auth_fehlgeschlagen` |
 | Rate-Limit / 5xx (transient) | 30-60 s warten, einmal retry, dann teil-schreiben |
 | Leerer Zeitraum (`note`-Feld in der Antwort) | Konto ohne Spend in der Periode → `daten_qualitaet: keine`, minimale Outputs |
 | Quality Score überall `null` | QS-Verteilung auslassen, Hinweis im Body, keine `quality_score_schwach`-Auffälligkeit |

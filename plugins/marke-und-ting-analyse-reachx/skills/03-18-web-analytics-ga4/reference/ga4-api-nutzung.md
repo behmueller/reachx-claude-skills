@@ -2,15 +2,15 @@
 
 Wie der Skill Google-Analytics-4-Daten beschafft. Eine einzige Quelle: der Helper `${CLAUDE_PLUGIN_ROOT}/scripts/google-analytics.py`, der die GA4 Data API (Reporting) und die GA4 Admin API (Property-Liste) in eine zustandslose CLI mit JSON-Output wrappt — analog zu `google-ads.py` und `drive.py`.
 
-Es gibt **keinen Fallback-Pfad** (anders als bei `03-04`, das einen Ahrefs-GSC-Fallback hat). Ohne `google-credentials.yaml` oder ohne zugängliche Property skippt der Skill freundlich.
+Es gibt **keinen Fallback-Pfad** (anders als bei `03-04`, das einen Ahrefs-GSC-Fallback hat). Ohne `google-analytics.yaml` (bzw. ohne Rückfall-`google-credentials.yaml`) oder ohne zugängliche Property skippt der Skill freundlich.
 
 ## Auth und Setup
 
-`google-analytics.py` liest OAuth-User-Credentials aus `~/.config/reachx-mta/google-credentials.yaml` (chmod 600) — **dieselbe Datei wie `google-ads.py`**. Der Helper braucht daraus nur drei Felder: `client_id`, `client_secret`, `refresh_token`. Der refresh_token deckt beide Google-APIs ab (Ads und Analytics), weil der OAuth-Scope beim Erzeugen breit genug gewählt wurde.
+`google-analytics.py` liest OAuth-User-Credentials aus `~/.config/reachx-mta/google-analytics.yaml` (chmod 600). Seit der Wrapper-Umstellung nutzen Ads und Analytics **getrennte Credential-Dateien** (und ggf. getrennte Google-Accounts) — so kann jeder Service mit dem Account laufen, der dort Zugriff hat. Der Helper braucht aus der Datei nur drei Felder: `client_id`, `client_secret`, `refresh_token`. Der Account beim OAuth-Login braucht GA4-Zugriff auf die Kunden-Properties.
 
-- Pfad überschreibbar via Env-Var `REACHX_GOOGLE_CREDENTIALS`.
-- Wenn `03-17-sea-first-party-google-ads` (Schwester-Skill) bereits lief, ist die Datei schon da — beide Skills teilen sie.
-- Fehlt die Datei: einmalig `google-oauth.py` ausführen (OAuth-Browser-Login mit dem zentralen Agentur-Account). Der genaue Setup-Schritt liegt außerhalb dieses Skills.
+- Pfad überschreibbar via Env-Var `REACHX_GOOGLE_ANALYTICS_CREDENTIALS`.
+- **Rückfall:** Fehlt `google-analytics.yaml` (noch), nutzt `google-analytics.py` automatisch das frühere gemeinsame `google-credentials.yaml` — der Skill bricht also nicht, wenn nur die alte Datei da ist.
+- Fehlt beides: einmalig `google-oauth.py --service analytics` ausführen (OAuth-Browser-Login mit einem Google-Account, der GA4-Zugriff auf die Kunden-Properties hat). Der genaue Setup-Schritt liegt außerhalb dieses Skills.
 - Verwendeter Scope: `https://www.googleapis.com/auth/analytics.readonly` (nur Lesezugriff).
 
 **Python-Libraries:** Der Helper braucht `google-analytics-data`, `google-analytics-admin`, `google-auth`, `pyyaml`. Installation: `pip3 install -r ${CLAUDE_PLUGIN_ROOT}/scripts/requirements-google.txt`. Fehlt eine Library, gibt der Helper eine klare Fehlermeldung mit dem `pip3`-Befehl aus.
@@ -181,9 +181,9 @@ Strategie:
 
 | Fehler | Reaktion |
 |---|---|
-| `google-credentials.yaml` fehlt | Freundlicher Skip mit Setup-Anleitung (SKILL.md Schritt 1) |
+| `google-analytics.yaml` fehlt (und kein Rückfall-`google-credentials.yaml`) | Freundlicher Skip mit Setup-Anleitung (SKILL.md Schritt 1) |
 | Python-Library fehlt | Helper gibt `pip3`-Befehl aus — Skill leitet das im Skip-Hinweis weiter |
-| `list-properties` schlägt mit Auth-Fehler fehl | "OAuth-Token erneuern — `google-oauth.py` ausführen", sauberer Abbruch (nur dieser Skill) |
+| `list-properties` schlägt mit Auth-Fehler fehl | "OAuth-Token erneuern — `google-oauth.py --service analytics` ausführen", sauberer Abbruch (nur dieser Skill) |
 | Keine passende Property | Freundlicher Skip mit Viewer-Einladungs-Hinweis (SKILL.md Schritt 2 Fall 1) |
 | `429` / `RESOURCE_EXHAUSTED` | 60 s warten, einmal Retry, dann teil-schreiben |
 | `5xx` / transienter API-Fehler | 30 s warten, einmal Retry, dann den Call als "fehlgeschlagen" markieren, weiter mit nächstem |

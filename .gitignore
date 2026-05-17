@@ -13,5 +13,6 @@ dist/
 # Secrets — gehoeren nach ~/.config/reachx-mta/, niemals ins Repo
 google-credentials.yaml
 google-ads.yaml
+google-analytics.yaml
 client_secret*.json
 .env

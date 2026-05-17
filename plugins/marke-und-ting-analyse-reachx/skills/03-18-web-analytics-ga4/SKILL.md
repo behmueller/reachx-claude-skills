@@ -1,6 +1,6 @@
 ---
 name: 03-18-web-analytics-ga4
-description: Erhebt für den Kunden den first-party-Web-Analytics-Status-Quo direkt aus dessen echter GA4-Property über den dedizierten Helper google-analytics.py (OAuth-User-Credentials gegen einen zentralen Agentur-Account, dieselbe Datei wie google-ads.py) - 12-Monats-Sitzungsverlauf, Kanal-Performance UND Kanal-Wertigkeit (Sessions, Conversion-Rate, Umsatz, Engagement pro Channel), source/medium-Analyse inklusive unüblicher Kanäle (Preisvergleich, Bewertungsportale), Conversion-Baseline, Top-Pages, Device- und Geo-Splits. Liefert die echten Nutzungsdaten des Kunden als Forecast-Anker. Läuft zweiphasig - Phase A ist ein Datenqualitäts-Gate, das Conversion-Tracking, Direct-Last-Attribution, GA4↔GSC-Abweichung und Datenhistorie prüft, BEVOR irgendwelche Zahlen weitergegeben werden, und stoppt mit beschreibenden Strategen-Fragen; Phase B führt nach Bestätigung die volle Erhebung durch und leitet ein belastbarkeit-Urteil (grün/gelb/rot) ab. Output ist audits/ga4-datenqualitaet.md (Gate), audits/ga4-first-party.md mit Aggregat plus Conversion-Baseline, audits/ga4-channels.csv und audits/ga4-pages.csv als Roh-Basis, plus HTML-Report. Nutze diesen Skill IMMER, wenn der Nutzer im MTA-Kontext GA4-Daten, Web-Analytics, echte Nutzungsdaten oder die Conversion-Realität des Kunden ziehen will - auch bei Phrasen wie "GA4-Daten", "Web-Analytics auswerten", "Google Analytics ziehen", "Analytics-Datenqualität prüfen", "Conversion-Tracking checken", "Conversion-Rate des Kunden", "Kanal-Performance GA4", "Kanal-Wertigkeit", "first-party-Analytics", "echte Sessions", "Forecast-Baseline aus Analytics", "Direct-Traffic-Anomalie", "Consent-Verlust prüfen". Setzt 01-01-mta-projekt-init voraus; empfiehlt 03-14-web-tech-und-tracking und 03-04-seo-first-party-gsc vorab, aber keine harte Abhängigkeit. Bei fehlenden google-credentials.yaml oder nicht zugänglicher Property freundlicher Skip mit Anleitung, KEIN Abbruch des MTA-Workflows.
+description: Erhebt für den Kunden den first-party-Web-Analytics-Status-Quo direkt aus dessen echter GA4-Property über den dedizierten Helper google-analytics.py (OAuth-User-Credentials gegen einen Google-Account mit GA4-Zugriff, eigene Credential-Datei getrennt von google-ads.py) - 12-Monats-Sitzungsverlauf, Kanal-Performance UND Kanal-Wertigkeit (Sessions, Conversion-Rate, Umsatz, Engagement pro Channel), source/medium-Analyse inklusive unüblicher Kanäle (Preisvergleich, Bewertungsportale), Conversion-Baseline, Top-Pages, Device- und Geo-Splits. Liefert die echten Nutzungsdaten des Kunden als Forecast-Anker. Läuft zweiphasig - Phase A ist ein Datenqualitäts-Gate, das Conversion-Tracking, Direct-Last-Attribution, GA4↔GSC-Abweichung und Datenhistorie prüft, BEVOR irgendwelche Zahlen weitergegeben werden, und stoppt mit beschreibenden Strategen-Fragen; Phase B führt nach Bestätigung die volle Erhebung durch und leitet ein belastbarkeit-Urteil (grün/gelb/rot) ab. Output ist audits/ga4-datenqualitaet.md (Gate), audits/ga4-first-party.md mit Aggregat plus Conversion-Baseline, audits/ga4-channels.csv und audits/ga4-pages.csv als Roh-Basis, plus HTML-Report. Nutze diesen Skill IMMER, wenn der Nutzer im MTA-Kontext GA4-Daten, Web-Analytics, echte Nutzungsdaten oder die Conversion-Realität des Kunden ziehen will - auch bei Phrasen wie "GA4-Daten", "Web-Analytics auswerten", "Google Analytics ziehen", "Analytics-Datenqualität prüfen", "Conversion-Tracking checken", "Conversion-Rate des Kunden", "Kanal-Performance GA4", "Kanal-Wertigkeit", "first-party-Analytics", "echte Sessions", "Forecast-Baseline aus Analytics", "Direct-Traffic-Anomalie", "Consent-Verlust prüfen". Setzt 01-01-mta-projekt-init voraus; empfiehlt 03-14-web-tech-und-tracking und 03-04-seo-first-party-gsc vorab, aber keine harte Abhängigkeit. Bei fehlender google-analytics.yaml oder nicht zugänglicher Property freundlicher Skip mit Anleitung, KEIN Abbruch des MTA-Workflows.
 ---
 
 # Web-Analytics-First-Party (GA4)
@@ -81,7 +81,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 Harte Voraussetzung ist nur `01-01-mta-projekt-init`. Der Skill läuft **bewusst früh** — idealerweise nach den Setup-Skills (01-01, 01-02, 02-01) und **vor `02-02-wettbewerber-identifikation`**: Seine Outputs (source/medium-Referral-Domains, Kanal-Wertigkeit) schärfen die Wettbewerber-Identifikation, weil GA4-Referral-Domains konkrete Akteurs-Hinweise liefern. First-Party-Daten sind der Realitäts-Anker, der die Wettbewerber-Auswahl und alle Folge-Audits verankert.
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json` mit `website` und `kunden_slug` vorhanden.
-- **OAuth-Credentials** in `~/.config/reachx-mta/google-credentials.yaml` (chmod 600) — dieselbe Datei wie `google-ads.py`. `google-analytics.py` liest daraus `client_id`, `client_secret`, `refresh_token`; der refresh_token deckt beide Google-APIs ab. Pfad überschreibbar via `REACHX_GOOGLE_CREDENTIALS`.
+- **OAuth-Credentials** in `~/.config/reachx-mta/google-analytics.yaml` (chmod 600). Ads und Analytics nutzen seit der Wrapper-Umstellung **getrennte Credential-Dateien** (und ggf. getrennte Google-Accounts) — so kann jeder Service mit dem Account laufen, der dort Zugriff hat. `google-analytics.py` liest daraus `client_id`, `client_secret`, `refresh_token`; der Account beim OAuth-Login braucht GA4-Zugriff auf die Kunden-Properties. Pfad überschreibbar via `REACHX_GOOGLE_ANALYTICS_CREDENTIALS`. Fehlt `google-analytics.yaml` noch, fällt `google-analytics.py` automatisch auf das frühere gemeinsame `google-credentials.yaml` zurück.
 - **GA4-Property des Kunden ist dem OAuth-Account zugänglich** (der zentrale Agentur-Account ist mit mindestens `Viewer` in der Property eingetragen). Der Skill prüft das automatisch über `list-properties`.
 - **Python-Libraries** für `google-analytics.py` installiert: `pip3 install -r ${CLAUDE_PLUGIN_ROOT}/scripts/requirements-google.txt`.
 
@@ -92,7 +92,7 @@ Harte Voraussetzung ist nur `01-01-mta-projekt-init`. Der Skill läuft **bewusst
 
 Beide Skills sind **Bonus**: ohne sie läuft `03-18` durch, stellt aber die Consent-Frage offen und überspringt die GSC-Abgleich-Sektion mit Hinweis.
 
-**Wichtig:** Wenn keine `google-credentials.yaml` da ist oder keine passende Property gefunden wird → **freundlicher Skip mit Anleitung, KEIN Abbruch.** Der MTA-Workflow läuft mit den übrigen Audit-Skills nahtlos weiter. GA4 ist ein **Forecast-Verstärker**, kein Blocker — fehlt es, fällt der Forecast (`04-04`) transparent auf Branchen-Benchmarks zurück.
+**Wichtig:** Wenn keine `google-analytics.yaml` da ist (und auch kein Rückfall-`google-credentials.yaml`) oder keine passende Property gefunden wird → **freundlicher Skip mit Anleitung, KEIN Abbruch.** Der MTA-Workflow läuft mit den übrigen Audit-Skills nahtlos weiter. GA4 ist ein **Forecast-Verstärker**, kein Blocker — fehlt es, fällt der Forecast (`04-04`) transparent auf Branchen-Benchmarks zurück.
 
 ## Ablauf
 
@@ -123,7 +123,7 @@ REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
 
 Lokaler Arbeits-Cache für GA4-Roh-JSONs und CSV-Generierung: `~/.cache/reachx-mta/<slug>/`.
 
-**Wichtig:** Die GA4-Auth (`google-credentials.yaml`) ist **unabhängig von Drive/gws** — `google-analytics.py` nutzt einen eigenen OAuth-Refresh-Token. Die Drive-Anpassung betrifft nur die Speicher-Stellen der Outputs.
+**Wichtig:** Die GA4-Auth (`google-analytics.yaml`) ist **unabhängig von Drive/gws** — `google-analytics.py` nutzt einen eigenen OAuth-Refresh-Token. Die Drive-Anpassung betrifft nur die Speicher-Stellen der Outputs.
 
 ### Schritt 1: Projekt-Auffindung, Voraussetzungs-Check, Phasen-Erkennung
 
@@ -134,18 +134,19 @@ Folge `contracts.md` Abschnitt 1. Wenn `meta.json` aus Schritt 0 fehlt oder nich
 Bitte zuerst 01-01-mta-projekt-init aufrufen.
 ```
 
-**Voraussetzungs-Check:** Prüfe, ob `~/.config/reachx-mta/google-credentials.yaml` existiert (bzw. `REACHX_GOOGLE_CREDENTIALS`). Wenn nicht → freundlicher Skip, kein Abbruch:
+**Voraussetzungs-Check:** Prüfe, ob `~/.config/reachx-mta/google-analytics.yaml` existiert (bzw. `REACHX_GOOGLE_ANALYTICS_CREDENTIALS`; ersatzweise greift der Rückfall auf `google-credentials.yaml`). Wenn nichts davon vorhanden ist → freundlicher Skip, kein Abbruch:
 
 ```
 ℹ 03-18-web-analytics-ga4 geskippt — keine Google-Credentials gefunden.
 
 So beheben (einmalig):
-1. Sicherstellen, dass ~/.config/reachx-mta/google-credentials.yaml existiert (chmod 600)
-   mit den Feldern client_id, client_secret, refresh_token. Diese Datei wird von
-   google-ads.py geteilt — wenn der SEA-First-Party-Skill (03-17) schon lief, ist
-   sie bereits da.
-2. Falls nicht: google-oauth.py einmalig ausführen (OAuth-Browser-Login mit dem
-   zentralen Agentur-Account).
+1. Sicherstellen, dass ~/.config/reachx-mta/google-analytics.yaml existiert (chmod 600)
+   mit den Feldern client_id, client_secret, refresh_token. Analytics nutzt eine
+   eigene Credential-Datei, getrennt von der google-ads.yaml für google-ads.py —
+   ggf. mit einem anderen Google-Account. (Fehlt google-analytics.yaml, fällt
+   google-analytics.py notfalls auf das alte gemeinsame google-credentials.yaml zurück.)
+2. Falls nicht: google-oauth.py --service analytics einmalig ausführen (OAuth-Browser-Login
+   mit einem Google-Account, der GA4-Zugriff auf die Kunden-Properties hat).
 3. Diesen Skill erneut aufrufen.
 
 Bis dahin läuft der MTA-Workflow ohne first-party-GA4-Daten weiter — kein Blocker.
@@ -234,7 +235,7 @@ Nächste Schritte:
 Sag mir, welcher als nächster.
 ```
 
-2. **`list-properties` schlägt mit Auth-Fehler fehl** → Hinweis "OAuth-Token-Problem — `google-oauth.py` erneut ausführen", sauberer Abbruch (kein MTA-Abbruch, nur dieser Skill). Vermerk `geskippt — auth_fehler` in `status.md`.
+2. **`list-properties` schlägt mit Auth-Fehler fehl** → Hinweis "OAuth-Token-Problem — `google-oauth.py --service analytics` erneut ausführen", sauberer Abbruch (kein MTA-Abbruch, nur dieser Skill). Vermerk `geskippt — auth_fehler` in `status.md`.
 
 Bei jedem Skip: `status.md` aktualisieren mit Grund, Mini-Eintrag im "✓ Erledigt"-Block mit Status "geskippt".
 
@@ -637,7 +638,7 @@ Sag mir, welcher als nächster.
 
 ## Edge Cases
 
-- **Keine `google-credentials.yaml`** → freundlicher Skip mit Anleitung (Schritt 1). KEIN Abbruch des MTA-Workflows. `status.md` markiert geskippt.
+- **Keine `google-analytics.yaml`** (und auch kein Rückfall-`google-credentials.yaml`) → freundlicher Skip mit Anleitung (Schritt 1). KEIN Abbruch des MTA-Workflows. `status.md` markiert geskippt.
 
 - **GA4-Property nicht zugänglich** → freundlicher Skip (Schritt 2 Fall 1). Im Skip-Hinweis erklären, dass der zentrale Agentur-Account als Viewer in der Property eingetragen werden muss.
 
@@ -659,7 +660,7 @@ Sag mir, welcher als nächster.
 
 - **GA4-API Rate-Limit (selten)** → bei `429`/Quota-Fehler 60 s warten, einmal Retry. Bei wiederholtem Limit: bisher erhobene Daten schreiben, Rest als offen markieren, Hinweis im Schluss-Format.
 
-- **OAuth-Token-Problem** → `google-analytics.py` gibt `Analytics-Fehler: ...` mit Exit-Code 2 zurück. Skill bricht sauber ab (nur dieser Skill, kein MTA-Abbruch) mit Hinweis "OAuth-Token erneuern — `google-oauth.py` ausführen". Vermerk `geskippt — auth_fehler` in `status.md`.
+- **OAuth-Token-Problem** → `google-analytics.py` gibt `Analytics-Fehler: ...` mit Exit-Code 2 zurück. Skill bricht sauber ab (nur dieser Skill, kein MTA-Abbruch) mit Hinweis "OAuth-Token erneuern — `google-oauth.py --service analytics` ausführen". Vermerk `geskippt — auth_fehler` in `status.md`.
 
 - **Outputs existieren bereits** (Re-Run Phase B) → analog `03-04`:
   - **(a) überschreiben**
@@ -679,7 +680,7 @@ Alle in `contracts.md` definierten Konventionen sind verbindlich:
 - `status.md` wird in jedem Lauf aktualisiert (auch in Phase A und bei Skip), via `drive.py upsert-text`; das Dashboard `reports/index.html` wird in Phase B aktualisiert (Schritt 17).
 - HTML-Report basiert auf `reports/_shell.html` (aus Drive lesen, Platzhalter ersetzen, zurückschreiben) — nur Phase B.
 - **GA4-Roh-Daten** lokal im Arbeits-Cache `~/.cache/reachx-mta/<slug>/audits/raw/ga4-*.json`, am Ende von Phase B komprimiert nach Drive `assets/raw/`.
-- **GA4-Auth ist unabhängig von gws** — `google-analytics.py` nutzt einen eigenen OAuth-Refresh-Token aus `google-credentials.yaml`, separat von der Drive-Authentifizierung.
+- **GA4-Auth ist unabhängig von gws** — `google-analytics.py` nutzt einen eigenen OAuth-Refresh-Token aus `google-analytics.yaml` (mit Rückfall auf `google-credentials.yaml`), separat von der Drive-Authentifizierung.
 - **Session-/Conversion-Werte unverändert lassen** — GA4-Daten sind Roh-Realität; Normalisierung (z. B. Consent-Hochrechnung) ist Aufgabe der Synthese-Skills, der Skill liefert nur den `consent_korrektur_hinweis`.
 - **Datenqualität VOR Datenweitergabe** — der zweiphasige Aufbau ist Pflicht. Der Skill gibt niemals GA4-Zahlen in die Synthese, ohne dass das Gate bestätigt und das `belastbarkeit`-Urteil abgeleitet ist.
 - **Schwester-Skill-Konsistenz** — Schritt-Struktur, Output-Konventionen und Ton sind bewusst identisch zu `03-04-seo-first-party-gsc` und dem parallel gebauten `03-17-sea-first-party-google-ads` gehalten. HTML-Report-Nummern: GSC `05a`, GA4 `05b`, Google Ads `05c`.
