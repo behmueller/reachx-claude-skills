@@ -20,10 +20,22 @@ basiert_auf:
   kanal_chancen_csv: synthese/kanal-chancen.csv
   briefing: data/briefing.md       # null wenn nicht vorhanden
   kunde: data/kunde.md             # null wenn nicht vorhanden
+  ga4_first_party: audits/ga4-first-party.md   # null wenn 03-18 nicht lief
+  sea_first_party: audits/sea-first-party.md   # null wenn 03-17 nicht lief
   audits_genutzt:
     - audits/seo-cluster-zusammenfassung.md
     - audits/google-ads.md
     # ... alle relevanten
+
+# === First-Party-CR-Quellen (GA4 / SEA) ===
+first_party_cr:
+  ga4_verfuegbar: false            # true wenn audits/ga4-first-party.md vorhanden
+  ga4_belastbarkeit: null          # gruen | gelb | rot — aus ga4-first-party.md Frontmatter
+  ga4_gesamt_cr: null              # conversion_baseline.gesamt_cr (nachrichtlich)
+  ga4_consent_korrektur_hinweis: null   # Text — Volumen-Basis um diesen Faktor hochrechnen
+  sea_verfuegbar: false            # true wenn audits/sea-first-party.md vorhanden
+  sea_conversion_setup_urteil: null     # sauber | mit_einschraenkung | kein_tracking
+  sea_account_cr: null             # statistiken_12_monate.cr (nachrichtlich)
 
 # === Branchen-Typ und Lauf-Modus ===
 branchen_typ: BRANCHEN_SLUG   # b2b_saas | b2c_ecommerce | lokal_dienstleister | b2b_industrie | b2b_mittelstand_dienstleister | content_publisher | marktplatz_plattform | sonstige
@@ -84,12 +96,20 @@ kanaele:
       einheit: monatliche_suchanfragen
       quelle: audits/seo-cluster-zusammenfassung.md
       konfidenz: hoch
+      begruendung: ""   # bei GA4-Sessions als Basis: Consent-Hochrechnungs-Faktor hier dokumentieren
     cr_bandbreite:
       konservativ: 0.008
       realistisch: 0.015
       ambitioniert: 0.030
       konfidenz: hoch
+      # quelle: einer der 10 kanonischen CR-Quellen-Tags —
+      #   ga4_first_party | ga4_first_party_eingeschraenkt | sea_first_party | sistrix_daten |
+      #   ahrefs_daten | gmb_daten | ads_audit | briefing_aussage | branchen_benchmark | schaetzung_skill
+      # ga4_first_party (belastbarkeit gruen): realistisch = GA4-Channel-CR, Spread ×0,80 / ×1,30
+      # ga4_first_party_eingeschraenkt (belastbarkeit gelb): realistisch = GA4-CR, Spread ×0,65 / ×1,55
+      # branchen_benchmark (kein GA4 / belastbarkeit rot): Werte aus diesem Template
       quelle: branchen_benchmark
+      first_party_cr_roh: null   # die echte GA4-Channel-CR, auch wenn quelle=branchen_benchmark (nachrichtlich)
     klick_anteil:
       konservativ: 0.20
       realistisch: 0.30
@@ -114,7 +134,14 @@ kanaele:
       realistisch: 0.045
       ambitioniert: 0.070
       konfidenz: hoch
+      # quelle: einer der 10 kanonischen CR-Quellen-Tags —
+      #   ga4_first_party | ga4_first_party_eingeschraenkt | sea_first_party | sistrix_daten |
+      #   ahrefs_daten | gmb_daten | ads_audit | briefing_aussage | branchen_benchmark | schaetzung_skill
+      # sea_first_party (conversion_setup_urteil sauber): realistisch = SEA-Account-/Kampagnen-CR, Spread ×0,80 / ×1,30
+      # sea_first_party (conversion_setup_urteil mit_einschraenkung): realistisch = SEA-CR, Spread ×0,65 / ×1,55, konfidenz mittel
+      # branchen_benchmark (kein SEA / kein_tracking): Werte aus diesem Template
       quelle: branchen_benchmark
+      first_party_cr_roh: null   # die echte SEA-CR, auch wenn quelle=branchen_benchmark (nachrichtlich)
     spend_annahme_eur_monat:
       konservativ: 0
       realistisch: 0
@@ -277,3 +304,34 @@ Mittelwert über die anderen Typen, Konfidenz `niedrig`, Hinweis im Schema-Body,
 - Bandbreiten sind als **Faktor 2-4 zwischen konservativ und ambitioniert** designt — wenn der Skill weniger Spread erzeugt, ist das ein Hinweis auf zu optimistische Annahmen
 - Default-Konfidenz für reine Branchen-Benchmark-Werte ist `mittel` — wird auf `hoch` nur erhöht, wenn audit-belegte Kunden-Daten die Bandbreite stützen
 - Bei `audit_coverage.modus: duenn` (aus `kanal-chancen.md`) werden alle Default-Konfidenzen automatisch auf `niedrig` herabgestuft
+
+---
+
+## First-Party-CR überschreibt die Branchen-Defaults
+
+Die obigen Branchen-Tabellen sind der **Fallback**. Liegen First-Party-Daten des Kunden vor, ist die echte Kunden-CR die bevorzugte Quelle (Quellen-Hierarchie, siehe `herleitungs-methodik.md` Abschnitt 2). Das `belastbarkeit`-Feld aus `audits/ga4-first-party.md` bzw. das `conversion_setup_urteil` aus `audits/sea-first-party.md` steuern, wie stark die echten Zahlen genutzt werden.
+
+**Kanonische CR-Quellen-Tag-Liste (`cr_bandbreite.quelle`):** Das Feld trägt genau einen Wert aus dieser 10er-Liste — identisch deklariert in `SKILL.md` Schritt A.7 und der CSV-Spalte `annahme_cr_quelle` in `ziel-output-schema.md`:
+
+```
+ga4_first_party | ga4_first_party_eingeschraenkt | sea_first_party | sistrix_daten |
+ahrefs_daten | gmb_daten | ads_audit | briefing_aussage | branchen_benchmark | schaetzung_skill
+```
+
+`abgeleitete_ziele` ist kein Herkunfts-Tag und darf hier nicht vorkommen. Die untenstehende Tabelle zeigt nur die GA4-/SEA-First-Party-Fälle im Detail; `sistrix_daten`, `ahrefs_daten`, `gmb_daten` und `ads_audit` kommen zum Tragen, wenn die CR aus dem jeweiligen Audit (statt First-Party oder reinem Branchen-Benchmark) abgeleitet wurde.
+
+| Quelle | Gate-Wert | CR-Bandbreite | `cr_bandbreite.quelle` | Konfidenz |
+|---|---|---|---|---|
+| GA4 (`ga4-first-party.md`) | `belastbarkeit: gruen` | `realistisch` = GA4-Channel-CR (oder Gesamt-CR-Fallback); Spread `×0,80` / `×1,30` | `ga4_first_party` | hoch (Channel-CR) / mittel (Gesamt-CR-Fallback) |
+| GA4 | `belastbarkeit: gelb` | `realistisch` = GA4-CR; breiterer Spread `×0,65` / `×1,55` | `ga4_first_party_eingeschraenkt` | mittel |
+| GA4 | `belastbarkeit: rot` | Branchen-Default aus diesem Template; GA4-Wert nur in `first_party_cr_roh` + Body-Hinweis | `branchen_benchmark` | wie Default |
+| SEA (`sea-first-party.md`) | `conversion_setup_urteil: sauber` | `realistisch` = SEA-Account-/Kampagnen-CR; Spread `×0,80` / `×1,30` | `sea_first_party` | hoch |
+| SEA | `conversion_setup_urteil: mit_einschraenkung` | `realistisch` = SEA-CR; breiterer Spread `×0,65` / `×1,55` | `sea_first_party` | mittel |
+| SEA | `conversion_setup_urteil: kein_tracking` | Branchen-Default aus diesem Template; SEA-Wert nur in `first_party_cr_roh` + Body-Hinweis | `branchen_benchmark` | wie Default |
+
+**Consent-Nuance bei der Volumen-Basis:** Eine Consent-/Cookie-Lücke verzerrt die **Sessions** (Volumen) nach unten, die **Conversion-Rate** bleibt robust. Folge:
+
+- GA4-**CR** wird unverändert als `realistisch`-Wert genutzt — Consent ändert daran nichts.
+- GA4-**Sessions** als `volumen_basis` werden, wenn `conversion_baseline.consent_korrektur_hinweis` im GA4-Frontmatter gesetzt ist, um den dort genannten Faktor **nach oben hochgerechnet**. Der Faktor und die Begründung gehören in `volumen_basis.begruendung`.
+
+Eine Mischung der Quellen-Tags im selben Schema ist erwartet und korrekt: GA4-belegbare Kanäle (Organic Search, Direct, Referral) tragen `ga4_first_party`, der Paid-Search-Kanal `sea_first_party`, noch nicht bespielte Kanäle weiterhin `branchen_benchmark`. Der Tag wird von `04-04-forecast-modell` unverändert durchgereicht.

@@ -62,6 +62,14 @@ datenstand_iso
 
 12 Zeilen (alle Kanäle) plus ggf. Skip-Zeilen. Kein Hard-Cap nötig.
 
+### Quellen- und Konfidenz-Vermerk (First-Party)
+
+Die Konfidenz-Spalten `potenzial_konfidenz` und `kunden_reife_konfidenz` spiegeln verbindlich die Datenherkunft wider:
+
+- Sind `potenzial_score` bzw. `kunden_reife_score` aus First-Party-Ist-Daten (`ga4-first-party.md` Block `kanal_wertigkeit`, `sea-first-party.md`) abgeleitet, folgt die Konfidenz dem `belastbarkeit`-Gate von GA4 — `gruen` → `hoch`, `gelb` → `mittel`, `rot` → `niedrig` (Zahlen nur Orientierung).
+- Ohne First-Party-Daten gilt die bisherige Konfidenz-Logik aus Branchen-Defaults/Third-Party-Audits (siehe `chancen-score-formel.md`).
+- Die genutzte First-Party-Quelle wird pro Kanal in `audit_inputs_verfuegbar` mitgeführt (z. B. `audits/ga4-first-party.md`, `audits/sea-first-party.md`), sodass im CSV nachvollziehbar bleibt, welche Achse messbar statt geschätzt ist.
+
 ## Markdown-Schema (`synthese/kanal-chancen.md`)
 
 ```markdown
@@ -86,6 +94,15 @@ basiert_auf:
     - audits/meta-ads.md
     - audits/local-gmb.md
     # ... (alle erwarteten aber nicht vorhandenen)
+
+# === First-Party-Datenlage ===
+# Vermerkt, ob die First-Party-Ist-Daten in die Achsen-Scores eingeflossen sind.
+# Steuert die Konfidenz von potenzial_score und kunden_reife_score.
+first_party:
+  ga4_vorhanden: <true | false>
+  ga4_belastbarkeit: <gruen | gelb | rot | null>   # null wenn ga4-first-party.md fehlt
+  ga4_konfidenz_wirkung: <hoch | mittel | niedrig | null>  # gruen→hoch, gelb→mittel, rot→niedrig
+  sea_first_party_vorhanden: <true | false>
 
 # === Branche und Gewichtung ===
 branchen_typ: <b2b_saas | b2c_ecommerce | lokal_dienstleister | b2b_industrie | b2b_mittelstand_dienstleister | content_publisher | marktplatz_plattform | sonstige>

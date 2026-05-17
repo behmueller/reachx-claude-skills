@@ -237,6 +237,52 @@ Branchen-Spend-Obergrenzen werden im Skript als Konstanten geführt:
 | marktplatz_plattform | 10000 | 8000 | 3000 |
 | sonstige | 5000 | 4000 | 4000 |
 
+### `forecast_basis_first_party`
+
+Die CR-Bandbreiten kommen mit einem Quellen-Tag aus `synthese/ziel-annahmen-schema.md` (gesetzt von `04-03-ziele-aus-potenzialen`). `04-04` baut keine eigene GA4-CR-Logik — es reicht den Tag durch.
+
+```
+cr_quellen = {kanal.cr_bandbreite.quelle fuer kanal in kanaele}
+if cr_quellen & {"ga4_first_party", "sea_first_party"}:
+    trigger -> forecast_basis_first_party
+```
+
+Bedeutung: Mindestens eine CR-Annahme stammt aus echten GA4-/Ads-Kunden-Daten statt Branchen-Schätzung → höhere Forecast-Konfidenz, als Realitäts-Beleg in der MTA-Story nutzbar.
+
+### `ga4_datenqualitaet_unsicher`
+
+```
+if existiert(audits/ga4-first-party.md):
+    belastbarkeit = ga4_first_party_md.frontmatter.belastbarkeit   # gruen | gelb | rot
+    if belastbarkeit in ("gelb", "rot"):
+        trigger -> ga4_datenqualitaet_unsicher
+```
+
+Bedeutung: GA4-Daten lagen vor, waren aber nicht voll belastbar. `04-03` hat die GA4-CR deshalb nicht (voll) übernommen, der Forecast nutzt (teilweise) Branchen-Benchmark statt der Kunden-CR. Handlungs-Empfehlung: im Kunden-Gespräch erden, GA4-Setup-Fix empfehlen. Fehlt `ga4-first-party.md` ganz, wird der Trigger nicht ausgewertet.
+
+## 5b. GA4-Ist-Baseline-Plausibilisierung
+
+Zusätzlich zum Plausibilitäts-Check gegen das Briefing: Wenn `audits/ga4-first-party.md` vorliegt, wird der Forecast-Start gegen die echte GA4-Ist-Baseline gestellt.
+
+```
+if existiert(audits/ga4-first-party.md):
+    baseline = ga4_first_party_md.frontmatter.conversion_baseline
+    ga4_sessions_ist  = baseline.sessions_pro_monat
+    ga4_conversions_ist = baseline.conversions_pro_monat   # Conversions/Monat (Macro)
+
+    forecast_m1_sessions = aggregat_korr[1, "real"]_sessions
+    forecast_m1_orders   = aggregat_korr[1, "real"]_orders
+
+    # Regel: Forecast-Start soll nicht unter dem GA4-Ist liegen
+    # (Forecast = Marketing-Aufbau ZUSAETZLICH zur bestehenden Baseline)
+    if forecast_m1_orders < ga4_conversions_ist * 0.90:
+        ergebnis -> forecast_start_unter_ist  # Volumen-Basen / Ramp-up-Start zu konservativ
+    else:
+        ergebnis -> forecast_start_ueber_ist
+```
+
+Bei `belastbarkeit: gelb` oder `rot` wird der Vergleich nur als grobe Orientierung geführt und im Output entsprechend gekennzeichnet — keine harte Korrektur.
+
 ## 6. Monats-Labels
 
 Wenn `meta.json.kickoff_datum` gesetzt: erstes Forecast-Monat = Kickoff-Monat + 1, dann fortlaufend.

@@ -7,7 +7,7 @@ description: Baut im MTA-Kontext ein quantitatives 12-Monats-Forecast-Modell mit
 
 Vierter Skill in Stufe 4 (Synthese). **Schema-vor-Lauf-Skill** (siehe `contracts.md` Abschnitt 8). Baut auf `04-03-ziele-aus-potenzialen` (Steady-State-Bandbreiten) und `04-02-kanal-chancen-analyse` (Kanal-Priorisierung) auf — verfeinert die Annahmen um Saisonalität, Ramp-up-Kurven, Spend-Pfade und rechnet das **12-Monats-Modell pro Kanal × Szenario**.
 
-**Kernregel: Pflicht-Bandbreite, niemals Punktschätzungen** (siehe Architektur-Entscheidung 10 im Plan). Jede Zelle im Forecast hat eine verlinkte Annahmen-Quelle. Wenn das Briefing eine bezifferte Zahl nennt, wird sie im Output explizit als `quelle: briefing_aussage` markiert — sonst `quelle: abgeleitete_ziele` oder `quelle: branchen_benchmark`.
+**Kernregel: Pflicht-Bandbreite, niemals Punktschätzungen** (siehe Architektur-Entscheidung 10 im Plan). Jede Zelle im Forecast hat eine verlinkte Annahmen-Quelle. Der CR-Quellen-Tag wird 1:1 aus `04-03-ziele-aus-potenzialen` durchgereicht — zulässig sind ausschließlich die zehn Tags `ga4_first_party`, `ga4_first_party_eingeschraenkt`, `sea_first_party`, `sistrix_daten`, `ahrefs_daten`, `gmb_daten`, `ads_audit`, `briefing_aussage`, `branchen_benchmark`, `schaetzung_skill`.
 
 **Dual-Quellen-Logik:** Der Skill liest ZWEI Quellen für Ziele:
 
@@ -81,6 +81,9 @@ Wenn eine Voraussetzung fehlt: harter Abbruch mit Hinweis, welcher Skill vorher 
 
 - Empfohlen: `data/briefing.md` (für KPI-Inventur und Plausibilitäts-Check gegen Briefing-Ziele)
 - Branchen-Saisonalitäts-Defaults aus `reference/berechnungs-formeln.md` werden geladen
+- Optional: `audits/ga4-first-party.md` und `audits/sea-first-party.md` (für `belastbarkeit`-Feld und Plausibilitäts-Check gegen die GA4-Ist-Baseline) — kein harter Blocker
+
+**Hinweis zur echten Kunden-Conversion-Rate:** `04-04` braucht GA4/SEA selbst NICHT hart. Die echte Kunden-CR fließt über `04-03-ziele-aus-potenzialen` in den Forecast ein — sofern die First-Party-Skills `03-18-web-analytics-ga4` bzw. `03-17-sea-first-party-google-ads` gelaufen sind. `04-03` taggt jede Kanal-CR mit ihrer Quelle aus der kanonischen Zehner-Liste (`ga4_first_party`, `ga4_first_party_eingeschraenkt`, `sea_first_party`, `sistrix_daten`, `ahrefs_daten`, `gmb_daten`, `ads_audit`, `briefing_aussage`, `branchen_benchmark`, `schaetzung_skill`) im `ziel-annahmen-schema.md`. `04-04` übernimmt diese getaggten Bandbreiten 1:1 in Schritt A.3, baut also keine eigene GA4-CR-Logik — es reicht die Tags nur transparent durch.
 
 ## Ablauf
 
@@ -135,9 +138,16 @@ Drive-Bootstrap wie oben. Lies `status.md` aus Drive.
 Lies aus diesen Dateien aus Drive (siehe `reference/forecast-annahmen-schema-template.md` für die genauen Felder):
 
 - Aus `synthese/ziele.md` Frontmatter: `aggregat.*`, `kanaele[].konservativ/realistisch/ambitioniert`, `kanaele[].ramp_up_monate_min/max`, `forecast_vorbereitung.uebernahme_in_forecast_schema`
-- Aus `synthese/ziel-annahmen-schema.md` Frontmatter: AOV-Bandbreite, CR-Bandbreiten pro Kanal, Lead-Funnel-Stufen, Ramp-up-Bandbreiten, branchen_typ, lauf_modus
+- Aus `synthese/ziel-annahmen-schema.md` Frontmatter: AOV-Bandbreite, CR-Bandbreiten pro Kanal **mit Quellen-Tag** (siehe Schritt A.3), Lead-Funnel-Stufen, Ramp-up-Bandbreiten, branchen_typ, lauf_modus
 - Aus `synthese/kanal-chancen.md` Frontmatter: `top_3_empfehlungen[]`, `branchen_typ`, `strategische_story.primaer_hebel`
 - Aus `data/briefing.md` Frontmatter und Body: bezifferte KPIs (Leads/Monat, Umsatz, Timeline, Spend-Budget falls genannt)
+
+**Optional, falls vorhanden** (jeweils `drive.py find_by_name` — nicht hart vorausgesetzt):
+
+- `audits/ga4-first-party.md` — Frontmatter-Feld `belastbarkeit` (`gruen`/`gelb`/`rot`) und `conversion_baseline` (`gesamt_cr`, `sessions_pro_monat`, `conversions_pro_monat`). Wird **nicht** für eigene CR-Logik genutzt — die CR kommt fertig aus `04-03` (siehe Schritt A.3) — sondern nur für den Plausibilitäts-Check (Phase B) und die Auffälligkeit `ga4_datenqualitaet_unsicher`.
+- `audits/sea-first-party.md` — echte Kunden-Spend- und Conversion-Daten aus dem Google-Ads-Konto. Dient ebenfalls dem Plausibilitäts-Check und der Einordnung des SEA-Spend-Pfads.
+
+Wenn keine der beiden Dateien existiert: kein Abbruch — der Forecast läuft wie bisher. Die echte Kunden-CR fließt dann (sofern `03-18`/`03-17` gelaufen sind) ohnehin über `04-03` ein, nicht über `04-04` direkt.
 
 ### Schritt A.2: Dual-Quellen-KPI-Inventur
 
@@ -165,7 +175,7 @@ ziel_inventur:
 
 ### Schritt A.3: Konversionsraten und Volumen pro Kanal übernehmen
 
-Aus `synthese/ziel-annahmen-schema.md` werden die CR-Bandbreiten und Volumen-Basen 1:1 übernommen (siehe `forecast_vorbereitung.uebernahme_in_forecast_schema`). Bei Bedarf branchen-spezifisch verfeinert (Stratege im Review):
+Aus `synthese/ziel-annahmen-schema.md` werden die CR-Bandbreiten und Volumen-Basen 1:1 übernommen (siehe `forecast_vorbereitung.uebernahme_in_forecast_schema`) — **inklusive des Quellen-Tags `quelle` pro CR-Bandbreite**. Bei Bedarf branchen-spezifisch verfeinert (Stratege im Review):
 
 ```yaml
 kanaele:
@@ -174,6 +184,7 @@ kanaele:
       worst: 0.008
       real: 0.015
       best: 0.030
+      quelle: ga4_first_party     # siehe zulässige Werte unten
     volumen_basis_monat:
       worst: 8000
       real: 11400
@@ -181,6 +192,25 @@ kanaele:
       einheit: monatliche_suchanfragen
       quelle: audits/seo-cluster-zusammenfassung.md
 ```
+
+**`04-04` baut KEINE eigene GA4-CR-Logik.** Die CR-Bandbreiten kommen fertig — bereits mit Quellen-Tag — aus `synthese/ziel-annahmen-schema.md`, das `04-03-ziele-aus-potenzialen` schreibt. `04-04` übernimmt sie 1:1 und reicht den Tag transparent durch. Speist `03-18-web-analytics-ga4` eine echte Kunden-Conversion-Rate ein, hat `04-03` sie pro Kanal-CR bereits getaggt.
+
+**Zulässige Werte für `quelle` der CR-Bandbreite** (kanonische Zehner-Liste — exakt die Tags, die `04-03-ziele-aus-potenzialen` erzeugen kann):
+
+| Wert | Bedeutung |
+|---|---|
+| `ga4_first_party` | Echte GA4-Kunden-Conversion-Rate, voll belastbar (`belastbarkeit: gruen` in `ga4-first-party.md`) |
+| `ga4_first_party_eingeschraenkt` | Echte GA4-Kunden-Conversion-Rate, aber mit dokumentierter Einschränkung (`belastbarkeit: gelb`) |
+| `sea_first_party` | Echte Conversion-Rate aus dem Google-Ads-Konto des Kunden (`sea-first-party.md`) |
+| `sistrix_daten` | Aus Sistrix-Audit-Daten abgeleitet |
+| `ahrefs_daten` | Aus Ahrefs-Audit-Daten abgeleitet |
+| `gmb_daten` | Aus Google-My-Business-/Local-Audit-Daten abgeleitet |
+| `ads_audit` | Aus dem Ads-Aktivitäts-Audit (Transparency Center / Ad Library) abgeleitet |
+| `briefing_aussage` | Bezifferte Aussage aus dem Kunden-Briefing |
+| `branchen_benchmark` | Branchen-Schätzung — keine Kunden-Ist-Daten verfügbar oder GA4 nicht belastbar (`belastbarkeit: rot`) |
+| `schaetzung_skill` | Skill-eigene Schätzung mangels belastbarer Quelle |
+
+Bei `belastbarkeit: rot` hat `04-03` die GA4-CR gar nicht erst übernommen — die `quelle` ist dann z. B. `branchen_benchmark` oder `schaetzung_skill`, und `04-04` triggert in Phase B die Auffälligkeit `ga4_datenqualitaet_unsicher` (siehe Schritt B.5). Trägt mindestens eine CR den Tag `ga4_first_party` oder `sea_first_party`, triggert `04-04` die Auffälligkeit `forecast_basis_first_party`.
 
 ### Schritt A.4: Saisonalitäts-Kurve pro Kanal
 
@@ -349,7 +379,7 @@ Rufe das mitgelieferte Python-Skript `scripts/forecast-berechnung.py` auf. Das S
 2. Berechnet pro Kanal × Monat × Szenario die fünf Pflicht-KPIs:
    - **Sessions / Klicks** (Volumen-Basis × Ramp-up-Faktor × Saisonalitäts-Multiplikator × Klick-Anteil)
    - **Anfragen / Leads** (Sessions × Conversion-Rate)
-   - **Qualifizierte Leads / Orders** (Leads × Lead-Funnel bei B2B, sonst direkt Orders bei B2C)
+   - **Qualifizierte Leads / Orders**: bei B2C direkt `orders = leads`; bei B2B läuft der **dreistufige Lead-Funnel** (Leads → qualifiziert → Angebote → Orders, je eine CR-Stufe) — exakte Formel siehe `reference/berechnungs-formeln.md` Abschnitt 1
    - **Umsatz** (Orders × AOV)
    - **Spend** (aus Spend-Annahme × Ramp-up-Faktor)
 3. Aggregiert über alle Kanäle pro Monat × Szenario, wendet Doppelzählungs-Faktor an (aus Schema oder Default 0,85)
@@ -379,7 +409,7 @@ spend[kanal, monat, szenario]  = spend_monat[szenario] x ramp_up_faktor (wenn ra
 Pro Roh-Zeile in der CSV werden die `*_quelle`-Felder gesetzt:
 
 - `quelle_volumen` — woher kommt die Volumen-Basis (z. B. `audits/seo-cluster-zusammenfassung.md`)
-- `quelle_cr` — woher die Conversion-Rate (z. B. `abgeleitete_ziele`)
+- `quelle_cr` — woher die Conversion-Rate. Mögliche Werte: kanonische Zehner-Liste `ga4_first_party`, `ga4_first_party_eingeschraenkt`, `sea_first_party`, `sistrix_daten`, `ahrefs_daten`, `gmb_daten`, `ads_audit`, `briefing_aussage`, `branchen_benchmark`, `schaetzung_skill`. Der Wert wird aus dem `cr_bandbreite.quelle`-Tag im Schema 1:1 durchgereicht (siehe Schritt A.3) — `04-04` verändert ihn nicht.
 - `quelle_aov` — woher der AOV (z. B. `data/kunde.md` Portfolio)
 - `quelle_spend` — woher der Spend (z. B. `briefing_aussage` oder `branchen_benchmark`)
 - `quelle_ziel_overlay` — falls Briefing-KPI als Vorrang im Schema gesetzt war: `briefing_aussage`, sonst `abgeleitete_ziele`
@@ -398,6 +428,8 @@ Mindestens **6 Auffälligkeiten**. Wenn weniger als 6 echte aus den Daten ableit
 | `spend_zu_hoch_fuer_geforderte_ziele` | Spend-Annahme deutlich über Branchen-Ranges | "SEA-Spend 8.000 EUR/Monat liegt 50% über Branchen-Range — Volumen-Annahme zu konservativ oder Spend reduzieren" |
 | `briefing_kpi_passt` | Plausibilitäts-Check positiv | "Briefing-Ziel 50 Leads/Monat liegt in Real-Bandbreite — bestätigt" |
 | `konfidenz_niedrig_basis` | Mehrheit der Annahmen aus `branchen_benchmark` ohne Audit-Bestätigung | "Großteil der Annahmen aus Branchen-Defaults — Verfeinerung mit Kunden-CRM-Daten würde Forecast deutlich präziser machen" |
+| `forecast_basis_first_party` | Mindestens eine CR-Annahme trägt den Tag `ga4_first_party` oder `sea_first_party` — die CR stammt aus echten GA4-/Ads-Kunden-Daten statt Branchen-Schätzung | "CR-Annahmen für SEO und SEA basieren auf der echten GA4-Conversion-Rate des Kunden — höhere Forecast-Konfidenz, in der MTA-Story als belastbarer Realitäts-Beleg nutzen" |
+| `ga4_datenqualitaet_unsicher` | `audits/ga4-first-party.md` liegt vor, aber `belastbarkeit` ist `gelb` oder `rot` — der Forecast nutzt deshalb (teilweise) Branchen-Benchmark statt der Kunden-CR | "GA4-Daten lagen vor, waren aber nicht voll belastbar (belastbarkeit rot, Verdacht falsch getaggte Conversions) — Forecast-CR fällt auf Branchen-Benchmark zurück; im Kunden-Gespräch erden und GA4-Setup-Fix empfehlen" |
 
 Auffälligkeiten werden im Markdown und HTML-Report prominent gezeigt.
 
@@ -436,8 +468,9 @@ Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "forecast.md" /tmp/f
 - **Übersicht**: Lauf-Modus, Branchen-Typ, Anzahl Kanäle, 12-Monats-Aggregat-Bandbreite (worst-best EUR), Steady-State-Monat, Top-Kanal-Beitrag
 - **12-Monats-Aggregat-Tabelle** (Szenario × Monat, Umsatz und Leads als zwei Tabellen)
 - **Pro Kanal ein Sub-Block** mit Mini-Tabelle und Mini-Sparkline-Beschreibung (eigentliche SVG nur im HTML-Report)
-- **Annahmen-Transparenz**: was wurde übernommen aus `ziel-annahmen-schema`, was wurde verfeinert
+- **Annahmen-Transparenz**: was wurde übernommen aus `ziel-annahmen-schema`, was wurde verfeinert — inkl. Quellen-Tag pro CR aus der kanonischen Zehner-Liste (`ga4_first_party` / `ga4_first_party_eingeschraenkt` / `sea_first_party` / `sistrix_daten` / `ahrefs_daten` / `gmb_daten` / `ads_audit` / `briefing_aussage` / `branchen_benchmark` / `schaetzung_skill`)
 - **Plausibilitäts-Check gegen Briefing**: nur bei `lauf_modus: plausibilitaets_check | hybrid`
+- **Plausibilitäts-Check gegen GA4-Ist-Baseline**: wenn `audits/ga4-first-party.md` vorliegt — Forecast-Monat-1 (Real-Szenario) grob gegen die GA4-Ist-Baseline plausibilisieren. Verglichen werden Forecast-Monat-1-Leads/Orders gegen `conversion_baseline.conversions_pro_monat` und Forecast-Monat-1-Sessions gegen `conversion_baseline.sessions_pro_monat`. **Regel:** Der Forecast-Start sollte nicht unter dem GA4-Ist liegen — der Forecast beschreibt den Marketing-getriebenen Aufbau *zusätzlich* zur bestehenden Baseline. Liegt Monat 1 darunter (Toleranz ca. -10 %), Hinweis im Body: Volumen-Basen oder Ramp-up-Start-Anteile sind zu konservativ. Bei `belastbarkeit: rot` den Vergleich nur als grobe Orientierung führen und so kennzeichnen.
 - **Diskrepanz-Tabelle Briefing vs. abgeleitete Ziele**
 - **Auffälligkeiten** (sortiert nach Relevanz)
 - **Vorbereitung für `04-05-90-tage-plan` und `04-06-retainer-kalkulator`**: welche Forecast-Werte direkt weiterverwendet werden
@@ -462,13 +495,21 @@ Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "forecast.md" /tmp/f
 
 ### Schritt B.10: Dashboard-Update und status.md
 
-Beide aus Drive lesen, patchen, via `drive.py upsert-text` zurückschreiben.
+Beide Dateien aus Drive lesen, patchen, via `drive.py upsert-text` zurückschreiben.
+
+**`status.md`** (`drive.py upsert-text "$FOLDER_ID" "status.md" ... "text/markdown"`):
 
 - `04-04-forecast-modell` in `schritte_done` (Phase B abgeschlossen)
 - Aus `blockiert` entfernen
-- Reports-Liste um den HTML-Report
 - `naechster_empfohlen`: `04-05-90-tage-plan`
 - Parallel möglich: `04-06-retainer-kalkulator`
+
+**Dashboard `reports/index.html`** (`drive.py find_by_name "$REPORTS_ID" "index.html"` → `read` → patchen → `drive.py upsert-text "$REPORTS_ID" "index.html" ... "text/html"`):
+
+- Reports-Liste um den Forecast-Report `X-forecast.html` ergänzen (Link-Eintrag mit Titel und Kurzbeschreibung)
+- Status-Sektion aktualisieren (Erledigt-Liste, Nächste Schritte) — gleiche Inhalte wie `status.md`, als HTML
+- Token-Breakdown-Slots aktualisieren: `{{TOKEN_BREAKDOWN}}` via `token-tracker.py render-counter <slug> --style breakdown` neu rendern, kompakter Stat-Strip im `{{MAIN_CONTENT}}`-Stat-Bereich via `--style stat-strip`
+- `<body class="is-dashboard">` beibehalten (blendet den Hero-Back-Link aus)
 
 ### Schritt B.11: Standard-Schlussformat im Chat
 
@@ -531,6 +572,12 @@ Sag mir, welcher als nächster.
 - **Forecast Aggregat überschreitet das Briefing-Budget deutlich** → Auffälligkeit `spend_zu_hoch_fuer_geforderte_ziele` als prominente Warnung, im Kunden-Gespräch klären.
 
 - **Saisonalitäts-Daten für die Branche nicht verfügbar** → Default-Multiplikatoren 1,0 für alle Monate plus Auffälligkeit `konfidenz_niedrig_basis`.
+
+- **GA4-CR mit Quellen-Tag `ga4_first_party` / `ga4_first_party_eingeschraenkt`** → CR-Bandbreite wird 1:1 wie aus `04-03` übernommen, Tag durchgereicht in `quelle_cr`. Auffälligkeit `forecast_basis_first_party` wird gesetzt (höhere Forecast-Konfidenz, MTA-Story-Beleg).
+
+- **`ga4-first-party.md` vorhanden, aber `belastbarkeit: gelb` oder `rot`** → `04-03` hat die GA4-CR nicht (voll) übernommen, die `cr_bandbreite.quelle` ist dann ein anderer Tag aus der kanonischen Zehner-Liste (z. B. `branchen_benchmark` oder `schaetzung_skill`). `04-04` setzt zusätzlich die Auffälligkeit `ga4_datenqualitaet_unsicher` mit Empfehlung GA4-Setup-Fix. Der Forecast läuft normal weiter.
+
+- **`ga4-first-party.md` fehlt ganz** → kein Sonderfall, kein Plausibilitäts-Check gegen GA4-Ist-Baseline, keine GA4-bezogene Auffälligkeit. Der Forecast läuft wie bisher.
 
 - **Python-Script schlägt fehl** → Skill fängt den Fehler ab, gibt im Chat die Fehler-Ursache aus (z. B. fehlende Pandas-Library), schreibt KEINE Output-Dateien.
 

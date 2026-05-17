@@ -4,7 +4,7 @@ Definiert die drei Pflicht-Outputs der Phase B:
 
 - `synthese/ziele.md` — Aggregat-Markdown mit Szenario-Tabellen und Annahmen-Verweisen
 - `synthese/ziele-aufschluesselung.csv` — Roh-Tabelle (Kanal × Szenario × Metrik)
-- `reports/X-abgeleitete-ziele.html` — HTML-Report mit Szenario-Karten
+- `reports/X-ziele.html` — HTML-Report mit Szenario-Karten
 
 ## CSV-Schema (`synthese/ziele-aufschluesselung.csv`)
 
@@ -30,9 +30,9 @@ datenstand_iso
 | `wert_realistisch` | float | ja | mittlerer Wert |
 | `wert_max` | float | ja | oberer Wert |
 | `einheit` | string | ja | `EUR` \| `besuche_pro_monat` \| `leads_pro_monat` \| `prozent` \| `eur_pro_order` |
-| `annahme_cr_quelle` | string | nein | Quelle der CR-Annahme |
+| `annahme_cr_quelle` | string | nein | Quelle der CR-Annahme — genau einer der 10 kanonischen CR-Quellen-Tags (identisch zu `SKILL.md` Schritt A.7 und `cr_bandbreite.quelle` in `ziel-annahmen-schema-template.md`): `ga4_first_party` \| `ga4_first_party_eingeschraenkt` \| `sea_first_party` \| `sistrix_daten` \| `ahrefs_daten` \| `gmb_daten` \| `ads_audit` \| `briefing_aussage` \| `branchen_benchmark` \| `schaetzung_skill`. `abgeleitete_ziele` ist kein Herkunfts-Tag und kommt hier nicht vor. Wird unverändert aus dem Schema-Feld `cr_bandbreite.quelle` übernommen und von `04-04-forecast-modell` durchgereicht. |
 | `annahme_aov_quelle` | string | nein | Quelle der AOV-Annahme |
-| `annahme_volumen_quelle` | string | nein | Quelle der Volumen-Annahme |
+| `annahme_volumen_quelle` | string | nein | Quelle der Volumen-Annahme: bei GA4-Sessions als Basis `ga4_first_party` |
 | `konfidenz` | enum | ja | `hoch` \| `mittel` \| `niedrig` |
 | `ramp_up_monate_min` | int | nein | leer bei `kanal_slug: aggregat` |
 | `ramp_up_monate_max` | int | nein | leer bei `kanal_slug: aggregat` |
@@ -202,10 +202,14 @@ forecast_vorbereitung:
 | Annahme | Wert | Quelle | Konfidenz |
 |---|---|---|---|
 | AOV (realistisch) | 150 EUR | data/kunde.md Portfolio | hoch |
-| SEO-CR konservativ | 0,8% | branchen_benchmark | mittel |
+| SEO-CR realistisch | 2,1% | ga4_first_party (belastbarkeit gruen) | hoch |
+| SEA-CR realistisch | 4,8% | sea_first_party (Setup sauber) | hoch |
+| Meta-Ads-CR konservativ | 1,0% | branchen_benchmark | mittel |
 | ... | ... | ... | ... |
 
-> Quellen-Inventur: X% aus Audit-Daten, X% aus Branchen-Benchmark, X% aus Briefing-Aussagen, X% aus Skill-Schätzung.
+> Bei CR-Quellen `ga4_first_party` / `ga4_first_party_eingeschraenkt` / `sea_first_party`: im Annahmen-Block kurz festhalten, welches `belastbarkeit`- bzw. `conversion_setup_urteil`-Gate galt und ob die Volumen-Basis um einen Consent-Faktor hochgerechnet wurde (siehe `herleitungs-methodik.md` Abschnitt 2a).
+
+> Quellen-Inventur: X% aus First-Party-Daten (GA4/SEA), X% aus Audit-Daten, X% aus Branchen-Benchmark, X% aus Briefing-Aussagen, X% aus Skill-Schätzung.
 
 ## Plausibilitäts-Check gegen Briefing-KPIs
 

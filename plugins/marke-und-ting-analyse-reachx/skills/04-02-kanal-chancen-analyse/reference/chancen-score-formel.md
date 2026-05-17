@@ -12,12 +12,23 @@ Pro Kanal werden fünf Achsen auf einer **0-100-Skala** bewertet. Aus den fünf 
 
 **Skala**: 0 = kein Potenzial, 100 = sehr großes Potenzial.
 
+### First-Party-Daten als bevorzugte Quelle
+
+Bevor die unten stehenden Third-Party-/Branchen-Quellen herangezogen werden, prüft der Skill, ob First-Party-Ist-Daten des Kunden vorliegen — sie sind die **bevorzugte Quelle** für das Potenzial, weil sie messbar statt geschätzt sind:
+
+- **`ga4-first-party.md` Block `kanal_wertigkeit`** (plus `ga4-channels.csv`, Filter `periode=zwoelf_monate`) — für jeden Kanal mit GA4-Beitrag: Session-Anteil, Conversion-Rate, Umsatz-Anteil, `wert_einordnung`. Ein Kanal, der laut GA4 schon echte Sessions plus eine ordentliche CR/Umsatz liefert, belegt ein reales Potenzial; ein Kanal mit kaum GA4-Beitrag, der branchen-typisch aber stark ist, behält den hohen Branchen-Default als ungehobenes Aufholpotenzial (GA4 widerlegt das Potenzial nicht, sondern zeigt nur, dass es noch nicht gehoben ist).
+- **`sea-first-party.md`** (plus `sea-kampagnen.csv`) — für SEA / Google-Ads: die echte Konto-Performance (Spend-Größenordnung, ROAS, Conversions) ersetzt die geschätzte Branchen-Dichte aus `google-ads.md` als Markt-Signal.
+
+**`belastbarkeit`-Gate (verbindlich):** Das Frontmatter-Feld `belastbarkeit` aus `ga4-first-party.md` steuert die Konfidenz, mit der die GA4-Zahlen einfließen — `gruen` → Konfidenz `hoch`, GA4-Werte voll nutzbar; `gelb` → Konfidenz `mittel`, nutzbar mit Vorsicht; `rot` → Konfidenz `niedrig`, GA4-Conversion-Zahlen nur als grobe Orientierung, keine harte Score-Ableitung daraus (dann fällt der Score transparent auf die Third-Party-/Branchen-Logik unten zurück).
+
+Fehlen `ga4-first-party.md` und `sea-first-party.md`, gilt die folgende Quellen- und Fallback-Logik unverändert.
+
 ### Quellen pro Kanal
 
 | Kanal | Primäre Quelle | Sekundäre Quelle |
 |---|---|---|
 | SEO | `seo-cluster-zusammenfassung.md` `statistiken.kumuliertes_volumen` (gesamt) plus `cluster_aggregat` Top-Score-Cluster | `seo-sichtbarkeit.md` `statistiken.luecke_kunde_zu_top_relativ` |
-| SEA / Google-Ads | `google-ads.md` `statistiken.branchen_sea_dichte` + `top_werber.anzahl_anzeigen` als Indikator für Marktsignal | SpyFu-Spend-Ranges aus `akteure[i].spyfu_anreicherung` wenn vorhanden |
+| SEA / Google-Ads | First-Party `sea-first-party.md` (echte Spend-/ROAS-/Conversion-Daten) — bevorzugt; sonst `google-ads.md` `statistiken.branchen_sea_dichte` + `top_werber.anzahl_anzeigen` als Indikator für Marktsignal | SpyFu-Spend-Ranges aus `akteure[i].spyfu_anreicherung` wenn vorhanden |
 | Meta-Ads | `meta-ads.md` `statistiken` (analog Google) | Anzahl aktiver WBs |
 | LinkedIn-Ads | `linkedin-ads.md` `statistiken` | Branchen-typische LinkedIn-Eignung |
 | Local-SEO / GMB | `local-gmb.md` mit Such-Volumen lokaler Keywords | `local-rankings.csv` Wettbewerbs-Dichte |
@@ -31,7 +42,13 @@ Pro Kanal werden fünf Achsen auf einer **0-100-Skala** bewertet. Aus den fünf 
 
 ### Score-Logik
 
-**Quantitatives Mapping** (Default — wenn Daten vorhanden):
+**First-Party-Mapping (bevorzugt — wenn `ga4-first-party.md` / `sea-first-party.md` vorhanden):**
+
+- GA4-getragene Kanäle (Organic Search → SEO, Paid Search → SEA, organische Social-Kanäle, Direct/Referral als CRO-Indikator): Der echte GA4-Session-Anteil plus die `wert_einordnung` aus `kanal_wertigkeit` belegen das Ist-Potenzial. Ein Kanal mit substanziellem Session-Anteil und `wert_einordnung: hoch` rechtfertigt einen hohen `potenzial_score`. Ein Kanal mit 0 GA4-Beitrag wird **nicht** automatisch auf 0 gesetzt — er behält den Branchen-Default als ungehobenes Aufholpotenzial; GA4 belegt hier nur die Reife-Lücke (siehe Achse 4), nicht das Fehlen von Markt.
+- SEA: aus `sea-first-party.md` die Spend-Größenordnung und ROAS — ein Konto mit relevantem Spend und tragfähigem ROAS belegt einen funktionierenden, ausbaubaren Markt.
+- Bei `belastbarkeit: rot` werden die GA4-Zahlen nur als grobe Orientierung gelesen; der Score wird dann primär aus dem quantitativen Mapping unten gebildet.
+
+**Quantitatives Mapping** (Default — wenn keine First-Party-Daten, aber Third-Party-Daten vorhanden):
 
 - Volumen-basierte Kanäle (SEO, SEA, Content, Local): Mapping über kumuliertes Volumen relativ zum Branchen-Median
   - Volumen < 1.000 → Score 10-25
@@ -49,9 +66,9 @@ Pro Kanal werden fünf Achsen auf einer **0-100-Skala** bewertet. Aus den fünf 
 
 ### Konfidenz
 
-- `hoch`: konkrete Audit-Daten vorhanden, mehr als ein Akteur als Referenz
-- `mittel`: ein Audit verfügbar, aber dünne Daten oder nur ein Akteur
-- `niedrig`: nur Branchen-Default, kein Audit gelaufen
+- `hoch`: First-Party-Ist-Daten (`ga4-first-party.md` mit `belastbarkeit: gruen`, `sea-first-party.md`) ODER konkrete Audit-Daten mit mehr als einem Akteur als Referenz
+- `mittel`: GA4 mit `belastbarkeit: gelb` ODER ein Third-Party-Audit verfügbar, aber dünne Daten oder nur ein Akteur
+- `niedrig`: GA4 mit `belastbarkeit: rot` (Zahlen nur Orientierung) ODER nur Branchen-Default, kein Audit gelaufen
 
 ## Achse 2: `aufwand_score` (invertiert)
 
@@ -129,17 +146,26 @@ Die Achse ist **bewusst nicht-monoton**: niedrige Reife kann positiv sein (groß
 - `reife_roh` (0-100): wie aktiv ist der Kunde? 0 = inaktiv, 100 = sehr aktiv und professionell aufgesetzt
 - `reife_kontext_score` (0-100): wie groß ist der Hebel daraus?
 
+### First-Party-Daten als bevorzugte `reife_roh`-Quelle
+
+Vor den unten stehenden Third-Party-Signalen prüft der Skill, ob First-Party-Ist-Daten vorliegen — sie sind die **bevorzugte Quelle** für `reife_roh`, weil sie die tatsächliche Kanal-Aktivität des Kunden messen statt sie zu schätzen:
+
+- **`ga4-first-party.md` Block `kanal_wertigkeit`** (plus `ga4-channels.csv`) — für jeden GA4-getragenen Kanal: Liefert der Kanal laut GA4 echte Sessions plus Conversions, ist die Kunden-Reife belegt hoch (`reife_roh` aus dem Session-/Conversion-Beitrag abgeleitet, nicht aus Annahmen). Zeigt GA4 für einen branchen-typisch starken Kanal 0 oder kaum Beitrag, ist `reife_roh` belegt niedrig — das ist echtes, datenbelegtes Aufholpotenzial statt einer Vermutung.
+- **`sea-first-party.md`** (plus `sea-kampagnen.csv`) — für SEA: aktive Kampagnen, Spend-Höhe und Konto-Aktivität sind die echte `reife_roh`. Ein Konto mit relevantem Spend → hohe Reife; ein inaktives/leeres Konto → niedrige Reife mit Engpass-Hinweis.
+
+**`belastbarkeit`-Gate (verbindlich):** `gruen` → Konfidenz `hoch`; `gelb` → Konfidenz `mittel`; `rot` → Konfidenz `niedrig`, GA4-Zahlen nur als grobe Orientierung — dann fällt `reife_roh` auf die Third-Party-Signale unten zurück. Fehlen beide First-Party-Quellen, gilt die folgende Tabelle unverändert.
+
 ### `reife_roh` Quellen pro Kanal
 
-| Kanal | Reife-Signal |
+| Kanal | Reife-Signal (Fallback ohne First-Party) |
 |---|---|
-| SEO | `seo-sichtbarkeit.md` `akteure[kunde].visibility_aktuell` relativ zu `top_visibility` |
-| SEA | `google-ads.md` `akteure[kunde].anzahl_aktive_anzeigen` und SpyFu-Spend |
+| SEO | First-Party: GA4 `kanal_wertigkeit` Organic Search (Sessions + CR) — bevorzugt; sonst `seo-sichtbarkeit.md` `akteure[kunde].visibility_aktuell` relativ zu `top_visibility` |
+| SEA | First-Party: `sea-first-party.md` (aktive Kampagnen, Spend) — bevorzugt; sonst `google-ads.md` `akteure[kunde].anzahl_aktive_anzeigen` und SpyFu-Spend |
 | Meta-Ads | `meta-ads.md` analog |
 | LinkedIn-Ads | `linkedin-ads.md` analog |
 | Local-SEO | `local-gmb.md` Kunde-GMB-Status, Review-Anzahl, Antwort-Quote |
-| Content | `content-inventur.md` Kunde-Content-Volumen und -Frequenz |
-| Social-organisch | jeweiliger Social-Audit, Kunde-Follower und -Frequenz |
+| Content | First-Party: GA4 `kanal_wertigkeit` Organic Search plus `ga4-pages.csv` Blog-Kategorie-Beitrag — bevorzugt; sonst `content-inventur.md` Kunde-Content-Volumen und -Frequenz |
+| Social-organisch | First-Party: GA4 `kanal_wertigkeit` Organic Social — bevorzugt; sonst jeweiliger Social-Audit, Kunde-Follower und -Frequenz |
 | Website-CRO | `web-tech-tracking.md` Tracking-Setup-Score, A/B-Test-Tools vorhanden |
 
 ### `reife_kontext_score` Berechnung
@@ -161,9 +187,9 @@ Pro Kanal in dieser Reihenfolge prüfen:
 
 ### Konfidenz
 
-- `hoch`: konkrete Audit-Daten zum Kunden im Kanal vorhanden
-- `mittel`: indirekte Daten (z. B. nur Wettbewerber-Daten + Annahme über Kunden)
-- `niedrig`: nur Annahmen
+- `hoch`: First-Party-Ist-Daten zum Kunden im Kanal (`ga4-first-party.md` mit `belastbarkeit: gruen`, `sea-first-party.md`) ODER konkrete Third-Party-Audit-Daten zum Kunden
+- `mittel`: GA4 mit `belastbarkeit: gelb` ODER indirekte Daten (z. B. nur Wettbewerber-Daten + Annahme über Kunden)
+- `niedrig`: GA4 mit `belastbarkeit: rot` (Zahlen nur Orientierung) ODER nur Annahmen
 
 ## Achse 5: `branchen_fit_score`
 

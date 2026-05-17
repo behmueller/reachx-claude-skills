@@ -67,6 +67,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - `01-01-mta-projekt-init` gelaufen → `meta.json`, `status.md`
 - **`04-02-kanal-chancen-analyse` gelaufen** → `synthese/kanal-chancen.md` plus `synthese/kanal-chancen.csv` vorhanden — sonst Abbruch mit Hinweis
 - Empfohlen: mindestens 2-3 Audit-Skills aus Stufe 3 mit Volumen-Daten (SEO-Cluster, GMB, Ads-Spend-Schätzungen) — sonst Annahmen-Schema fast komplett aus Branchen-Defaults
+- **Empfohlen: `audits/ga4-first-party.md` (aus `03-18-web-analytics-ga4`) — liefert die echte Kunden-Conversion-Rate statt einer Branchen-Schätzung. Keine harte Voraussetzung; fehlt die Datei, läuft der Skill wie bisher mit Branchen-Benchmark-CR.**
+- **Empfohlen: `audits/sea-first-party.md` (aus `03-17-sea-first-party-google-ads`) — liefert die echte Google-Ads-Conversion-Rate des Kunden für den SEA-Kanal. Ebenfalls keine harte Voraussetzung.**
 - Empfohlen: `data/briefing.md` (für Plausibilitäts-Check und ggf. Kunden-AOV)
 - Empfohlen: `data/kunde.md` (für Portfolio + AOV-Hinweise + B2B/B2C-Einordnung)
 
@@ -137,6 +139,10 @@ Lies optional aus Drive (jeweils `find_by_name` + `read_text` im passenden Sub-F
 - `audits/google-ads.md`, `audits/meta-ads.md`, `audits/linkedin-ads.md` — Branchen-Spend-Range
 - `audits/local-gmb.md`, `audits/local-rankings.csv` — lokales Volumen
 - `wettbewerber/identifikation-schema.md` — Branchen-Kontext (B2B-Stufen, typische Order-Größen)
+- **`audits/ga4-first-party.md` — First-Party-Web-Analytics des Kunden. Wenn vorhanden, ist diese Datei die bevorzugte Quelle für die Conversion-Rate-Bandbreiten (siehe Schritt A.3a). Aus dem Frontmatter lesen: `belastbarkeit` (`gruen | gelb | rot`), `conversion_baseline.gesamt_cr`, `conversion_baseline.cr_pro_channel[]` (CR + Sessions/Monat pro Channel), `conversion_baseline.consent_korrektur_hinweis`, `kanal_wertigkeit[]` (Channel → Sessions, CR, Umsatz-Anteil, Engagement, `wert_einordnung`).**
+- **`audits/ga4-channels.csv` — Channel-Ebene als Roh-Datenbasis (optional, nur wenn pro Channel feinere Sessions-/CR-Werte gebraucht werden als im Frontmatter-Aggregat).**
+- **`audits/sea-first-party.md` — echte Google-Ads-Kampagnen-Performance des Kunden. Wenn vorhanden, bevorzugte Quelle für die CR-Bandbreite des SEA-/Google-Ads-Kanals. Aus dem Frontmatter lesen: `statistiken_12_monate.cr` (Account-CR auf Klicks), `conversion_setup_urteil` (`sauber | mit_einschraenkung | kein_tracking`).**
+- **`audits/sea-kampagnen.csv` — Kampagnen-Ebene als Roh-Datenbasis (optional, für die CR je Kampagne).**
 
 ### Schritt A.2: Briefing-KPI-Inventur
 
@@ -173,6 +179,47 @@ Default-Bandbreiten pro Kanal als **Bandbreiten, nicht Punktwerte**:
 | Website-CRO | n/a Hebel-Faktor | +10-15% | +25-40% | 1-3 |
 
 Bandbreiten werden **branchen-spezifisch im Schema verfeinert** (z. B. B2B-SaaS hat höhere Demo-Lead-CR; B2C-E-Commerce hat höhere Transaction-CR). Pro Branchen-Typ liegen kuratierte Overrides in `reference/ziel-annahmen-schema-template.md`.
+
+Die so ermittelten Branchen-Defaults sind der **Fallback**. Wenn First-Party-Daten des Kunden vorliegen (GA4 / SEA), werden sie in Schritt A.3a für die betroffenen Kanäle ersetzt — die echte Kunden-CR schlägt die Branchen-Schätzung (Quellen-Hierarchie, siehe `reference/herleitungs-methodik.md` Abschnitt 2).
+
+### Schritt A.3a: CR-Bandbreiten aus First-Party-Daten (GA4 / SEA) — der Kern
+
+04-03 ist der Ort, an dem die Conversion-Rate-Bandbreiten entstehen, die `04-04-forecast-modell` später 1:1 übernimmt. Wenn `audits/ga4-first-party.md` und/oder `audits/sea-first-party.md` vorliegen, wird die CR-Bandbreite pro Kanal **nicht** aus der Branchen-Tabelle gebildet, sondern um die echte Kunden-CR herum — gesteuert durch das **belastbarkeit-Gate**.
+
+**Schritt 1 — GA4-Daten prüfen.** Wenn `audits/ga4-first-party.md` vorhanden ist, lies das Frontmatter-Feld `belastbarkeit`:
+
+- **`belastbarkeit: gruen`** → GA4-Conversion-Rate voll nutzbar.
+  - Pro Kanal: wenn `conversion_baseline.cr_pro_channel[]` einen passenden Channel-Eintrag hat, dessen `conversion_rate` als `realistisch`-Wert der CR-Bandbreite nehmen.
+  - **Schmale Bandbreite** um die GA4-CR: `konservativ = ga4_cr × 0,80`, `realistisch = ga4_cr`, `ambitioniert = ga4_cr × 1,30`.
+  - `cr_bandbreite.quelle: ga4_first_party`, `cr_bandbreite.konfidenz: hoch`.
+  - Für Kanäle ohne eigenen GA4-Channel-Eintrag (z. B. ein noch nicht bespielter Kanal) als Fallback `conversion_baseline.gesamt_cr` mit gleichem Spread nehmen, `quelle: ga4_first_party`, `konfidenz: mittel` (Gesamt-CR ist nicht kanalscharf).
+
+- **`belastbarkeit: gelb`** → GA4-CR nutzbar mit Vorsicht.
+  - GA4-CR (Channel-CR oder Gesamt-CR-Fallback) weiterhin als `realistisch`-Wert nehmen.
+  - **Breitere Bandbreite**: `konservativ = ga4_cr × 0,65`, `realistisch = ga4_cr`, `ambitioniert = ga4_cr × 1,55`.
+  - `cr_bandbreite.quelle: ga4_first_party_eingeschraenkt`, `cr_bandbreite.konfidenz: mittel`.
+
+- **`belastbarkeit: rot`** → GA4-Conversion-Zahlen **NICHT** als harte Basis übernehmen (z. B. falsch getaggte Conversions, Macro-/Micro-Mix).
+  - CR-Bandbreite **wie bisher aus dem Branchen-Benchmark** (Schritt A.3), `cr_bandbreite.quelle: branchen_benchmark`.
+  - Den GA4-Wert **nur nachrichtlich** im Schema-Body erwähnen ("GA4 weist X% aus, wegen belastbarkeit rot nicht als Basis übernommen — siehe `ga4-first-party.md`").
+
+**Schritt 2 — Consent-Nuance bei der Volumen-Basis.** Eine Consent-/Cookie-Lücke verzerrt die **Absolut-Volumina** (Sessions) nach unten — die Conversion-**Rate** bleibt davon robust. Daraus folgt:
+
+- Die GA4-**CR** wird wie oben beschrieben direkt als `real`-Wert genutzt — die Consent-Lücke ändert daran nichts.
+- Die GA4-**Sessions** als Volumen-Basis (`volumen_basis`) müssen, wenn `conversion_baseline.consent_korrektur_hinweis` gesetzt ist, um den dort genannten Consent-Faktor **nach oben hochgerechnet** werden. Den Hochrechnungs-Faktor und die Begründung in `volumen_basis.begruendung` dokumentieren, `volumen_basis.quelle: ga4_first_party`.
+- Ist kein `consent_korrektur_hinweis` gesetzt, werden die GA4-Sessions unverändert als Volumen-Basis genutzt.
+
+**Schritt 3 — SEA-/Google-Ads-Kanal.** Wenn `audits/sea-first-party.md` vorhanden ist, analog für den `sea`-Kanal:
+
+- `conversion_setup_urteil` aus dem SEA-Frontmatter prüfen.
+  - **`sauber`** → `statistiken_12_monate.cr` (oder die kampagnen-gewichtete CR aus `sea-kampagnen.csv`) als `realistisch`-Wert. Schmale Bandbreite (`× 0,80` / `× 1,30`), `cr_bandbreite.quelle: sea_first_party`, `konfidenz: hoch`.
+  - **`mit_einschraenkung`** → echte SEA-CR weiterhin als `realistisch`-Wert, breitere Bandbreite (`× 0,65` / `× 1,55`), `cr_bandbreite.quelle: sea_first_party`, `konfidenz: mittel`.
+  - **`kein_tracking`** → SEA-CR ist nicht belastbar (analog `belastbarkeit: rot`): CR-Bandbreite wie bisher aus dem Branchen-Benchmark, `quelle: branchen_benchmark`, SEA-Wert nur nachrichtlich im Body.
+- Der SEA-Kanal nutzt für die Volumen-Basis weiterhin die Spend-Annahme (siehe `reference/herleitungs-methodik.md` Abschnitt 4.2) — die echten Kampagnen-Daten verbessern hier zusätzlich die `avg_cpc`-Annahme, wenn vorhanden.
+
+**Schritt 4 — gemischte Quellen pro Kanal.** Es ist der Normalfall, dass einige Kanäle eine First-Party-CR bekommen (GA4 für Organic/Direct/Referral, SEA für Paid Search) und andere weiter auf dem Branchen-Benchmark stehen (z. B. ein Kanal, den der Kunde noch nicht bespielt). Jeder Kanal trägt seinen eigenen `cr_bandbreite.quelle`-Tag — eine Mischung aus `ga4_first_party`, `ga4_first_party_eingeschraenkt`, `sea_first_party` und `branchen_benchmark` im selben Schema ist erwartet und korrekt.
+
+**Schritt 5 — Begründung im Schema-Body.** Pro Kanal mit First-Party-CR im Body kurz festhalten, woher die CR stammt, welches belastbarkeit-/Setup-Urteil galt und ob die Volumen-Basis um einen Consent-Faktor hochgerechnet wurde. Damit sieht der Stratege im Review sofort, welche CR aus echten Kunden-Daten und welche aus dem Branchen-Benchmark kommt.
 
 ### Schritt A.4: AOV / LTV-Annahmen ableiten
 
@@ -224,16 +271,28 @@ Ramp-up wird im Schema dokumentiert — wenn das Briefing eine kürzere Timeline
 
 Jede Annahme im Schema hat ein `quelle`-Feld mit einem der folgenden Werte:
 
+- `ga4_first_party` — echte Kunden-Conversion-Rate aus `audits/ga4-first-party.md`, `belastbarkeit: gruen`
+- `ga4_first_party_eingeschraenkt` — echte Kunden-CR aus GA4, aber `belastbarkeit: gelb` (breitere Bandbreite, mittlere Konfidenz)
+- `sea_first_party` — echte Google-Ads-Conversion-Rate aus `audits/sea-first-party.md` (`conversion_setup_urteil: sauber` oder `mit_einschraenkung`)
 - `sistrix_daten` — aus SEO-Sichtbarkeits-Audit
 - `ahrefs_daten` — aus Keyword-Recherche
 - `gmb_daten` — aus Local-Audit
 - `ads_audit` — aus Google/Meta/LinkedIn-Ads-Check
-- `branchen_benchmark` — aus `reference/herleitungs-methodik.md`
+- `branchen_benchmark` — aus `reference/herleitungs-methodik.md` (auch der Fallback bei GA4 `belastbarkeit: rot` bzw. SEA `kein_tracking`)
 - `briefing_aussage` — vom Kunden im Briefing genannt
 - `kunde_md_portfolio` — aus Portfolio in `data/kunde.md`
 - `schaetzung_skill` — explizite Schätzung mit niedriger Konfidenz
 
 Quelle pro Annahme im Schema-Frontmatter — **Pflicht für die Quellen-Transparenz**.
+
+Speziell die CR-Bandbreite pro Kanal (`cr_bandbreite.quelle`) trägt **genau einen** Wert aus der kanonischen CR-Quellen-Tag-Liste (10 zulässige Werte — identisch in `reference/ziel-annahmen-schema-template.md` und der CSV-Spalte `annahme_cr_quelle` in `reference/ziel-output-schema.md`):
+
+```
+ga4_first_party | ga4_first_party_eingeschraenkt | sea_first_party | sistrix_daten |
+ahrefs_daten | gmb_daten | ads_audit | briefing_aussage | branchen_benchmark | schaetzung_skill
+```
+
+Damit sieht der Stratege im Review, woher die CR stammt, und `04-04-forecast-modell` kann den Tag unverändert durchreichen. `kunde_md_portfolio` ist eine zulässige Quelle für AOV-/Portfolio-Annahmen, aber **kein** CR-Quellen-Tag. `abgeleitete_ziele` ist kein Herkunfts-Tag und darf nicht als CR-Quelle vorkommen.
 
 ### Schritt A.8: `synthese/ziel-annahmen-schema.md` nach Drive schreiben
 
@@ -264,9 +323,11 @@ Annahmen-Übersicht:
 - Lauf-Modus:      MODUS (abgeleitet_pur | plausibilitaets_check | hybrid)
 - AOV-Bandbreite:  X-Y EUR (Konfidenz K)
 - Kanäle im Set:   N (Top-3 aus kanal-chancen.md plus weitere relevante)
+- CR-Quelle:       M Kanäle aus First-Party-Daten (ga4_first_party / sea_first_party), K Kanäle aus Branchen-Benchmark
+  [Falls GA4 belastbarkeit rot / SEA kein_tracking: Hinweis, dass die First-Party-CR nur nachrichtlich ist.]
 
 Pflicht-Review durch den Strategen
-Bitte prüfen: CR-Bandbreiten pro Kanal (branchen-realistisch?), AOV-Annahme (passt zum Portfolio?), Lead-Funnel-Stufen bei B2B (realistische Quoten?), Ramp-up-Phasen (Kunden-Timeline-Erwartung im Briefing?).
+Bitte prüfen: CR-Bandbreiten pro Kanal (branchen-realistisch bzw. First-Party-CR plausibel?), CR-Quellen-Tag pro Kanal (echte Kunden-CR vs. Branchen-Benchmark — passt das Urteil?), AOV-Annahme (passt zum Portfolio?), Lead-Funnel-Stufen bei B2B (realistische Quoten?), Ramp-up-Phasen (Kunden-Timeline-Erwartung im Briefing?).
 Nach Review: status: bestaetigt im Frontmatter setzen, dann läuft Phase B.
 
 Sag mir, wenn du fertig bist mit dem Review.
@@ -403,10 +464,10 @@ Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "ziele.md" /tmp/ziel
 - **Übersicht**: Lauf-Modus, Branchen-Typ, Anzahl Kanäle, Top-Aggregat-Bandbreite (konservativ-ambitioniert EUR pro Jahr)
 - **Aggregat-Tabelle** (drei Szenarien × vier Metriken)
 - **Pro Kanal ein Sub-Block** mit Szenario-Tabelle plus Annahmen-Verweis
-- **Annahmen-Tabelle**: was wurde mit welcher Quelle und Konfidenz hergeleitet
+- **Annahmen-Tabelle**: was wurde mit welcher Quelle und Konfidenz hergeleitet — die CR-Zeilen tragen den `cr_bandbreite.quelle`-Tag (`ga4_first_party` | `ga4_first_party_eingeschraenkt` | `sea_first_party` | `branchen_benchmark`), damit der Stratege echte Kunden-CR von Branchen-Schätzung unterscheiden kann
 - **Plausibilitäts-Check gegen Briefing** (nur bei Modus `plausibilitaets_check` / `hybrid`)
 - **Auffälligkeiten** (sortiert nach Relevanz)
-- **Vorbereitung für `04-04-forecast-modell`**: welche Annahmen direkt weiterverwendet werden, welche im Forecast-Schema verfeinert werden müssen
+- **Vorbereitung für `04-04-forecast-modell`**: welche Annahmen direkt weiterverwendet werden, welche im Forecast-Schema verfeinert werden müssen — die CR-Quellen-Tags werden über die CSV-Spalte `annahme_cr_quelle` an `04-04` durchgereicht; First-Party-CR-Werte (`ga4_first_party` / `sea_first_party`) gelten als belastbarer Real-Anker, `branchen_benchmark`-CR sind im Forecast-Schema zu verfeinern
 
 ### Schritt B.10: HTML-Report
 
@@ -492,6 +553,12 @@ Sag mir, welcher als nächster.
 - **Aggregat-Doppelzählung über Kanäle** → Default-Faktor 0,85 für 2-Kanal-Overlap, 0,75 für 3+-Kanal-Overlap (im Schema dokumentiert). Stratege kann im Review anpassen. Im Output explizit als "Roh-Summe vs. korrigierte Summe" ausgewiesen.
 
 - **Kanal-Chancen-Top-3 hat `skip`-Kanäle (z. B. Local-SEO bei National-Online)** → werden in der Ableitung übersprungen, im Schema-Body Hinweis. Top-3 wird ggf. um Rang 4/5 ergänzt, wenn weniger als 3 nicht-skip-Kanäle.
+
+- **GA4-Daten nicht vorhanden (`audits/ga4-first-party.md` fehlt) oder `belastbarkeit: rot`** → CR-Ableitung wie bisher aus Branchen-Benchmark / Markt-Potenzial (Schritt A.3), `cr_bandbreite.quelle: branchen_benchmark`. Bei `belastbarkeit: rot` wird der GA4-Wert nur nachrichtlich im Schema-Body erwähnt, nicht als Basis übernommen. Kein Abbruch — GA4/SEA-First-Party ist empfohlen, aber keine harte Voraussetzung.
+
+- **SEA-Daten nicht vorhanden oder `conversion_setup_urteil: kein_tracking`** → CR-Bandbreite des SEA-Kanals wie bisher aus dem Branchen-Benchmark, SEA-Wert nur nachrichtlich im Body. Analog zum GA4-Fall.
+
+- **GA4 liefert nur eine Gesamt-CR ohne kanalscharfe `cr_pro_channel`-Einträge** → die `conversion_baseline.gesamt_cr` wird für alle GA4-belegbaren Kanäle als CR-Anker mit `konfidenz: mittel` genutzt (statt `hoch`), im Schema-Body als Einschränkung dokumentiert.
 
 ## Wichtige Konventionen
 

@@ -23,6 +23,11 @@ basiert_auf:
   ziel_annahmen_schema_md: synthese/ziel-annahmen-schema.md
   briefing: data/briefing.md       # null wenn nicht vorhanden
   kunde: data/kunde.md             # null wenn nicht vorhanden
+  ga4_first_party: audits/ga4-first-party.md   # null wenn nicht vorhanden, optional
+  sea_first_party: audits/sea-first-party.md   # null wenn nicht vorhanden, optional
+
+# === GA4-Datenqualitaet (nur wenn ga4-first-party.md vorliegt) ===
+ga4_belastbarkeit: gruen   # gruen | gelb | rot — 1:1 aus ga4-first-party.md, oder null wenn keine GA4-Daten
 
 # === Branchen-Typ und Lauf-Modus ===
 branchen_typ: BRANCHEN_SLUG
@@ -139,7 +144,11 @@ kanaele:
       real: 0.015
       best: 0.030
       konfidenz: hoch
-      quelle: abgeleitete_ziele
+      # quelle 1:1 aus ziel-annahmen-schema.md durchgereicht — 04-04 baut KEINE eigene GA4-CR-Logik.
+      # Zulaessige Werte (kanonische Zehner-Liste, exakt wie 04-03 sie erzeugt):
+      #   ga4_first_party | ga4_first_party_eingeschraenkt | sea_first_party | sistrix_daten
+      #   | ahrefs_daten | gmb_daten | ads_audit | briefing_aussage | branchen_benchmark | schaetzung_skill
+      quelle: ga4_first_party
     ramp_up:
       funktion: s_curve   # linear | s_curve | sofort
       monate_bis_steady_state_min: 6
@@ -180,7 +189,7 @@ kanaele:
       real: 0.045
       best: 0.070
       konfidenz: hoch
-      quelle: abgeleitete_ziele
+      quelle: branchen_benchmark
     ramp_up:
       funktion: sofort
       monate_bis_steady_state_min: 1
@@ -241,6 +250,8 @@ konfidenz_inventur:
 ## Übernommen aus `ziel-annahmen-schema.md`
 
 Tabelle, was 1:1 übernommen wurde (AOV, CR-Bandbreiten, Lead-Funnel, Ramp-up-Bandbreiten).
+
+Jede CR-Bandbreite trägt einen Quellen-Tag (`cr_bandbreite.quelle`), den `04-03-ziele-aus-potenzialen` gesetzt hat — zulässig ist ausschließlich die kanonische Zehner-Liste: `ga4_first_party` (echte GA4-Kunden-CR, voll belastbar), `ga4_first_party_eingeschraenkt` (echte GA4-CR mit dokumentierter Einschränkung), `sea_first_party` (echte CR aus dem Google-Ads-Konto), `sistrix_daten`, `ahrefs_daten`, `gmb_daten`, `ads_audit`, `briefing_aussage`, `branchen_benchmark` oder `schaetzung_skill`. `04-04` reicht den Tag nur durch — keine eigene GA4-CR-Logik. Bei `ga4_belastbarkeit: rot` hat `04-03` die GA4-CR nicht übernommen; Phase B triggert dann die Auffälligkeit `ga4_datenqualitaet_unsicher`.
 
 ## Verfeinert in diesem Schema
 

@@ -116,6 +116,8 @@ Analog für `synthese/positionierung.md` (falls vorhanden) via `find_by_name(SYN
 Erwartete Pfade (alle optional, jeder als File auf Drive zu prüfen):
 
 - `audits/gsc-first-party.md`, `audits/gsc-performance.csv`, `audits/gsc-pages.csv` (First-Party-Quelle, kann fehlen wenn GSC nicht angebunden)
+- `audits/ga4-first-party.md`, `audits/ga4-channels.csv`, `audits/ga4-pages.csv` (First-Party-Web-Analytics aus `03-18-web-analytics-ga4`, kann fehlen wenn GA4 nicht angebunden — liefert echte Ist-Sessions/CR/Umsatz pro Kanal plus das `belastbarkeit`-Gate)
+- `audits/sea-first-party.md`, `audits/sea-kampagnen.csv`, `audits/sea-suchbegriffe.csv` (First-Party-Google-Ads-Konto aus `03-17-sea-first-party-google-ads`, kann fehlen wenn kein Ads-Konto angebunden — liefert echte Kampagnen-Performance des Kunden)
 - `audits/seo-sichtbarkeit.md`, `audits/seo-keyword-pool.md`, `audits/seo-cluster-zusammenfassung.md`, `audits/seo-keywords.csv`, `audits/seo-keyword-pool.csv`, `audits/seo-keyword-cluster.csv`, `audits/seo-rankings-ahrefs.csv` (optional, nur im Hybrid- oder Ahrefs-only-Modus)
 - `audits/google-ads.md`, `audits/google-ads-anzeigen.csv`
 - `audits/meta-ads.md`, `audits/meta-ads-anzeigen.csv`
@@ -128,6 +130,14 @@ Erwartete Pfade (alle optional, jeder als File auf Drive zu prüfen):
 - `synthese/positionierung.md`
 
 Halte die Inventur als interne Datenstruktur — für jeden Kanal wird notiert, welche Inputs zur Verfügung standen.
+
+**First-Party-Daten und das `belastbarkeit`-Gate:** Wenn `audits/ga4-first-party.md` vorliegt, lies aus dem Frontmatter das Feld `belastbarkeit` (`gruen | gelb | rot`) sowie die Blöcke `conversion_baseline` und `kanal_wertigkeit`. Das `belastbarkeit`-Gate steuert verbindlich, mit welcher Konfidenz die GA4-Zahlen in die Achsen-Scores eingehen:
+
+- `gruen` → GA4-Werte voll nutzbar, Achsen-Konfidenz `hoch`
+- `gelb` → nutzbar mit Vorsicht, Achsen-Konfidenz `mittel`
+- `rot` → GA4-Conversion-Zahlen nur als grobe Orientierung, Achsen-Konfidenz `niedrig`, keine harte Score-Ableitung daraus
+
+`audits/sea-first-party.md` liefert die echte Google-Ads-Kampagnen-Performance des Kunden (Spend, ROAS, Conversions). Beide First-Party-Quellen sind optional — fehlen sie, läuft der Skill wie bisher mit den geschätzten Defaults (kein Blocker, keine harte Abhängigkeit).
 
 ### Schritt 3: Branchen-Typ ermitteln
 
@@ -163,11 +173,13 @@ Der Skill bewertet die folgenden **Kanäle** (in fester Reihenfolge im Output):
 
 Pro Kanal werden **fünf Achsen** auf einer 0-100-Skala bewertet. Die genauen Scoring-Regeln stehen in `reference/chancen-score-formel.md`. Kurz zusammengefasst:
 
-- **`potenzial_score`** — wie groß ist der Markt für diesen Kanal? Quellen: SEO-Volumen, Ads-Spend-Range der Branche, Social-Reichweiten der WBs, GMB-Such-Volumen. Bei fehlenden Daten: branchen-typischer Default aus `branchen-fit-defaults.md` mit Konfidenz `niedrig`.
+- **`potenzial_score`** — wie groß ist der Markt für diesen Kanal? Quellen: SEO-Volumen, Ads-Spend-Range der Branche, Social-Reichweiten der WBs, GMB-Such-Volumen. Bei fehlenden Daten: branchen-typischer Default aus `branchen-fit-defaults.md` mit Konfidenz `niedrig`. **First-Party-Schärfung:** Liegt `ga4-first-party.md` mit dem Block `kanal_wertigkeit` vor, wird das Potenzial messbar statt geschätzt — ein Kanal, der laut GA4 schon echte Sessions plus eine ordentliche Conversion-Rate/Umsatz bringt, belegt ein reales Hebel-Potenzial; ein Kanal mit 0 oder kaum GA4-Beitrag, der branchen-typisch aber stark ist, zeigt echtes ungehobenes Aufholpotenzial (Default bleibt gültig, GA4 liefert nur den Ist-Beweis). Für SEA liest `sea-first-party.md` die echte Kampagnen-Performance (Spend-Größenordnung, ROAS) als Markt-Signal statt der geschätzten Branchen-Dichte. Die Achsen-Konfidenz folgt dem `belastbarkeit`-Gate (siehe Schritt 2): GA4 `gruen` → `hoch`, `gelb` → `mittel`, `rot` → `niedrig`/keine harte Ableitung.
 - **`aufwand_score`** — wie hoch ist die Reibung im Kanal? **Invertiert**: 100 = niedriger Aufwand. Berücksichtigt Difficulty (SEO), Spend-Anforderung (Ads), Content-Frequenz (Social), Tech-Voraussetzungen (Tracking, CRO).
 - **`briefing_fit_score`** — passt der Kanal zu den Zielen aus `data/briefing.md`? Mappe Briefing-Ziele auf Kanal-Eignung. Bei fehlendem Briefing: 50 (neutral).
-- **`kunden_reife_score`** — wie weit ist der Kunde bereits aktiv im Kanal? Niedrig = großes Aufholpotenzial; sehr niedrig kann auch heißen "Tech-Lücke / Team-Lücke / nicht ready". Wird invertiert je nach Kontext — siehe Formel-Datei.
+- **`kunden_reife_score`** — wie weit ist der Kunde bereits aktiv im Kanal? Niedrig = großes Aufholpotenzial; sehr niedrig kann auch heißen "Tech-Lücke / Team-Lücke / nicht ready". Wird invertiert je nach Kontext — siehe Formel-Datei. **First-Party-Schärfung:** Liegt `ga4-first-party.md` vor, wird die Kunden-Reife datenbasiert statt geschätzt bestimmt — ein Kanal, der laut GA4 `kanal_wertigkeit` schon echte Sessions plus Conversions liefert, hat eine belegte, hohe Kunden-Reife (`reife_roh` aus dem GA4-Session-/Conversion-Beitrag statt aus Annahmen); ein potenzialstarker Kanal mit 0 GA4-Beitrag belegt echtes Aufholpotenzial statt einer bloßen Vermutung. Für SEA liefert `sea-first-party.md` die echte Konto-Aktivität (aktive Kampagnen, Spend) als `reife_roh`. Die Achsen-Konfidenz folgt dem `belastbarkeit`-Gate.
 - **`branchen_fit_score`** — passt der Kanal zur Branche? Aus `branchen-fit-defaults.md` plus Override aus konkreten Audit-Daten (z. B. wenn 6 von 7 WBs auf TikTok aktiv sind, ist TikTok branchen-fit hoch, auch wenn Branche eher nicht TikTok-affin).
+
+**Fallback ohne First-Party-Daten:** Fehlen `ga4-first-party.md` und `sea-first-party.md`, bleibt das bisherige Verhalten von `potenzial_score` und `kunden_reife_score` unverändert — geschätzt aus Branchen-Defaults und Wettbewerber-/Audit-Daten mit der bisherigen Konfidenz-Logik. Die First-Party-Schärfung ist ein Bonus, kein Blocker.
 
 ### Schritt 5: `chancen_score` berechnen
 
@@ -212,6 +224,14 @@ Mindestens **7 Auffälligkeiten** (siehe Reference-Datei für Details):
 - `kunden_reife_engpass` — Kanal hat Potenzial, aber Kunden-Reife (Tech, Team) ist niedrig
 - `quick_win_kanal` — niedrige Difficulty + hohes Potenzial + niedriger Aufwand
 - `kanal_zu_klein` — Branchen-Fit zu schwach für relevanten Hebel
+
+**First-Party-Schärfung der Auffälligkeiten:** Wenn `ga4-first-party.md` vorliegt (und `belastbarkeit` nicht `rot`), werden die folgenden Auffälligkeiten aus echten Ist-Daten belegt statt geschätzt — im `beschreibung`-Feld dann konkret die GA4-Zahl nennen:
+
+- `kanal_unterbespielt_kunde` — wird durch GA4 gehärtet: Kanal hat laut Branchen-Default/WB-Daten hohes Potenzial, aber `kanal_wertigkeit` zeigt für ihn 0 oder einen sehr geringen Session-Anteil → der Beleg ist nicht mehr eine Annahme, sondern die echte GA4-Zahl ("Kanal X liefert laut GA4 nur N% der Sessions trotz Branchen-Potenzial").
+- `kunden_reife_engpass` — wird durch GA4/SEA gehärtet: ein potenzialstarker Kanal mit faktisch fehlendem GA4-Beitrag bzw. inaktivem Ads-Konto belegt die Reife-Lücke mit Ist-Daten statt mit einer Tech-Vermutung.
+- `quick_win_kanal` — wird durch GA4 gehärtet: zeigt `kanal_wertigkeit` für einen Kanal eine bereits gute Conversion-Rate bei noch kleinem Session-Volumen, ist der Skalierungs-Quick-Win datenbelegt ("Kanal X konvertiert laut GA4 mit X,X%, hat aber erst N Sessions/Monat — Hebel ist Volumen, nicht CR").
+
+Bei `belastbarkeit: rot` werden die GA4-Zahlen nur als grobe Orientierung erwähnt, nicht als harter Beleg. Fehlen die First-Party-Daten ganz, bleiben die Auffälligkeiten wie bisher geschätzt aus Branchen-Defaults und Wettbewerber-Daten.
 
 Wenn weniger als 7 echte Auffälligkeiten aus den Daten ableitbar sind: ergänze um methodische Hinweise (z. B. "Datenbasis für Kanal X dünn — Folge-Audit empfohlen").
 

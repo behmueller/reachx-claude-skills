@@ -40,7 +40,7 @@ datenstand_iso
 | `ramp_up_faktor` | float [0,1] | ja | Anteil am Steady State in dem Monat |
 | `saisonalitaet_multiplikator` | float | ja | Default 1,0 |
 | `quelle_volumen` | string | ja | z. B. `audits/seo-cluster-zusammenfassung.md` |
-| `quelle_cr` | string | ja | z. B. `abgeleitete_ziele` |
+| `quelle_cr` | enum | ja | kanonische Zehner-Liste: `ga4_first_party` \| `ga4_first_party_eingeschraenkt` \| `sea_first_party` \| `sistrix_daten` \| `ahrefs_daten` \| `gmb_daten` \| `ads_audit` \| `briefing_aussage` \| `branchen_benchmark` \| `schaetzung_skill` — 1:1 aus dem `cr_bandbreite.quelle`-Tag im Forecast-Schema durchgereicht (gesetzt von `04-03-ziele-aus-potenzialen`) |
 | `quelle_aov` | string | ja | z. B. `data/kunde.md` |
 | `quelle_spend` | string | ja | z. B. `branchen_benchmark` oder `briefing_aussage` |
 | `quelle_ziel_overlay` | string | ja | `abgeleitete_ziele` (Default) oder `briefing_aussage` falls Vorrang im Schema gesetzt |
@@ -91,13 +91,15 @@ Annahmen-Transparenz als flache Tabelle:
 | aov | (alle) | worst | 120 | EUR | kunde_md_portfolio | hoch |
 | aov | (alle) | real | 150 | EUR | kunde_md_portfolio | hoch |
 | aov | (alle) | best | 200 | EUR | kunde_md_portfolio | hoch |
-| cr | seo | worst | 0.008 | prozent | abgeleitete_ziele | hoch |
-| cr | seo | real | 0.015 | prozent | abgeleitete_ziele | hoch |
-| cr | seo | best | 0.030 | prozent | abgeleitete_ziele | hoch |
+| cr | seo | worst | 0.008 | prozent | ga4_first_party | hoch |
+| cr | seo | real | 0.015 | prozent | ga4_first_party | hoch |
+| cr | seo | best | 0.030 | prozent | ga4_first_party | hoch |
 | volumen_basis | seo | worst | 8000 | suchanfragen | audits/seo-cluster-zusammenfassung.md | hoch |
 | ramp_up_monate | seo | (alle) | 9 | monate | abgeleitete_ziele | hoch |
 | spend_monat | sea | real | 4000 | EUR | branchen_benchmark | mittel |
 | saisonalitaet | (alle) | jan | 0.85 | multiplikator | branchen_benchmark | mittel |
+
+> **Quelle der CR-Zeilen:** Die `quelle`-Spalte der `cr`-Zeilen trägt den aus `04-03-ziele-aus-potenzialen` durchgereichten Tag aus der kanonischen Zehner-Liste — `ga4_first_party` (echte GA4-Kunden-CR, voll belastbar), `ga4_first_party_eingeschraenkt` (echte GA4-CR mit Einschränkung), `sea_first_party` (echte Google-Ads-Konto-CR), `sistrix_daten`, `ahrefs_daten`, `gmb_daten`, `ads_audit`, `briefing_aussage`, `branchen_benchmark` oder `schaetzung_skill`. `04-04` setzt diesen Tag nicht selbst, sondern übernimmt ihn 1:1.
 
 ## Markdown-Schema (`synthese/forecast.md`)
 
@@ -117,6 +119,8 @@ basiert_auf:
   ziel_annahmen_schema: synthese/ziel-annahmen-schema.md
   kanal_chancen: synthese/kanal-chancen.md
   briefing: data/briefing.md       # null wenn nicht vorhanden
+  ga4_first_party: audits/ga4-first-party.md   # null wenn nicht vorhanden
+  sea_first_party: audits/sea-first-party.md   # null wenn nicht vorhanden
 
 # === Lauf-Kontext ===
 branchen_typ: BRANCHEN_SLUG
@@ -189,6 +193,16 @@ plausibilitaets_check:
       real_durchschnitt: 45
       ergebnis: passt | unrealistisch_hoch | unrealistisch_niedrig
       kommentar: "Briefing-Wert liegt im Real-Korridor"
+  # GA4-Ist-Baseline-Vergleich — nur wenn audits/ga4-first-party.md vorliegt
+  ga4_ist_baseline:
+    aktiv: true                       # false, wenn ga4-first-party.md fehlt
+    belastbarkeit: gruen              # gruen | gelb | rot — aus ga4-first-party.md
+    ga4_sessions_pro_monat_ist: 9500
+    ga4_conversions_pro_monat_ist: 142
+    forecast_monat1_sessions_real: 10200
+    forecast_monat1_orders_real: 155
+    ergebnis: forecast_start_ueber_ist | forecast_start_unter_ist
+    kommentar: "Forecast-Monat-1 liegt über der GA4-Ist-Baseline — plausibel"
 
 # === Auffaelligkeiten (min. 6) ===
 auffaelligkeiten:
@@ -246,7 +260,7 @@ forecast_outputs_fuer_folge_skills:
 |---|---|---|---|
 | ... | ... | ... | ... |
 
-- **Annahmen-Verweis**: Volumen aus `audits/seo-cluster-zusammenfassung.md` (11.400 real), CR aus `abgeleitete_ziele` (1,5% real), AOV aus `data/kunde.md` (150 EUR real)
+- **Annahmen-Verweis**: Volumen aus `audits/seo-cluster-zusammenfassung.md` (11.400 real), CR aus `ga4_first_party` (1,5% real), AOV aus `data/kunde.md` (150 EUR real)
 - **Ramp-up**: s_curve über 9 Monate (real), Steady State ab M10
 - **Saisonalität**: B2C-E-Commerce-Default mit Q4-Peak
 - **Konfidenz**: hoch
@@ -261,7 +275,7 @@ Tabelle mit allen Annahmen, deren Quellen und Konfidenzen. Identisch zum Excel-S
 | Achse | Kanal | Worst | Real | Best | Quelle | Konfidenz |
 |---|---|---|---|---|---|---|
 | AOV (EUR) | — | 120 | 150 | 200 | data/kunde.md | hoch |
-| SEO-CR | seo | 0,8% | 1,5% | 3,0% | abgeleitete_ziele | hoch |
+| SEO-CR | seo | 0,8% | 1,5% | 3,0% | ga4_first_party | hoch |
 | SEO-Volumen (Monat) | seo | 8.000 | 11.400 | 16.000 | audits/seo-cluster-zusammenfassung.md | hoch |
 | ... | ... | ... | ... | ... | ... | ... |
 
@@ -275,6 +289,19 @@ Tabelle mit allen Annahmen, deren Quellen und Konfidenzen. Identisch zum Excel-S
 | Umsatz/Jahr | 250.000 EUR | — | 320.000 | unrealistisch_niedrig (Kunde unterschätzt sein Potenzial) |
 
 Kommentar pro Vergleich mit Handlungs-Empfehlung.
+
+## Plausibilitäts-Check gegen GA4-Ist-Baseline
+
+(Nur wenn `audits/ga4-first-party.md` vorliegt)
+
+Forecast-Monat-1 (Real-Szenario) grob gegen die GA4-Ist-Baseline (`conversion_baseline`) gestellt. **Regel:** Der Forecast-Start sollte nicht unter dem GA4-Ist liegen — der Forecast beschreibt den Marketing-getriebenen Aufbau *zusätzlich* zur bestehenden Baseline.
+
+| Metrik | GA4-Ist (pro Monat) | Forecast Monat 1 (Real) | Ergebnis |
+|---|---|---|---|
+| Sessions | 9.500 | 10.200 | forecast_start_ueber_ist |
+| Conversions / Orders | 142 | 155 | forecast_start_ueber_ist |
+
+Bei `belastbarkeit: gelb`/`rot` der GA4-Daten wird der Vergleich nur als grobe Orientierung geführt und so gekennzeichnet. Liegt Monat 1 unter dem Ist (Toleranz ca. -10 %): Hinweis, dass Volumen-Basen oder Ramp-up-Start-Anteile zu konservativ sind.
 
 ## Diskrepanz-Tabelle: Briefing vs. abgeleitete Ziele
 

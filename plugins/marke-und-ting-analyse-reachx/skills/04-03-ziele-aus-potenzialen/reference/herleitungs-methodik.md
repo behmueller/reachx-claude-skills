@@ -14,13 +14,51 @@ Definiert die Formeln, Quellen-Hierarchie und Bandbreiten-Logik für `04-03-ziel
 
 Wenn mehrere Quellen für dieselbe Annahme verfügbar sind, gilt diese Reihenfolge:
 
-1. **Kunden-Daten aus Audit** (höchste Priorität) — z. B. SEO-Volumen aus Sistrix-Audit, Local-Volumen aus GMB-Audit
-2. **Briefing-Aussage des Kunden** — z. B. AOV "wir haben durchschnittlich 150 EUR pro Auftrag"
-3. **Portfolio-Ableitung aus `data/kunde.md`** — z. B. AOV aus Preis-Range der Produkte
-4. **Branchen-Benchmark** aus diesem Referenz-Dokument
-5. **Schätzung Skill** (niedrigste Priorität) — wird im Output mit Konfidenz `niedrig` und Auffälligkeit `quelle_branchen_benchmark_unsicher` flagged
+1. **First-Party-Kunden-Daten** (höchste Priorität) — die echte Conversion-Rate des Kunden aus `audits/ga4-first-party.md` (GA4) bzw. `audits/sea-first-party.md` (Google Ads). Nur nutzbar, wenn das jeweilige Daten-Gate es zulässt — siehe Abschnitt 2a.
+2. **Kunden-Daten aus Audit** — z. B. SEO-Volumen aus Sistrix-Audit, Local-Volumen aus GMB-Audit
+3. **Briefing-Aussage des Kunden** — z. B. AOV "wir haben durchschnittlich 150 EUR pro Auftrag"
+4. **Portfolio-Ableitung aus `data/kunde.md`** — z. B. AOV aus Preis-Range der Produkte
+5. **Branchen-Benchmark** aus dem Referenz-Dokument `ziel-annahmen-schema-template.md`
+6. **Schätzung Skill** (niedrigste Priorität) — wird im Output mit Konfidenz `niedrig` und Auffälligkeit `quelle_branchen_benchmark_unsicher` flagged
 
-Wenn ein Wert aus Quelle 1-3 abweicht von Quelle 4-5, **immer Quelle 1-3 bevorzugen** und im Schema dokumentieren.
+Wenn ein Wert aus Quelle 1-4 abweicht von Quelle 5-6, **immer Quelle 1-4 bevorzugen** und im Schema dokumentieren.
+
+## 2a. First-Party-CR aus GA4 / SEA — das belastbarkeit-Gate
+
+`04-03` ist der Ort, an dem die CR-Bandbreiten entstehen, die `04-04-forecast-modell` 1:1 übernimmt. Liegt eine First-Party-Quelle vor, ersetzt die echte Kunden-CR den Branchen-Benchmark **für die betroffenen Kanäle** — gesteuert durch ein Gate.
+
+### GA4 — `belastbarkeit`-Feld aus `audits/ga4-first-party.md`
+
+| `belastbarkeit` | CR-Übernahme | Spread um die GA4-CR | `cr_bandbreite.quelle` | Konfidenz |
+|---|---|---|---|---|
+| `gruen` | GA4-CR voll nutzbar | `konservativ = cr × 0,80`, `realistisch = cr`, `ambitioniert = cr × 1,30` | `ga4_first_party` | `hoch` (Channel-CR) / `mittel` (Gesamt-CR-Fallback) |
+| `gelb` | nutzbar mit Vorsicht | `konservativ = cr × 0,65`, `realistisch = cr`, `ambitioniert = cr × 1,55` | `ga4_first_party_eingeschraenkt` | `mittel` |
+| `rot` | **nicht** als harte Basis | CR-Bandbreite wie bisher aus dem Branchen-Benchmark (Abschnitt 3.2) | `branchen_benchmark` | wie Branchen-Default |
+
+- `realistisch` = die kanalscharfe `conversion_baseline.cr_pro_channel[].conversion_rate`. Hat ein Kanal keinen eigenen GA4-Eintrag, als Fallback `conversion_baseline.gesamt_cr` mit Konfidenz `mittel`.
+- Bei `belastbarkeit: rot` den GA4-Wert nur **nachrichtlich** ablegen (`cr_bandbreite.first_party_cr_roh` plus Body-Hinweis), nicht in die Bandbreite einrechnen.
+
+### SEA — `conversion_setup_urteil`-Feld aus `audits/sea-first-party.md`
+
+| `conversion_setup_urteil` | CR-Übernahme | Spread | `cr_bandbreite.quelle` | Konfidenz |
+|---|---|---|---|---|
+| `sauber` | SEA-CR voll nutzbar | `× 0,80` / `× 1,30` | `sea_first_party` | `hoch` |
+| `mit_einschraenkung` | nutzbar mit Vorsicht | `× 0,65` / `× 1,55` | `sea_first_party` | `mittel` |
+| `kein_tracking` | **nicht** als harte Basis | Branchen-Benchmark wie bisher | `branchen_benchmark` | wie Branchen-Default |
+
+- `realistisch` = `statistiken_12_monate.cr` aus dem SEA-Frontmatter, oder die kampagnen-gewichtete CR aus `sea-kampagnen.csv` (Klick-gewichteter Mittelwert der `cr`-Spalte über die `SEARCH`-Kampagnen).
+- Gilt für den `sea`-Kanal (`SEA / Google-Ads`). Die echten Kampagnen-Daten verbessern zusätzlich die `avg_cpc`-Annahme für die Volumen-Basis (siehe Abschnitt 4.2).
+
+### Consent-Nuance bei der Volumen-Basis
+
+Eine Consent-/Cookie-Lücke verzerrt die **Absolut-Volumina** (Sessions) nach unten — die Conversion-**Rate** bleibt robust (sie misst nur die getrackte Teilmenge in sich selbst). Konsequenz:
+
+- Die GA4-**CR** wird wie oben direkt als `real`-Wert genutzt; das Gate hängt nur an `belastbarkeit`, nicht an der Consent-Frage.
+- Die GA4-**Sessions** als `volumen_basis` müssen, wenn `conversion_baseline.consent_korrektur_hinweis` gesetzt ist, um den dort genannten Consent-Faktor **nach oben hochgerechnet** werden. Faktor und Begründung gehören in `volumen_basis.begruendung`, `volumen_basis.quelle: ga4_first_party`.
+
+### Gemischte Quellen
+
+Eine Mischung der Quellen-Tags im selben Schema ist der Normalfall: GA4-belegbare Kanäle tragen `ga4_first_party` / `ga4_first_party_eingeschraenkt`, der Paid-Search-Kanal `sea_first_party`, noch nicht bespielte Kanäle weiterhin `branchen_benchmark`. Jeder Kanal trägt seinen eigenen `cr_bandbreite.quelle`-Tag; `04-04-forecast-modell` reicht den Tag unverändert durch.
 
 ## 3. Bandbreiten-Logik
 
@@ -78,6 +116,8 @@ klicks_szenario  = spend_szenario / durchschnittlicher_cpc
 orders_szenario  = klicks_szenario × cr_szenario × lead_funnel_gesamt_szenario
 umsatz_szenario  = orders_szenario × aov_szenario
 ```
+
+Wenn `audits/sea-first-party.md` vorliegt: `durchschnittlicher_cpc` aus dem echten `statistiken_12_monate.avg_cpc` (oder kampagnen-gewichtet aus `sea-kampagnen.csv`) statt aus dem Branchen-Benchmark — und `cr_szenario` aus der First-Party-CR gemäß Abschnitt 2a.
 
 **Modus B — Volumen-getrieben** (wenn Spend-Annahme fehlt):
 
@@ -211,6 +251,8 @@ Im CSV-Output bekommt jede Stufe eine eigene Zeile mit `metrik`-Wert (`anfragen`
 
 ## 8. Volumen-Basis-Extraktion aus den Audits
 
+Hinweis vorab: Die Volumen-Basis ist getrennt von der CR-Bandbreite (Abschnitt 2a). Wenn `audits/ga4-first-party.md` vorliegt, sind die echten Kunden-Sessions je Channel (`conversion_baseline.cr_pro_channel[].sessions_pro_monat` bzw. `ga4-channels.csv`) eine zusätzliche, oft belastbarere Volumen-Quelle als die Audit-Schätzungen unten — bei gesetztem `consent_korrektur_hinweis` aber um den Consent-Faktor hochrechnen (Sessions werden durch die Cookie-Lücke zu niedrig gemessen).
+
 ### 8.1 SEO
 
 Reihenfolge:
@@ -265,7 +307,7 @@ Vor dem Output prüft der Skill:
 
 1. Jeder Kanal hat genau drei Szenario-Werte (konservativ < realistisch < ambitioniert)
 2. konservativ ≤ realistisch ≤ ambitioniert (sonst Schema-Inkonsistenz)
-3. Aggregat-Werte sind konsistent mit Kanal-Summen (innerhalb Doppelzählungs-Faktor)
+3. Aggregat-Werte sind konsistent mit Kanal-Summen (innerhalb Doppelzählungs-Faktor Toleranz ±2%)
 4. Jede Zahl hat ein nicht-leeres `quelle`-Feld
 5. CSV hat keine leeren Pflicht-Felder
 6. Mindestens 6 Auffälligkeiten im Output (Pflicht-Mindestmenge)
