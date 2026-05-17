@@ -130,6 +130,8 @@ Lies *jetzt* `reference/methodology.md` vollständig. Die Datei enthält die fü
 
 ## Schritt 6 — HTML-Bericht generieren
 
+**Validierung — Pflicht:** Den fertigen Report vor dem Upload prüfen: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad>` (ohne `--shell`, da dieser Skill ein eigenes Template `reference/report-template.html` nutzt). Exit-Code 0 → ausliefern. Exit-Code 1 → nicht ausliefern, korrigieren, erneut validieren. Keine CSS-Klassen verwenden, die nicht im `<style>`-Block des Templates definiert sind.
+
 Lies `reference/report-template.html`. Das Template enthält Platzhalter in der Form `{{TOKEN}}`, die Du durch die Inhalte aus den vorherigen Schritten ersetzt.
 
 ### Bewertungen sammeln

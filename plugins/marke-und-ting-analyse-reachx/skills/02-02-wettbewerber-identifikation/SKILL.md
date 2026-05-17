@@ -1,6 +1,6 @@
 ---
 name: 02-02-wettbewerber-identifikation
-description: Identifiziert Wettbewerber für eine laufende MTA aus drei Quellen - vom Kunden genannte (aus dem Briefing), regionale Wettbewerber (via Apify Google Maps), überregionale Best-Practice-Vorbilder (via Sistrix Toplist). Nutzt das Schema-vor-Lauf-Pattern - in Phase A wird ein Recherche-Schema generiert und vom Strategen bestätigt, in Phase B läuft die eigentliche Recherche. Nutze diesen Skill IMMER, wenn der Nutzer im Kontext einer laufenden MTA Wettbewerber finden will - auch bei Phrasen wie "Wettbewerber identifizieren", "Wettbewerber-Recherche starten für [Kunde]", "Wer sind die Konkurrenten von [Kunde]", "Finde Wettbewerber", "Konkurrenz-Recherche", "Identifiziere Best Practices im Markt von [Kunde]". Setzt voraus, dass 01-01-mta-projekt-init bereits gelaufen ist und idealerweise auch 02-01-kunden-marken-profil und 01-02-kickoff-transcript-parser - bricht bei fehlender meta.json mit Hinweis ab.
+description: Identifiziert Wettbewerber für eine laufende MTA aus drei Quellen - vom Kunden genannte (aus dem Briefing), regionale Wettbewerber (via Apify Google Maps), überregionale Best-Practice-Vorbilder (via Sistrix Toplist). Nutzt First-Party-Signale (echte GSC-Top-Queries als Seed-Keywords, GA4-Referral-Domains als Akteurs-Kandidaten), wenn die First-Party-Skills schon gelaufen sind - sonst läuft der Skill unverändert mit aus Briefing/Branche abgeleiteten Seed-Keywords. Nutzt das Schema-vor-Lauf-Pattern - in Phase A wird ein Recherche-Schema generiert und vom Strategen bestätigt, in Phase B läuft die eigentliche Recherche. Nutze diesen Skill IMMER, wenn der Nutzer im Kontext einer laufenden MTA Wettbewerber finden will - auch bei Phrasen wie "Wettbewerber identifizieren", "Wettbewerber-Recherche starten für [Kunde]", "Wer sind die Konkurrenten von [Kunde]", "Finde Wettbewerber", "Konkurrenz-Recherche", "Identifiziere Best Practices im Markt von [Kunde]". Setzt voraus, dass 01-01-mta-projekt-init bereits gelaufen ist und idealerweise auch 02-01-kunden-marken-profil und 01-02-kickoff-transcript-parser - bricht bei fehlender meta.json mit Hinweis ab.
 ---
 
 # Wettbewerber-Identifikation
@@ -60,6 +60,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - `01-01-mta-projekt-init` gelaufen → `meta.json` vorhanden
 - **Stark empfohlen:** `01-02-kickoff-transcript-parser` gelaufen → `briefing.md` vorhanden (für vom Kunden genannte Wettbewerber)
 - **Stark empfohlen:** `02-01-kunden-marken-profil` gelaufen → `kunde.md` vorhanden (für fundierte Seed-Keyword-Generierung)
+- **Idealerweise vorab gelaufen (weiche Anreicherung, KEINE harte Voraussetzung):** der First-Party-Block — `03-04-seo-first-party-gsc` und `03-18-web-analytics-ga4`. Wenn deren Outputs (`audits/gsc-first-party.md` + `audits/gsc-performance.csv`, `audits/ga4-first-party.md` + `audits/ga4-channels.csv`) vorliegen, nutzt 02-02 sie, um Seed-Keywords und Wettbewerber-Kandidaten **datenbasiert statt geraten** abzuleiten — echte GSC-Top-Queries als Seed-Keywords, GA4-Referral-Domains als Akteurs-Kandidaten. Liegen sie nicht vor, läuft 02-02 exakt wie bisher.
 - Sistrix-Zugang verfügbar (über MCP oder API-Token)
 - Apify-Zugang verfügbar (für Google Maps Scraper)
 
@@ -136,15 +137,45 @@ KUNDE_ID=$(python3 "$DRIVE_PY" list-children "$DATA_ID" | jq -r '.[] | select(.n
 
 Wenn `briefing.md` oder `kunde.md` fehlen: Hinweis im Schema-Body, dass die Konfiguration auf reduzierter Datenbasis erstellt wurde, aber weitermachen.
 
+**Optional: First-Party-Outputs aus dem `audits/`-Sub-Folder lesen.** Wenn der First-Party-Block (`03-04-seo-first-party-gsc`, `03-18-web-analytics-ga4`) schon gelaufen ist, liefert er echte Kunden-Daten, die Seed-Keywords und Wettbewerber-Kandidaten datenbasiert statt geraten machen. Lies sie, wenn vorhanden — wenn nicht, ohne Fehler weitermachen:
+
+```bash
+AUDITS_ID=$(jq -r '.drive.subfolders.audits' /tmp/meta.json)
+
+GSC_MD_ID=$(python3 "$DRIVE_PY" list-children "$AUDITS_ID" | jq -r '.[] | select(.name == "gsc-first-party.md") | .id')
+GSC_CSV_ID=$(python3 "$DRIVE_PY" list-children "$AUDITS_ID" | jq -r '.[] | select(.name == "gsc-performance.csv") | .id')
+GA4_MD_ID=$(python3 "$DRIVE_PY" list-children "$AUDITS_ID" | jq -r '.[] | select(.name == "ga4-first-party.md") | .id')
+GA4_CSV_ID=$(python3 "$DRIVE_PY" list-children "$AUDITS_ID" | jq -r '.[] | select(.name == "ga4-channels.csv") | .id')
+
+[ -n "$GSC_CSV_ID" ] && python3 "$DRIVE_PY" read "$GSC_CSV_ID" > /tmp/gsc-performance.csv
+[ -n "$GSC_MD_ID" ]  && python3 "$DRIVE_PY" read "$GSC_MD_ID"  > /tmp/gsc-first-party.md
+[ -n "$GA4_CSV_ID" ] && python3 "$DRIVE_PY" read "$GA4_CSV_ID" > /tmp/ga4-channels.csv
+[ -n "$GA4_MD_ID" ]  && python3 "$DRIVE_PY" read "$GA4_MD_ID"  > /tmp/ga4-first-party.md
+```
+
+- `audits/gsc-performance.csv` + `audits/gsc-first-party.md` (optional — echte Top-Queries des Kunden, Quelle für Schritt A.2)
+- `audits/ga4-channels.csv` + `audits/ga4-first-party.md` (optional — Kanal-Daten plus die source/medium-Analyse mit den Referral-Domains. **Hinweis:** die detaillierte source/medium-Tabelle mit den einzelnen Referral-Domains liegt im Body von `ga4-first-party.md` in der Sektion "source/medium-Analyse" — `ga4-channels.csv` enthält nur die aggregierte Kanal-Gruppe `Referral`. Beide Outputs werden für Schritt A.7 gelesen.)
+
+Wenn keiner der First-Party-Outputs vorhanden ist: kein Fehler, der Skill läuft wie bisher mit aus Briefing/Branche abgeleiteten Seed-Keywords (siehe Edge Cases).
+
 ### Schritt A.2: Seed-Keywords ableiten
 
-Aus den verfügbaren Quellen 3-5 Seed-Keywords ableiten, in Mischung aus:
+**Primärquelle, wenn `gsc-performance.csv` vorliegt — echte GSC-Top-Queries.** Liegt `/tmp/gsc-performance.csv` vor, sind die echten Non-Brand-Top-Queries des Kunden die **primäre** Seed-Keyword-Quelle — statt aus Briefing/Branche zu raten:
+
+1. Aus `gsc-performance.csv` die Zeilen der aktuellen Periode nehmen, nach `clicks` (sekundär `impressions`) absteigend sortieren.
+2. **Brand-Queries ausschließen** — alle Queries, die den Marken-Namen oder ein Synonym aus `meta.json.marke` / `data/kunde.md.marke.synonyme` enthalten. (Brand-Queries führen die Toplist-Recherche in die Irre, weil sie nur den Kunden selbst finden.)
+3. Aus den verbleibenden Non-Brand-Queries 3-5 Seed-Keywords kuratieren — die stärksten Klick-/Impressionen-Treffer, aber generisch genug für eine Sistrix-Toplist (eine sehr lange Long-Tail-Query ggf. auf ihren Kern-Begriff verdichten).
+4. Im Schema-Body dokumentieren, dass die Keywords aus **echten GSC-Daten** stammen (Qualitäts-Hinweis: höhere Treffsicherheit der Toplist-Recherche, weil der Markt aus den realen Suchanfragen des Kunden abgeleitet ist statt geraten), und im Frontmatter `seed_keywords_quelle: gsc` setzen.
+
+**Fallback, wenn keine GSC-Daten vorliegen — wie bisher.** Aus den verfügbaren Quellen 3-5 Seed-Keywords ableiten, in Mischung aus:
 
 - **Produktspezifisch** (1-2): Hauptprodukt-Kategorien aus Briefing/kunde.md
 - **Branchengenerisch** (1-2): aus `meta.json.branche`, ggf. mit Anwendungs-Kontext
 - **Pain-Point-Keywords** (optional, 1): wenn aus dem Briefing klar ein bestimmter Pain-Point hervortritt, kann ein zugehöriges Keyword sinnvoll sein
 
-Wichtig: Keywords sollen **nicht** zu spezifisch sein (sonst leere Toplisten) und **nicht** zu generisch (sonst nur Aggregatoren). Faustregel: ein Keyword sollte in Sistrix mindestens 200 Suchvolumen pro Monat haben — wenn das beim Vorschlag unklar ist, im Body einen Hinweis setzen.
+In diesem Fall im Frontmatter `seed_keywords_quelle: abgeleitet` setzen.
+
+Wichtig (für beide Fälle): Keywords sollen **nicht** zu spezifisch sein (sonst leere Toplisten) und **nicht** zu generisch (sonst nur Aggregatoren). Faustregel: ein Keyword sollte in Sistrix mindestens 200 Suchvolumen pro Monat haben — wenn das beim Vorschlag unklar ist, im Body einen Hinweis setzen.
 
 ### Schritt A.3: Branchenportale-Vorschlag
 
@@ -182,7 +213,26 @@ Aus `briefing.md.wettbewerber_genannt`: Liste mit `name`, `quelle_turn`, `bedroh
 
 Wichtig: hier wird **nichts gefiltert** — auch wenn ein vom Kunden genannter Wettbewerber später keine Online-Marketing-Signale zeigt, gehört er in die Liste (Begründung: Kundenrelevanz schlägt Filter).
 
-### Schritt A.7: `wettbewerber/identifikation-schema.md` nach Drive schreiben
+### Schritt A.7: First-Party-Akteurs-Hinweise sammeln (GA4-Referral)
+
+Wenn GA4-source/medium-/Referral-Daten vorliegen (`/tmp/ga4-first-party.md` aus Schritt A.1 — die source/medium-Tabelle im Body-Abschnitt "source/medium-Analyse"; `/tmp/ga4-channels.csv` liefert ergänzend den aggregierten `Referral`-Kanal), die Top-Referral-Domains scannen und potenzielle Akteurs-Kandidaten herausfiltern:
+
+1. Aus der source/medium-Analyse die Referral-Quellen mit den meisten Sessions nehmen.
+2. **Bekannte Nicht-Akteure herausfiltern** — Domains, die KEINE potenziellen Wettbewerber sind:
+   - Such- und Aggregator-Domains aus `reference/aggregatoren-blocklist.md`
+   - Bewertungs-/Branchenportale (ProvenExpert, Trustpilot, Jameda, wlw, Capterra, G2, OMR, Preisvergleiche) — die laufen über `02-04-branchenportal-recherche`, nicht als Wettbewerber
+   - Social-Netze (LinkedIn, Instagram, Facebook, YouTube, TikTok, Pinterest, Reddit)
+   - Suchmaschinen (Google, Bing, DuckDuckGo, Ecosia)
+   - E-Mail-/Newsletter-Provider, URL-Shortener und offensichtliche technische Referrer
+3. Was übrig bleibt, sind **echte Fremd-Domains, die Traffic an den Kunden schicken** — oft Branchen-Verzeichnisse, Partner, oder eben tatsächliche Wettbewerber, die den Kunden verlinken. Diese als Kandidaten in die neue Schema-Sektion `first_party_hinweise` aufnehmen, jeweils mit:
+   - `domain` — die Referral-Domain
+   - `referral_sessions` — Sessions aus GA4 (aktuelle Periode)
+   - `begruendung` — kurzer Hinweis, warum die Domain als Akteurs-Kandidat aufgenommen wurde (z. B. "Fremd-Domain mit relevantem Referral-Traffic, kein bekanntes Portal/Social/Suchmaschine — Strategen-Prüfung, ob Wettbewerber")
+4. Diese Sektion ist **explizit zur Strategen-Prüfung** — der Skill entscheidet nicht selbst, ob es Wettbewerber sind. Im Schema-Body einen Hinweis setzen, dass der Stratege die Liste durchgehen und unzutreffende Domains streichen soll.
+
+Wenn keine GA4-Daten vorliegen: Schritt liefert eine **leere** `first_party_hinweise`-Sektion, kein Fehler. Im Schema-Body kurz vermerken, dass keine GA4-Referral-Daten zur Verfügung standen.
+
+### Schritt A.8: `wettbewerber/identifikation-schema.md` nach Drive schreiben
 
 Baue das vollständige Schema lokal im Cache zusammen (Format in `reference/identifikation-schema-template.md`) mit `status: vorgeschlagen` und lade es nach Drive in den `wettbewerber/`-Sub-Folder hoch:
 
@@ -197,11 +247,16 @@ Im Body: pro Sektion eine Begründung, damit der Stratege schnell prüfen kann, 
 
 Der Stratege kann das Schema direkt in der Drive-Web-UI editieren (Markdown ist editierbar) oder lokal runterladen und neu hochladen — Phase B liest in beiden Fällen aus Drive.
 
-### Schritt A.8: HTML-Report (optional)
+### Schritt A.9: HTML-Report (optional)
+
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
 
 In Phase A optional — der Schema-Markdown ist normalerweise ausreichend zum Review. Wenn der Stratege ihn lieber visuell sieht: HTML-Report mit Schema-Visualisierung erzeugen, aber nicht Pflicht.
 
-### Schritt A.9: `status.md` aktualisieren und Schluss-Format Phase A
+### Schritt A.10: `status.md` aktualisieren und Schluss-Format Phase A
 
 Lies, aktualisiere und schreibe `status.md` auf Drive (im MTA-Root-Folder) per `drive.py upsert-text` — setze `blockiert`-Eintrag wie unten.
 
@@ -212,11 +267,12 @@ Outputs (auf Drive):
 - wettbewerber/identifikation-schema.md — Recherche-Schema (status: vorgeschlagen)
 
 Konfigurations-Vorschlag:
-- Seed-Keywords:    <Liste>
-- Region:           <ausdehnung + ggf. Radius>
-- Branchenportale:  <Anzahl> identifiziert
-- Filter-Schwelle:  Sistrix Visibility ≥ <Wert>
-- Vom Briefing:     <Anzahl> Wettbewerber übernommen
+- Seed-Keywords:      <Liste> (Quelle: <gsc | abgeleitet>)
+- Region:             <ausdehnung + ggf. Radius>
+- Branchenportale:    <Anzahl> identifiziert
+- Filter-Schwelle:    Sistrix Visibility ≥ <Wert>
+- Vom Briefing:       <Anzahl> Wettbewerber übernommen
+- First-Party-Hinweise: <Anzahl> GA4-Referral-Domains als Kandidaten (0, wenn keine GA4-Daten)
 
 ⏸ Pflicht-Review durch den Strategen
 Bitte prüfen: Seed-Keywords, Region, Branchenportale, Online-Marketing-Filter.
@@ -291,6 +347,20 @@ Wenn `region_definition.ausdehnung` ≠ international (für international ist ei
    - Vielfalt der Branchen-Sub-Segmente bevorzugen
    - Mix aus Sichtbarkeits-Modellen (manche SEO-getrieben, manche Ads-getrieben, manche Content-getrieben)
 
+### Schritt B.4b: First-Party-Hinweise prüfen (GA4-Referral-Kandidaten)
+
+Wenn das Schema eine nicht-leere `first_party_hinweise`-Sektion enthält (vom Strategen in Phase A bestätigt — Domains, die er nicht gestrichen hat):
+
+1. Jede bestätigte `first_party_hinweise`-Domain wie einen normalen Wettbewerber-Kandidaten behandeln — sie durchläuft denselben **Website-Check** (kurzer Crawl der Startseite: echte Marken-Website, kein Affiliate/Aggregator?) und denselben **Signal-Check** wie die Kandidaten aus B.3 und B.4.
+2. Domains, die den Website-Check nicht bestehen (Portal, Affiliate, Verzeichnis, technischer Referrer) oder kein einziges Online-Marketing-Signal zeigen, werden verworfen — mit kurzer Notiz im Body.
+3. Domains, die als **echte Wettbewerber** durchgehen, werden in die passende **bestehende** Kategorie einsortiert:
+   - primär regional aktiv (in der Region des Kunden) → Kategorie `regional`
+   - überregional aktiv → Kategorie `best_practice_ueberregional`
+   - Dedupe: ist die Domain bereits über B.3 oder B.4 in der Liste, **nicht** doppelt aufnehmen — stattdessen am bestehenden Eintrag den Quellen-Vermerk ergänzen.
+4. Jeder so aufgenommene Wettbewerber bekommt zusätzlich den Quellen-Vermerk `quelle_zusatz: first_party_signal` in seinem Listen-Eintrag — damit nachvollziehbar bleibt, dass der Akteur über ein First-Party-Signal (GA4-Referral) gefunden wurde.
+
+**Wichtig:** Es entsteht **keine vierte Kategorie** in `liste.md` — die First-Party-Kandidaten landen in den drei bestehenden Kategorien, nur mit dem zusätzlichen `quelle_zusatz`-Feld. Wenn die `first_party_hinweise`-Sektion leer ist, wird dieser Schritt übersprungen.
+
 ### Schritt B.5: Online-Marketing-Signale anreichern
 
 Für jeden Wettbewerber (alle drei Kategorien) den Signal-Check:
@@ -330,6 +400,11 @@ YAML-Frontmatter mit allen strukturierten Feldern, Markdown-Body mit den drei Ka
 Status: `vorgeschlagen`. Der Stratege bestätigt nach Review.
 
 ### Schritt B.8: HTML-Report erzeugen
+
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
 
 Lies `reports/_shell.html` aus Drive und baue `03-wettbewerber-liste.html` daraus:
 
@@ -425,6 +500,7 @@ Sag mir, was du als nächstes willst.
 - **Internationaler Markt** (`ausdehnung: international`) → Skill warnt: "Sistrix ist DACH-fokussiert, internationale Recherche unvollständig. Stratege sollte zusätzlich Ahrefs/SimilarWeb-Daten manuell prüfen."
 - **Vom Kunden genannter Wettbewerber existiert nicht mehr / Domain ist offline** → Beim Website-Check Fehlerfall sauber abfangen, in der Liste mit `online_marketing_signale: ["Website nicht erreichbar"]` markieren, `empfehlung_profilieren: nein` setzen.
 - **Mehr als 5 Best-Practice-Kandidaten mit ähnlich hoher Visibility** → Kuration nötig. Skill wählt nach Lehrwert-Vielfalt (Mix der Sichtbarkeits-Modelle), schreibt im Body, welche knapp aus der Top-5 rausgefallen sind, damit der Stratege ggf. tauschen kann.
+- **First-Party-Skills noch nicht gelaufen** (`03-04-seo-first-party-gsc`, `03-18-web-analytics-ga4` haben keine Outputs in `audits/` hinterlegt) → 02-02 läuft wie bisher: Seed-Keywords werden aus Briefing/Branche abgeleitet (`seed_keywords_quelle: abgeleitet`), die `first_party_hinweise`-Sektion bleibt leer. Hinweis im Schema-Body, dass eine vorherige First-Party-Erhebung (GSC + GA4) die Keyword- und Kandidaten-Qualität deutlich verbessern würde — echte Top-Queries statt geratener Branchen-Begriffe, GA4-Referral-Domains als zusätzliche Akteurs-Quelle. Kein Fehler, kein Blocker.
 
 ## Wichtige Konventionen
 

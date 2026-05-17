@@ -247,7 +247,7 @@ Numerisches Präfix nach Workflow-Reihenfolge — bleibt unverändert zu Schema 
 - `reports/02-kunde.html`
 - `reports/03-wettbewerber-liste.html`
 - `reports/04-wettbewerber-profile.html`
-- `reports/05-audits-*.html` (pro Audit-Skill eine Datei)
+- `reports/05-audits-*.html` (pro Audit-Skill eine Datei) — Audit-Skills mit feiner Reihenfolge-Anforderung dürfen einen Buchstaben-Suffix vergeben, um sich gezielt vor anderen Audit-Reports einzusortieren: `reports/05a-gsc-first-party.html`, `reports/05b-ga4-first-party.html`, `reports/05c-sea-first-party.html` (der First-Party-Block läuft vor den Third-Party-Audit-Reports)
 - `reports/06-synthese-*.html`
 - `reports/index.html` ist immer das Dashboard.
 
@@ -321,35 +321,55 @@ Niemals weglassen. Auch nicht bei Skills, die "offensichtliche" Folge-Skills hab
 
 ## 7. HTML-Reports
 
+**Zwei kanonische Dateien — bei HTML-Reports immer beide heranziehen:**
+
+| Datei (im Plugin) | Rolle |
+|---|---|
+| `01-01-mta-projekt-init/reference/report-shell.html` | Der äußere Rahmen + das **gesamte CSS**. Pro Projekt als `reports/_shell.html` auf Drive. |
+| `01-01-mta-projekt-init/reference/report-bausteine.md` | Die **einzige Quelle für Report-Markup** — fertiges Copy-Paste-Markup je Komponente. |
+
+Diese beiden Dateien sind die einzige Wahrheit für Report-Aussehen. `contracts.md` dupliziert die CSS-Klassen-Liste **nicht** — sie steht in `report-bausteine.md`.
+
 ### Shell-Nutzung
 
-Jedes Projekt hat im Anlage-Schritt eine `reports/_shell.html` auf Drive bekommen — das ist die geteilte HTML-Vorlage im REACHX-Branding.
+Jedes Projekt hat im Anlage-Schritt eine `reports/_shell.html` auf Drive bekommen — die geteilte HTML-Vorlage im REACHX-Branding.
 
 Wenn dein Skill einen HTML-Report schreibt:
 
-1. Lies `reports/_shell.html` aus Drive (per `drive.py read <id>`).
-2. Ersetze die folgenden Platzhalter:
+1. Lies `reports/_shell.html` aus Drive (per `drive.py read <id>`). Übernimm den `<style>`-Block **unverändert** — niemals CSS umbauen, ergänzen oder aus dem Gedächtnis rekonstruieren.
+2. Ersetze die acht Platzhalter:
    - `{{TITLE}}` — Browser-Tab-Titel: "<Skill-Titel> · <Kunde>"
-   - `{{EYEBROW}}` — kleiner Label-Text oben: z. B. "MTA-Audit", "Synthese", "Briefing"
+   - `{{EYEBROW}}` — kleiner Label-Text oben: z. B. "MTA-Audit · SEO"
    - `{{DISPLAY_NAME}}` — große Überschrift: der eigentliche Report-Titel
-   - `{{META_LINE}}` — Meta-Zeile unter dem Titel (Erstellungs-Datum, ggf. Quelle)
+   - `{{META_LINE}}` — Meta-Zeile unter dem Titel (Quelle, Datenstand, Akteur-Anzahl)
    - `{{MAIN_CONTENT}}` — der inhaltliche Teil zwischen `<main>` und `</main>`
+   - `{{TOKEN_BREAKDOWN}}` — nur Dashboard, sonst leer lassen
+   - `{{TOKEN_FOOTER}}` — Footer-Counter (siehe Abschnitt 10)
    - `{{FOOTER_TEXT}}` — Footer-Zeile
-3. Lade das Resultat als `reports/<nummer>-<slug>.html` per `drive.py upsert-text` hoch (MIME `text/html`).
+3. **Validiere** den fertigen Report vor dem Upload (siehe unten).
+4. Lade das Resultat als `reports/<nummer>-<slug>.html` per `drive.py upsert-text` hoch (MIME `text/html`).
 
-### Content-Sektionen
+### Content-Sektionen — nur kanonische Bausteine
 
-Innerhalb von `{{MAIN_CONTENT}}` strukturierst du den Inhalt mit den im Shell-CSS verfügbaren Klassen:
+`{{MAIN_CONTENT}}` wird **ausschließlich** aus den Bausteinen in `report-bausteine.md` zusammengesetzt. Diese Datei enthält für jede Komponente — Sektion, Sticky-TOC, `table.data`, `table.ratings`, Stat-Strip, `details.dim`-Karten, Badges, Suggestion-Block, Top-N-Liste, SVG-Sparkline — das fertige Markup zum 1:1-Kopieren.
 
-- `<section>` für jede Haupt-Sektion
-- `.section-heading` mit `.label` (eyebrow) und `<h2>` (Section-Titel)
-- `.summary-card` für hervorgehobene Zusammenfassungen
-- `details.skill[data-status="..."]` für expandable Karten (siehe Skills-Overview-Beispiel)
-- `table.data` für tabellarische Daten
-- `.badge.stark`, `.badge.mittel`, `.badge.schwach` für Status-Badges
-- `nav.toc` für Section-Quicklinks oben
+Vier Regeln:
 
-Die vollständige CSS-Klassen-Übersicht steckt in `reports/_shell.html` selbst (auskommentiert).
+- **Markup kopieren, nicht erfinden.** Die SKILL.md beschreibt *welche* Bausteine mit *welchen* Daten zu füllen sind — das Markup selbst kommt unverändert aus `report-bausteine.md`.
+- **Keine eigenen CSS-Klassen.** Jede Klasse, die nicht in `report-bausteine.md` vorkommt, existiert im Shell-CSS nicht und rendert ungestylt.
+- **Kein inline-`style="…"`.** Styling lebt im Shell-CSS, nicht im Report-Inhalt.
+- **Kein eigener `<style>`-Block.** Das CSS kommt komplett aus der Shell.
+
+### Pflicht: Report vor dem Upload validieren
+
+Jeder Skill, der einen HTML-Report rendert, prüft ihn **vor dem Drive-Upload**:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" \
+  ~/.cache/reachx-mta/<slug>/<nummer>-<slug>.html --shell
+```
+
+Der Validator prüft drei Regeln: (1) jede verwendete CSS-Klasse ist im `<style>`-Block definiert, (2) keine offenen `{{Platzhalter}}`, (3) der `<style>`-Block ist byte-identisch mit der kanonischen Shell. **Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen**, Markup gegen `report-bausteine.md` korrigieren und erneut validieren.
 
 ### Dashboard-Update (`reports/index.html`)
 

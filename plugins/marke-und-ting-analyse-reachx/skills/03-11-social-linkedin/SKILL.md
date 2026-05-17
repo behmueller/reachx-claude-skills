@@ -291,6 +291,11 @@ Pro Auffaelligkeit: Typ, Titel, Beschreibung, Relevanz, Handlungs-Empfehlung, be
 
 ### Schritt 17: HTML-Report `reports/18-linkedin-wettbewerb.html` (nur MTA)
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html` (aus Drive `REPORTS_ID` lesen via `find_by_name` + `read_text`) mit den Standard-Platzhaltern:
 
 - `{{TITLE}}` - "LinkedIn-Wettbewerb · KUNDE_NAME"
@@ -307,7 +312,7 @@ Content-Sektionen in `{{MAIN_CONTENT}}`:
 - **Branchen-Relevanz-Banner** oben (wenn schwach: rote Hervorhebung mit Hinweis fuer `04-02-kanal-chancen-analyse`)
 - **Company-Profil-Matrix-Tabelle**: Akteur × Follower × Posts/Woche × ER × Format-Top
 - **Mitarbeiter-Aggregat-Tabelle**: Akteur × Listing-Size × Top-Department × Median-Tenure × Aktive-Poster
-- **Pro Akteur** ein `details class="skill"`-Block mit:
+- **Pro Akteur** ein `details class="dim"`-Block mit:
   - Company-Header (Name, Industry, Size, HQ, Follower)
   - Mitarbeiter-Struktur (Department-Verteilung als Mini-Tabelle, Tenure-Buckets)
   - Posts-Statistik als Mini-Stat-Strip

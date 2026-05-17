@@ -346,6 +346,11 @@ Jede Auffälligkeit mit Typ, Titel, Beschreibung, Relevanz (`hoch`/`mittel`/`nie
 
 ### Schritt 8: HTML-Report `reports/06-seo-sichtbarkeit.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html` einen Audit-Report bauen:
 
 - `{{TITLE}}` → `SEO-Sichtbarkeit · KUNDE`
@@ -361,7 +366,7 @@ Aus `reports/_shell.html` einen Audit-Report bauen:
   - **SI-Verlauf-Visualisierung**: einfache SVG-Sparklines pro Akteur (12-Monats-Verlauf, gleicher Y-Achsen-Maßstab über alle Akteure)
   - **Ahrefs-Master-Tabelle** (nur Hybrid): Akteur, DR aktuell, DR vor 12M, DR-Trend-Badge, org_traffic, org_keywords. **Eigene Tabelle**, nicht mit der Sistrix-Tabelle vermischt — damit beide Skalen nebeneinander lesbar bleiben.
   - **DR-Verlauf-Sparkline**: pro Akteur, parallel zur SI-Sparkline (klar als "Ahrefs DR-Verlauf" labeln)
-  - **Pro Akteur ein `details class="skill"`-Block** (default zugeklappt außer Kunde + Top-2-WBs nach SI):
+  - **Pro Akteur ein `details class="dim"`-Block** (default zugeklappt außer Kunde + Top-2-WBs nach SI):
     - SI-Verlauf
     - Top-10 Sistrix-Keywords als Tabelle (Keyword, Position, Suchvolumen, ranking-URL)
     - Sistrix-vorgeschlagene WBs als kleine Liste

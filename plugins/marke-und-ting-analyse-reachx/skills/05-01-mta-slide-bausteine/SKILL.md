@@ -246,6 +246,11 @@ python3 "$DRIVE_PY" upsert-text "$SLIDES_ID" "index.html" \
 
 #### 6.1: HTML-Report `reports/<nummer>-slide-bausteine-uebersicht.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Lies `reports/_shell.html` aus Drive (per `drive.py read <id>`). Nummer nach Workflow-Reihenfolge (vermutlich 14 bis 17, je nach welche Folge-Skills schon Reports geschrieben haben). Inhalte:
 
 - Stat-Strip: Anzahl Slides total, davon voll/Platzhalter/Skip

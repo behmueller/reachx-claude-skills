@@ -251,6 +251,11 @@ Body-Struktur ebenfalls identisch (Übersicht, Portfolio, USPs, Zielgruppen, Ton
 
 ### Schritt 6: Bundle-HTML-Report `reports/04-wettbewerber-profile.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Lies `reports/_shell.html` aus Drive und baue daraus einen Bundle-Report, der alle erstellten Profile Side-by-Side darstellt:
 
 - `{{TITLE}}` → `Wettbewerber-Profile · KUNDE`
@@ -261,7 +266,7 @@ Lies `reports/_shell.html` aus Drive und baue daraus einen Bundle-Report, der al
   - **Stat-Strip oben**: Anzahl Profile gesamt, Anzahl pro Kategorie (kunde_genannt / regional / best_practice), Durchschnittlicher Hero-Test-Score, Anzahl im Reduced-Mode
   - **Sticky-TOC** mit Sprung zu jedem Wettbewerber-Profil
   - **Wenn `data/kunde.md` existiert**: Vergleichs-Block direkt oben — Kunden-Hero-Test-Score vs. Wettbewerber-Durchschnitt, plus Hinweis "Detaillierter Vergleich folgt in `04-01-positionierungs-analyse`"
-  - **Pro Wettbewerber** ein `details class="skill"`-Block (defaultmäßig aufgeklappt für die ersten 3, zugeklappt für weitere) mit:
+  - **Pro Wettbewerber** ein `details class="dim"`-Block (defaultmäßig aufgeklappt für die ersten 3, zugeklappt für weitere) mit:
     - Kategorie-Badge (kunde_genannt / regional / best_practice)
     - Marken-Identität (Name, Claim, Logo wenn vorhanden)
     - Hero-Test-Score als Stat-Mini (Gesamt + schwächste Frage)

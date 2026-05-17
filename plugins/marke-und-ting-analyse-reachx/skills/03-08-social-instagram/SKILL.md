@@ -279,13 +279,18 @@ Body:
 
 ### Schritt 13: HTML-Report `reports/15-instagram-wettbewerb.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html`:
 
 - **Stat-Strip oben**: Akteure mit IG-Profil, aktive Akteure, Branchen-Median-ER, Top-Werber, Top-Reach-Akteur
 - **Sticky-TOC** zu allen Sektionen
 - **Branchen-Relevanz-Banner** oben (wenn schwach: rote Hervorhebung mit Hinweis fuer `04-02-kanal-chancen-analyse`)
 - **Profil-Matrix-Tabelle**: Akteur × Follower × Frequenz × ER × Pillar-Anzahl
-- **Pro Akteur** ein `details class="skill"`-Block mit:
+- **Pro Akteur** ein `details class="dim"`-Block mit:
   - Profil-Header (Avatar wenn vorhanden, Bio, Follower-Counts)
   - Posts-Statistik als Mini-Stat-Strip
   - Post-Typ-Mix als kleine Balken

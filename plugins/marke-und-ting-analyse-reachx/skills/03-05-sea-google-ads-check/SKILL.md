@@ -248,12 +248,17 @@ Body:
 
 ### Schritt 11: HTML-Report `reports/09-google-ads.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html`:
 
 - **Stat-Strip oben**: Akteure aktiv im TC, Anzahl Anzeigen gesamt, Top-Werber, Anzahl Themen-Cluster, Anzahl Auffälligkeiten
 - **Sticky-TOC** zu allen Sektionen
 - **Aktivitäts-Heatmap** (Akteur × Anzeigentyp): zeigt schnell, wer welche Format-Mischung nutzt
-- **Pro Akteur** ein `details class="skill"`-Block mit:
+- **Pro Akteur** ein `details class="dim"`-Block mit:
   - Aktivitätsstatus + Volumen
   - Anzeigentypen-Verteilung (kleine ASCII-Balken)
   - Top-5-Anzeigen-Karten mit Werbetext-Auszug und Landingpage-Link

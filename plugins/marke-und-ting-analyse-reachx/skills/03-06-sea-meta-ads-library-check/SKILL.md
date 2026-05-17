@@ -276,13 +276,18 @@ Body:
 
 ### Schritt 12: HTML-Report `reports/10-meta-ads.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html`:
 
 - **Stat-Strip oben**: Akteure aktiv in Ad Library, Anzahl Anzeigen gesamt, Top-Werber, Plattform-Schwerpunkt, Anzahl Themen-Cluster, Anzahl Auffälligkeiten
 - **Sticky-TOC**
 - **Aktivitäts-Heatmap** (Akteur x Plattform — Meta-spezifische Erweiterung gegenüber Google)
 - **Format-Mix-Diagramm** (Image/Video/Carousel/Collection pro Akteur)
-- **Pro Akteur** ein `details class="skill"`-Block mit:
+- **Pro Akteur** ein `details class="dim"`-Block mit:
   - Page-Info und Match-Konfidenz
   - Aktivitätsstatus + Volumen
   - Plattform-Verteilung (kleine Balken)

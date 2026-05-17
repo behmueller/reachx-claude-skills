@@ -255,6 +255,11 @@ Body strukturiert nach:
 
 ### Schritt 8: HTML-Report `reports/05-branchenportale.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Lies `reports/_shell.html` aus Drive und baue einen Bundle-Report:
 
 - `{{TITLE}}` → `Branchenportal-Recherche · KUNDE`
@@ -269,7 +274,7 @@ Lies `reports/_shell.html` aus Drive und baue einen Bundle-Report:
     - `gelistet_ruhend` → gelbes Badge mit Score + Review-Count
     - `nicht_gelistet` → graues Badge "—"
     - `unklar` → orangefarbenes Badge "?"
-  - **Pro Portal** ein `details class="skill"`-Block, default zugeklappt, mit detaillierter Akteurs-Liste (Profil-URL, Score, Reviews, letzte Aktivität)
+  - **Pro Portal** ein `details class="dim"`-Block, default zugeklappt, mit detaillierter Akteurs-Liste (Profil-URL, Score, Reviews, letzte Aktivität)
   - **Auffälligkeiten-Block** prominent als `.suggestion`-Block: Top 3-5 strategische Beobachtungen mit klarer Handlungs-Empfehlung
   - **Lücken-Block** unten: Tasks, die nicht erfolgreich abgeschlossen werden konnten — als To-Do für den Strategen
 - `{{FOOTER_TEXT}}` → `MTA · KUNDE · Branchenportal-Recherche`

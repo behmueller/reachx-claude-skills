@@ -7,6 +7,8 @@ description: Erhebt für den Kunden den first-party-SEO-Status-Quo direkt aus de
 
 **Erster SEO-Skill in Stufe 3** (Kanal-Audits), läuft VOR `03-01-seo-sichtbarkeit-und-rankings`. Erhebt aus der **echten Google-Search-Console-Property des Kunden** über den dedizierten **search-console-MCP** (saurabhsharma2u/search-console-mcp, OAuth gegen einen zentralen Agentur-Account, kostenlos, keine Ahrefs-Units) den first-party-SEO-Status-Quo: Klicks, Impressionen, CTR, Position — die einzigen echten Performance-Daten, die der Kunde tatsächlich aus Google bekommt.
 
+Dieser Skill ist Teil des **First-Party-Blocks** der MTA (GSC + GA4 + Google Ads — `03-04`, `03-18`, `03-17`), der gemeinsam die Realitäts-Basis legt, **bevor** Third-Party-Tools (Sistrix/Ahrefs-Index) und die Wettbewerbs-Audits laufen. Keine harte Abhängigkeit zu den beiden anderen First-Party-Skills — der Block wird aber bewusst zusammen und früh abgearbeitet.
+
 Warum first-party VOR third-party-Tools (Sistrix, Ahrefs-Index)?
 
 - **Sistrix/Ahrefs-Index** = modellierte Sichtbarkeit, basierend auf gecrawlten Top-N-Keywords. Gut für Wettbewerbs-Vergleich, aber filtert Long-Tail und Brand-Traffic.
@@ -77,6 +79,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - **GSC-Property des Kunden ist dem OAuth-Account zugänglich** (entweder direkt freigegeben, oder der zentrale Agentur-Account hat als `siteFullUser`/`siteRestrictedUser`/`siteOwner` Zugriff). Skill prüft das automatisch über `sites_list`.
 
 **Wichtig:** Wenn weder MCP noch GSC-Zugang da ist → **freundlicher Skip mit Anleitung, KEIN Abbruch.** Der MTA-Workflow läuft mit `03-01-seo-sichtbarkeit-und-rankings` (Sistrix-basiert) und weiteren SEO-Skills nahtlos weiter. GSC ist ein **Bonus**, kein Blocker.
+
+**Reihenfolge:** Dieser Skill läuft bewusst **früh** — nach den Setup-Skills (`01-01`, `01-02`, `02-01`) und idealerweise **vor `02-02-wettbewerber-identifikation`**. Grund: Die First-Party-Outputs sind der Realitäts-Anker — die Top-Queries aus `gsc-performance.csv` schärfen die Wettbewerber-Identifikation mit echten Seed-Keywords statt mit geratenen Branchen-Begriffen. Harte Voraussetzung bleibt allein `01-01-mta-projekt-init`; alles andere ist Empfehlung, kein Blocker.
 
 ## Ablauf
 
@@ -413,6 +417,11 @@ Jede Auffälligkeit mit Typ, Titel, Beschreibung, Relevanz (`hoch`/`mittel`/`nie
 
 ### Schritt 9: HTML-Report `reports/05a-gsc-first-party.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html` bauen. Nummer `05a` (vor `06-seo-sichtbarkeit.html`, damit GSC im Dashboard sichtbar vor Sistrix steht — `05a` statt `05` damit nicht mit anderen Stufe-3-Audits kollidiert).
 
 Platzhalter:
@@ -474,7 +483,7 @@ Aktualisiere `reports/index.html`:
 - "Erledigt"-Sektion erweitern um `03-04-seo-first-party-gsc`
 - Reports-Liste um `05a-gsc-first-party.html` erweitern
 - Stufe 3 als "in Arbeit" markieren
-- "Nächster empfohlener Schritt": `03-01-seo-sichtbarkeit-und-rankings` (komplementiert mit Sistrix-Wettbewerbs-Sicht)
+- "Nächster empfohlener Schritt": die übrigen First-Party-Skills `03-18-web-analytics-ga4` und `03-17-sea-first-party-google-ads` (First-Party-Block zusammen abarbeiten), danach `02-02-wettbewerber-identifikation` (nutzt die First-Party-Outputs als Seed-Keywords)
 
 ### Schritt 11: `status.md` aktualisieren
 
@@ -491,7 +500,7 @@ Nach Regeln aus `contracts.md` Abschnitt 3:
 
 - `03-04-seo-first-party-gsc` in `schritte_done`
 - Eigene Sektion in "✓ Erledigt" mit Datum, Outputs, kompakten Highlight-Numbers (Klicks/90T, QoQ-Delta, Quick-Win-Anzahl)
-- `naechster_empfohlen`: `03-01-seo-sichtbarkeit-und-rankings`
+- `naechster_empfohlen`: zuerst die noch nicht gelaufenen First-Party-Skills (`03-18-web-analytics-ga4`, dann `03-17-sea-first-party-google-ads` — der First-Party-Block wird zusammen abgearbeitet), danach `02-02-wettbewerber-identifikation` mit dem Hinweis, dass es die First-Party-Outputs (GSC-Top-Queries als Seed-Keywords) nutzt. `03-01-seo-sichtbarkeit-und-rankings` und die übrigen Audits nachgelagert, sobald die Wettbewerber stehen.
 - Bei `traffic_trend_negativ` oder `cannibalization_haeufig`: explizit als Hinweis "in MTA-Story als Schwerpunkt einplanen"
 
 ### Schritt 12: Standard-Schlussformat im Chat
@@ -526,9 +535,10 @@ Gefundene Hebel:
 - (1-3 Punkte aus der Auffälligkeiten-Liste, sortiert nach Relevanz)
 
 Nächste Schritte:
-1. 03-01-seo-sichtbarkeit-und-rankings — Sistrix-Sichtbarkeit ergänzt die first-party-Sicht um Wettbewerbs-Vergleich
-2. (parallel möglich) 03-14-web-tech-und-tracking — Tech/Tracking als nächste Audit-Achse
-3. (parallel möglich) 03-05-sea-google-ads-check — Paid-Search-Aktivität in derselben Branche
+1. 03-18-web-analytics-ga4 — nächster First-Party-Skill, der Block wird zusammen abgearbeitet
+2. 03-17-sea-first-party-google-ads — letzter First-Party-Skill, vervollständigt die Realitäts-Basis
+3. danach 02-02-wettbewerber-identifikation — nutzt die First-Party-Outputs (GSC-Top-Queries als echte Seed-Keywords) zur Schärfung der Wettbewerber-Recherche
+4. (danach / sobald die Wettbewerber stehen) 03-01-seo-sichtbarkeit-und-rankings — Sistrix-Sichtbarkeit ergänzt die first-party-Sicht um Wettbewerbs-Vergleich
 
 Sag mir, welcher als nächster.
 ```

@@ -363,12 +363,17 @@ Lokal generieren, dann `drive.py upsert-text "$AUDITS_ID" "content-inventur.md" 
 
 ### Schritt B.11: HTML-Report `reports/13-content-inventur.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 `_shell.html` aus Drive (`find_by_name(REPORTS_ID, "_shell.html")` → `read_text`) als Basis nehmen, Platzhalter füllen, dann via `drive.py upsert-text "$REPORTS_ID" "13-content-inventur.html" /tmp/report.html "text/html"` hochladen. Aus `reports/_shell.html`:
 
 - Stat-Strip oben: Akteure-Anzahl, Pages gesamt, größter Cluster, Anzahl Content-Lücken
 - Sticky-TOC zu allen Akteurs-Sektionen plus Lücken-Sektion plus Auffälligkeiten
 - **Page-Typ-Heatmap**: Akteur × Page-Typ als Tabelle mit Farb-Intensität nach %-Anteil
-- **Pro Akteur** ein `<details class="skill">`-Block mit Page-Count, Cluster-Tabelle, Top-Themen (falls full)
+- **Pro Akteur** ein `<details class="dim">`-Block mit Page-Count, Cluster-Tabelle, Top-Themen (falls full)
 - **Content-Lücken-Block** prominent als `.suggestion` — die strategisch wichtigsten Beobachtungen
 - **Auffälligkeiten-Block** mit Handlungs-Empfehlungen
 - Footer

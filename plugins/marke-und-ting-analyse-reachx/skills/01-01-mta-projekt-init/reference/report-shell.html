@@ -217,36 +217,13 @@
 <body>
 
 <!--
-  CSS-KLASSEN-ÜBERSICHT FÜR SKILL-AUTOREN
-  =======================================
-  Verfügbar im {{MAIN_CONTENT}}-Bereich:
-
-  STRUKTUR
-  - <section> + <div class="section-heading"><p class="label">XX — Phase</p><h2>Titel</h2></div>
-  - <nav class="toc"> mit <strong>-Label und <a>-Quicklinks (sticky am Top)
-  - <div class="summary-card"> für hervorgehobene Zusammenfassungen
-  - <div class="suggestion"><p class="label">Empfehlung</p>…</div>
-
-  TABELLEN
-  - <table class="data"> für normale Daten-Tabellen
-  - <table class="ratings"> für Bewertungs-Tabellen mit fetter ersten Spalte
-
-  KARTEN / EXPANDABLE
-  - <details class="dim" data-rating="stark|mittel|schwach"> mit <summary> + <div class="body">
-
-  BADGES
-  - <span class="badge stark|mittel|schwach"> für Audit-Ratings
-  - <span class="badge vorhanden|in-arbeit|geplant|neutral"> für Skill-Status
-
-  WORKFLOW / GRID
-  - <div class="workflow-card"><div class="workflow-steps"><div class="step"><span class="num">01</span>
-    <div class="ttl">…</div><div class="desc">…</div></div>…</div></div>
-
-  TOP-N LISTE
-  - <ol class="top3"><li><strong>Headline</strong> — Text</li>…</ol>
-
-  STATS
-  - <div class="stat-strip"><div class="stat"><span class="num">23</span><span class="lbl">Label</span></div>…</div>
+  REPORT-MARKUP — kanonische Quelle: report-bausteine.md
+  ======================================================
+  {{MAIN_CONTENT}} ausschliesslich aus den Bausteinen in
+  01-01-mta-projekt-init/reference/report-bausteine.md zusammensetzen
+  (fertiges Copy-Paste-Markup je Komponente). Keine eigenen CSS-Klassen,
+  kein inline-style, dieser <style>-Block bleibt unveraendert.
+  Vor dem Upload pruefen: scripts/validate-report.py <report> --shell
 -->
 
 <header class="hero">

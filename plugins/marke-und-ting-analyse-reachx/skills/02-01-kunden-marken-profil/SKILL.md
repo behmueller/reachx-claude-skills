@@ -245,6 +245,11 @@ Wenn kein Briefing vorhanden: Abweichungs-Analyse überspringen, Hinweis im Schl
 
 ### Schritt 11: HTML-Report erzeugen
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Lies `reports/_shell.html` aus Drive und erzeuge daraus `02-kunde.html` mit:
 
 - `{{TITLE}}` → `Marken-Profil · <Kunde>`
@@ -286,7 +291,7 @@ Nach Regeln aus `contracts.md` Abschnitt 3:
 
 - `02-01-kunden-marken-profil` in `schritte_done`
 - Eigene Sektion in "✓ Erledigt"
-- `naechster_empfohlen`: `02-02-wettbewerber-identifikation` (logischer Folge-Schritt)
+- `naechster_empfohlen`: der First-Party-Block — `03-04-seo-first-party-gsc`, `03-18-web-analytics-ga4`, `03-17-sea-first-party-google-ads` — und **danach** `02-02-wettbewerber-identifikation` (das die First-Party-Outputs nutzt, um Seed-Keywords und Wettbewerber-Kandidaten datenbasiert statt geraten abzuleiten)
 - Wenn Abweichungen mit Priorität "hoch" gefunden wurden: zusätzlicher Hinweis im Body, dass das Thema Strategie-relevant ist
 
 ### Schritt 14: Standard-Schlussformat im Chat
@@ -311,8 +316,10 @@ Abweichungen:     <X hoch, Y mittel, Z niedrig>
 - <Top-2-Abweichungen>
 
 Nächste Schritte:
-1. 02-02-wettbewerber-identifikation — Wettbewerber-Liste finden, dann profilieren (empfohlen)
-2. (parallel möglich) 03-01-seo-sichtbarkeit-und-rankings — SEO-Status Quo, wenn Sistrix-Zugang da ist
+1. 03-04-seo-first-party-gsc — First-Party-Block starten: echte GSC-Klick-Daten des Kunden
+2. 03-18-web-analytics-ga4 — First-Party-Block: echte GA4-Nutzungs- und Referral-Daten
+3. 03-17-sea-first-party-google-ads — First-Party-Block: echte Google-Ads-Daten des Kunden
+4. danach 02-02-wettbewerber-identifikation — Wettbewerber-Liste finden, dann profilieren; nutzt die First-Party-Outputs (GSC-Top-Queries als Seed-Keywords, GA4-Referral-Domains als Akteurs-Kandidaten) für datenbasierte statt geratene Recherche
 
 Sag mir, welcher als nächster.
 ```

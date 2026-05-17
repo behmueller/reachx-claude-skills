@@ -387,6 +387,8 @@ Fasse zusammen:
 
 ### HTML-Report speichern (Dual-Mode)
 
+**Validierung — Pflicht:** Den fertigen Report vor dem Upload prüfen: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad>` (ohne `--shell`, da dieser Skill den im Skill beschriebenen HTML-Aufbau nutzt). Exit-Code 0 → ausliefern. Exit-Code 1 → nicht ausliefern, korrigieren, erneut validieren. Keine CSS-Klassen verwenden, die nicht im `<style>`-Block des Templates definiert sind.
+
 Falls der Combined Output zusätzlich als HTML-Diagnose-Report archiviert werden soll:
 
 - **Dateiname**: `deck-qa-pyramid-{kunden-slug}-{datum}.html`

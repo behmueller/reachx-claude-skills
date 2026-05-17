@@ -438,6 +438,11 @@ Für reproduzierbare Visualisierung und spätere Skill-Re-Runs. `akteur_typ` ist
 
 ### Schritt B.11: HTML-Report `reports/X-positionierung.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Numerisches Präfix aus `status.md` ableiten (nächste freie Nummer ab Reports-Liste). `_shell.html` aus Drive lesen (`find_by_name(REPORTS_ID, "_shell.html")` → `read_text`), Platzhalter füllen, dann `drive.py upsert-text "$REPORTS_ID" "X-positionierung.html" ... "text/html"`. Aus `reports/_shell.html`:
 
 - Stat-Strip oben: Anzahl Akteure, Anzahl Markt-Cluster, Anzahl White-Space-Quadranten, Anzahl Auffälligkeiten

@@ -366,12 +366,17 @@ Body strukturiert nach:
 
 ### Schritt B.8: HTML-Report `reports/08-seo-cluster.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html`:
 
 - Stat-Strip oben: Anzahl Cluster, Top-Score-Cluster, Anzahl Sweet-Spot-Cluster, Anzahl Gap-Cluster
 - Sticky-TOC zu allen Cluster-Sektionen plus Auffälligkeiten
 - **Cluster-Heatmap** (Volumen × Difficulty als Bubble-Visualisierung — Bubble-Größe = Cluster-Volumen, Position = Median-Difficulty, Farbe = Kunden-Abdeckung)
-- **Pro Cluster** ein `details class="skill"`-Block mit Cluster-Definition, Top-Keywords-Tabelle, Funnel-Mini-Verteilung
+- **Pro Cluster** ein `details class="dim"`-Block mit Cluster-Definition, Top-Keywords-Tabelle, Funnel-Mini-Verteilung
 - **Intent/Funnel-Verteilungs-Block** mit ASCII- oder SVG-Visualisierung
 - **Auffälligkeiten-Block** als `.suggestion`-Block — die strategisch wichtigsten Beobachtungen mit Handlungs-Empfehlungen
 - Footer

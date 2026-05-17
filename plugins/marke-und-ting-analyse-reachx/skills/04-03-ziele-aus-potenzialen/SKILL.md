@@ -410,12 +410,17 @@ Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "ziele.md" /tmp/ziel
 
 ### Schritt B.10: HTML-Report
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Lade `_shell.html` aus Drive (`find_by_name(REPORTS_ID, "_shell.html")` → `read_text`), Platzhalter füllen, dann via `drive.py upsert-text "$REPORTS_ID" "X-ziele.html" /tmp/report.html "text/html"` nach Drive. Aus `reports/_shell.html`:
 
 - Stat-Strip oben: Aggregat-Bandbreite (konservativ-ambitioniert EUR pro Jahr), Top-Kanal-Beitrag, Annahmen-Anzahl, Konfidenz-Quote
 - Sticky-TOC zu Aggregat, Pro-Kanal-Blöcke, Annahmen, Auffälligkeiten
 - **Szenario-Karten** (drei nebeneinander: konservativ / realistisch / ambitioniert) mit Umsatz-Beitrag, Traffic, Leads, Orders pro Szenario
-- **Pro Kanal** ein `details class="skill"`-Block mit Szenario-Tabelle, Annahmen-Verweis
+- **Pro Kanal** ein `details class="dim"`-Block mit Szenario-Tabelle, Annahmen-Verweis
 - **Annahmen-Tabelle** mit Quelle und Konfidenz pro Annahme
 - **Plausibilitäts-Check** als prominente Karte (grün bei Übereinstimmung, gelb bei niedrig, rot bei unrealistisch hoch)
 - **Auffälligkeiten** als `.suggestion`-Block

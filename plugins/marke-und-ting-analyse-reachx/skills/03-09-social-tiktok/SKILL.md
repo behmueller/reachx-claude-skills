@@ -269,6 +269,11 @@ Detaillierte Spalten-Definition in `reference/tiktok-output-schema.md`.
 
 ### Schritt 11: HTML-Report `reports/16-tiktok-wettbewerb.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 Aus `reports/_shell.html` einen Bundle-Report bauen:
 
 - `{{TITLE}}` → `TikTok-Wettbewerb · KUNDE`
@@ -280,7 +285,7 @@ Aus `reports/_shell.html` einen Bundle-Report bauen:
   - **Stat-Strip**: Anzahl Akteure mit Profil, Anzahl Akteure ohne Profil, Gesamt-Video-Sample, Branchen-Median-Engagement-Rate
   - **Sticky-TOC**: Übersicht, pro Akteur, Aggregate, Auffälligkeiten, Lücken
   - **Profil-Matrix**: HTML-Tabelle mit Akteuren als Zeilen, Spalten: Follower, Likes-Gesamt, Videos im Sample, Posting-Frequenz/Woche, Engagement-Rate-Median
-  - **Pro Akteur** ein `details class="skill"`-Block, default zugeklappt: Profil-Daten, Top-3-Videos (mit Embed-Link oder Thumbnail-Hinweis), Content-Pillars, TikTok-Spezifika
+  - **Pro Akteur** ein `details class="dim"`-Block, default zugeklappt: Profil-Daten, Top-3-Videos (mit Embed-Link oder Thumbnail-Hinweis), Content-Pillars, TikTok-Spezifika
   - **Aggregate-Sektion**: Branchen-Hashtags, Branchen-Sounds, Median-ER als visuelle Balken
   - **Auffälligkeiten-Block** prominent als `.suggestion`-Block, eine Karte pro Auffälligkeit mit klarer Handlungs-Empfehlung
   - **Lücken-Block** unten: nicht-gefundene Profile, Scrape-Fehler

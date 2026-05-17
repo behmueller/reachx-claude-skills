@@ -444,12 +444,17 @@ Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "forecast.md" /tmp/f
 
 ### Schritt B.9: HTML-Report `reports/X-forecast.html`
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 `_shell.html` aus Drive lesen, Platzhalter füllen, dann via `drive.py upsert-text "$REPORTS_ID" "X-forecast.html" /tmp/report.html "text/html"`. Aus `reports/_shell.html`:
 
 - Stat-Strip oben: 12-Monats-Aggregat real (EUR), Bandbreite (worst-best), Top-Kanal-Beitrag, Steady-State-Monat
 - Sticky-TOC zu Aggregat-Chart, Pro-Kanal-Blöcke, Annahmen, Auffälligkeiten
 - **Aggregat-Chart** als inline-SVG: drei Szenarien-Linien (worst/real/best) über 12 Monate, Y-Achse Umsatz
-- **Pro Kanal** ein `details class="skill"`-Block mit Mini-Sparkline (SVG inline, Höhe ~40px, alle drei Szenarien als dünne Linien)
+- **Pro Kanal** ein `details class="dim"`-Block mit Mini-Sparkline (SVG inline, Höhe ~40px, alle drei Szenarien als dünne Linien)
 - **Kanal-Verteilungs-Donut** (im Real-Szenario, Anteil am 12-Monats-Aggregat-Umsatz) — als SVG inline
 - **Annahmen-Tabelle** mit Quellen-Spalte
 - **Plausibilitäts-Check** als prominente Karte (grün/gelb/rot je nach Ergebnis)

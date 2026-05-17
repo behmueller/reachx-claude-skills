@@ -243,6 +243,11 @@ Lies das vollständige `status.md`-Schema aus `reference/contracts.md`.
 
 ### Schritt 9: HTML-Dashboard und Shell hochladen
 
+**Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
+
+- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
+- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+
 1. **`_shell.html` hochladen:** Lade `reference/report-shell.html` als `_shell.html` in den `reports/`-Sub-Folder. Diese Datei ist das Template, das alle Folge-Skills für ihre eigenen HTML-Reports nutzen.
 
    ```bash
