@@ -159,7 +159,7 @@ Bei Multi-Standort: eine Zeile pro Akteur × Standort plus eine Akteur-Aggregat-
 
 Spalten:
 
-```
+```csv
 akteur_slug,akteur_name,ist_kunde,kategorie,standort_id,standort_stadt,
 lvs,lvs_rang,block_a_score,block_b_score,block_c_score,
 top_3_quote_prozent,top_10_quote_prozent,
@@ -194,13 +194,13 @@ Pro Akteur (bei Filialen `-<standort>` suffigiert) — siehe `apify-actors.md` A
 
 Roh-Rankings pro Local-Pack-Query. Spalten:
 
-```
+```csv
 standort_id,standort_stadt,keyword_basis,keyword_modifier,keyword_full,
 position,akteur_slug,akteur_name,akteur_rating,akteur_reviews,
 quelle,scrape_datum,pack_eingeblendet
 ```
 
-- `position`: integer 1–10 oder `null` (nicht in Top-10).
+- `position`: integer 1–10 oder leer (CSV: leeres Feld, nicht der String `null`) wenn nicht in Top-10.
 - `pack_eingeblendet`: `true | false` — false-Queries zählen nicht in den Block-A-Nenner.
 - `akteur_slug`: matched gegen Akteur-Set, sonst `unbekannt-<index>` (löst `local_wb_nicht_in_liste` aus).
 

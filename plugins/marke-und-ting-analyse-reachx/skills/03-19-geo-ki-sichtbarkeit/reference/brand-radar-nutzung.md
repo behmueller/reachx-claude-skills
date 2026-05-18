@@ -21,7 +21,7 @@ Zwei-stufiger Check, bevor der Voll-Quantitativ-Modus angenommen wird:
 
 Billiger, kostenloser Test-Call:
 
-```
+```text
 mcp__claude_ai_Ahrefs__subscription-info-limits-and-usage
 ```
 
@@ -42,7 +42,7 @@ Das Ergebnis wird im Schema (Phase A) und im Aggregat-Frontmatter (Phase B) als 
 
 Vor dem ersten echten Aufruf eines Brand-Radar-Tools **immer** das Ahrefs-`doc`-Tool nutzen, um das aktuelle Input-Schema zu holen:
 
-```
+```text
 mcp__claude_ai_Ahrefs__doc  →  tool: "brand-radar-mentions-overview"
 ```
 

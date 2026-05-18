@@ -170,7 +170,7 @@ Prüfe, ob `audits/geo-sichtbarkeit-schema.md` bereits auf Drive existiert:
 
 Schema-Datei nach Drive `audits/` schreiben (`upsert-text`), dann **abbrechen** mit:
 
-```
+```text
 Schema für 03-19-geo-ki-sichtbarkeit vorgeschlagen.
 Datei: audits/geo-sichtbarkeit-schema.md (auf Drive)
 Bitte Prompt-Inventar und Akteur-Set reviewen, anpassen, dann status auf `bestaetigt` setzen und Skill erneut aufrufen.
@@ -283,7 +283,7 @@ Pro Auffälligkeit: Typ, Titel, Beschreibung, Relevanz (`hoch`/`mittel`/`niedrig
 
 Spalten (Details in `reference/geo-output-schema.md`):
 
-```
+```text
 prompt_id, prompt_text, prompt_typ, funnel_stufe, engine,
 akteurs_slug, akteurs_typ, akteurs_name,
 sichtbar, nennungs_art, position_in_antwort, antwort_auszug,
@@ -296,7 +296,7 @@ methode, konfidenz, datenstand_iso
 
 Spalten:
 
-```
+```text
 domain, quellen_typ, engine, zitations_anzahl,
 prompts_die_zitieren, gehoert_akteur, datenstand_iso
 ```
@@ -371,7 +371,7 @@ Roh-JSONs gzip-komprimiert nach Drive `assets/raw/`:
 
 ```bash
 RAW_ID=$(python3 "$DRIVE_PY" find-or-create-folder "$ASSETS_ID" "raw")
-for f in ~/.cache/reachx-mta/<slug>/raw/geo-*.json; do
+for f in ~/.cache/reachx-mta/"$SLUG"/raw/geo-*.json; do
   gzip -k "$f"
   python3 "$DRIVE_PY" upsert-text "$RAW_ID" "$(basename "$f").gz" "$f.gz" "application/gzip"
 done
@@ -391,7 +391,7 @@ HTML-Report (nach Validierung) → `REPORTS_ID`.
 
 **Phase A (Schema-Vorschlag):**
 
-```
+```text
 ⏸ 03-19-geo-ki-sichtbarkeit — Phase A abgeschlossen.
 
 Schema-Vorschlag erstellt: audits/geo-sichtbarkeit-schema.md (auf Drive)
@@ -407,7 +407,7 @@ Status aktualisiert in: status.md
 
 **Phase B (Vollauf):**
 
-```
+```text
 ✓ 03-19-geo-ki-sichtbarkeit abgeschlossen.
 Modus: <Voll-Quantitativ | Voll-Qualitativ | Kunden-only>
 

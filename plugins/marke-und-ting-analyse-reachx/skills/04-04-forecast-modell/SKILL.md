@@ -565,7 +565,7 @@ Top strategische Beobachtungen:
 
 Nächste Schritte:
 1. 04-05-90-tage-plan — operationalisiert die Top-Kanäle aus dem Forecast
-2. (parallel möglich) 04-06-retainer-kalkulator — braucht Spend-Annahmen aus dem Forecast
+2. 04-06-retainer-kalkulator — braucht Spend-Annahmen aus dem Forecast; läuft nach 04-05 (Synthese-Sequenz: 04-03 → 04-04 → 04-05 → 04-06)
 3. (ergänzend, optional) 04-07-segment-potenzial-matrix — segment-zentrierte Zweitsynthese, wenn der Kunde mehrere Leistungs-/Zielgruppen-Segmente hat
 
 Sag mir, welcher als nächster.

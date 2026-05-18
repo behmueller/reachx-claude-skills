@@ -15,6 +15,7 @@ UTF-8, mit Header-Zeile, Komma-getrennt, doppelte Anführungszeichen für Werte 
 keyword,keyword_normalisiert,sistrix_volumen,ahrefs_volumen,difficulty,ahrefs_cpc,
 primaer_cluster,sekundaer_cluster,cluster_typ,intent_typ,funnel_stufe,
 kategorisierung_quelle,kategorisierungs_konfidenz,
+governance_blockiert,
 gap_zu_kunde,gap_typ,gap_score,
 ranking_kunde_position,ranking_kunde_url,ranking_top_wb_slug,ranking_top_wb_position,
 quellen_pool,seed_keyword,
@@ -36,6 +37,7 @@ datenstand_iso
 | `funnel_stufe` | enum | ja | `TOFU | MOFU | BOFU` |
 | `kategorisierung_quelle` | enum | ja | `branded_match | anker_token_match | ahrefs_parent_topic | manual_override | fallback_generic` |
 | `kategorisierungs_konfidenz` | enum | ja | `hoch | mittel | niedrig` |
+| `governance_blockiert` | true / false | ja | `true` wenn der Cluster laut Briefing aus regulatorischen oder strategischen Gründen nicht beworben werden soll (`Geparkte Cluster`-Block); `false` für alle übrigen Cluster |
 | `gap_zu_kunde` | bool | ja | aus Pool-CSV |
 | `gap_typ` | enum / leer | nein | aus Pool-CSV |
 | `gap_score` | float / leer | nein | aus Pool-CSV |
@@ -249,7 +251,7 @@ Aus den Cluster-Aggregaten ergeben sich klare Argumente für:
 
 Vor dem Schreiben prüft der Skill:
 
-1. Jede Zeile in der CSV hat alle Pflicht-Spalten gefüllt
+1. Jede Zeile in der CSV hat alle Pflicht-Spalten gefüllt (inkl. `governance_blockiert`)
 2. `primaer_cluster` existiert in der Schema-Cluster-Liste
 3. `sekundaer_cluster` (wenn gefüllt): alle Cluster existieren im Schema
 4. `cluster_typ` matched mit dem `typ`-Feld des `primaer_cluster` im Schema

@@ -16,7 +16,7 @@ Der LVS ist eine **vom Skill abgeleitete Heuristik** (`schaetzung_skill`), keine
 
 ## Gesamt-Formel
 
-```
+```text
 LVS = (A_score × gA + B_score × gB + C_score × gC) / 100
 ```
 
@@ -39,7 +39,7 @@ Eingang pro Akteur (aggregiert über alle Standort × Keyword-Queries, in denen 
 - `top3_quote` = Anteil Queries mit Akteur-Position 1–3
 - `top10_quote` = Anteil Queries mit Akteur-Position 1–10
 
-```
+```text
 A_score = clamp_0_100( 100 × (0.70 × top3_quote + 0.30 × top10_quote) )
 ```
 
@@ -58,8 +58,10 @@ Drei Teil-Größen, je auf 0–100 normiert, dann gewichtet gemittelt.
 
 Eine einfache lineare Skala würde einen Akteur mit 2000 Reviews alles erschlagen lassen. Darum log-Skala gegen das **Pool-Maximum**:
 
-```
-vol_score = 100 × log(1 + reviews_gesamt) / log(1 + reviews_gesamt_pool_max)
+```text
+# Guard: wenn alle Akteure 0 Reviews haben, ist reviews_gesamt_pool_max = 0 → vol_score = 0
+vol_score = 0  if reviews_gesamt_pool_max == 0  else
+            100 × log(1 + reviews_gesamt) / log(1 + reviews_gesamt_pool_max)
 ```
 
 - `reviews_gesamt` = GMB-Gesamt-Review-Zahl des Akteurs (GMB-only, keine Multi-Plattform-Summe).
@@ -70,7 +72,7 @@ vol_score = 100 × log(1 + reviews_gesamt) / log(1 + reviews_gesamt_pool_max)
 
 Aus den vier kumulativen Buckets (`velocity_1m`, `velocity_3m`, `velocity_6m`, `velocity_12m` — siehe Abschnitt "Review-Velocity-Berechnung"). Jüngere Aktivität zählt stärker. Es wird eine **gewichtete Monats-Rate** gebildet:
 
-```
+```text
 # Inkrementelle (nicht-kumulative) Bucket-Werte:
 inc_1m  = velocity_1m
 inc_2_3 = velocity_3m  - velocity_1m      # Reviews aus Monat 2–3
@@ -93,7 +95,7 @@ vel_score = clamp_0_100( 100 × vel_rate / vel_rate_pool_max )
 
 ### B.3 — Durchschnitts-Rating
 
-```
+```text
 rating_score = clamp_0_100( (avg_rating - 3.0) / (5.0 - 3.0) × 100 )
 ```
 
@@ -101,7 +103,7 @@ Unter 3,0 Sterne → 0. Die Skala startet bei 3,0, weil Ratings im DACH-GMB-Raum
 
 ### B.4 — Block-B-Aggregat
 
-```
+```text
 B_score = 0.35 × vol_score + 0.40 × vel_score + 0.25 × rating_score
 ```
 
@@ -122,7 +124,7 @@ Sechs Teil-Kriterien, je 0–100, dann gewichtet gemittelt. Alle Schwellen sind 
 | `antwort_score` | `antwort_quote_prozent` direkt als 0–100 (Anteil Reviews mit Inhaber-Antwort × 100). |
 | `vollst_score` | Vier Checks à 25 Punkte: Telefon vorhanden · Website vorhanden · Öffnungszeiten vorhanden · Beschreibung ≥ 100 Zeichen. |
 
-```
+```text
 C_score = (0.15 × kat_score
          + 0.10 × attr_score
          + 0.20 × foto_score
@@ -139,7 +141,7 @@ Service-Area-Business: `foto_score` und `vollst_score` werden unverändert berec
 
 Aus dem Reviews-Sample (jedes Review trägt ein Datum). Stichtag ist das Lauf-Datum.
 
-```
+```text
 velocity_1m  = Anzahl Reviews mit Datum ≥ heute − 30 Tage
 velocity_3m  = Anzahl Reviews mit Datum ≥ heute − 90 Tage
 velocity_6m  = Anzahl Reviews mit Datum ≥ heute − 180 Tage
@@ -152,7 +154,7 @@ Die Buckets sind **kumulativ** — `velocity_3m` schließt `velocity_1m` ein. Pe
 
 Vergleicht die jüngste Quartals-Rate mit der davorliegenden:
 
-```
+```text
 rate_jung = velocity_3m / 3                       # Reviews/Monat, Monat 1–3
 rate_alt  = (velocity_6m − velocity_3m) / 3        # Reviews/Monat, Monat 4–6
 
@@ -191,7 +193,7 @@ Fallback (Branche nicht gelistet): Default 40 / 35 / 25 — Hinweis im Schema-Bo
 
 ## Rundung und Hilfsfunktion
 
-```
+```text
 clamp_0_100(x) = max(0, min(100, x))
 ```
 

@@ -14,7 +14,7 @@ UTF-8, mit Header-Zeile, Komma-getrennt, doppelte Anführungszeichen für Werte 
 ### Spalten (in fester Reihenfolge)
 
 ```
-keyword,keyword_normalisiert,sistrix_volumen,ahrefs_volumen,volumen_diskrepanz,difficulty,ahrefs_cpc,ahrefs_parent_topic,ahrefs_is_branded,ahrefs_is_transactional,ahrefs_is_commercial,ahrefs_is_informational,quellen,seed_keyword,intent_hypothese,intent_quelle,gap_zu_kunde,gap_typ,gap_score,branchen_basis_luecke,ranking_kunde_position,ranking_kunde_url,ranking_top_wb_slug,ranking_top_wb_position,ranking_top_wb_url,branded_filter_grund,branded_unscharf,aggregator_filter_grund,lookup_fehlgeschlagen,datenstand_iso
+keyword,keyword_normalisiert,sistrix_volumen,ahrefs_volumen,volumen_diskrepanz,difficulty,ahrefs_cpc,ahrefs_parent_topic,ahrefs_is_branded,ahrefs_is_transactional,ahrefs_is_commercial,ahrefs_is_informational,quellen,seed_keyword,intent_hypothese,intent_quelle,keyword_geo_typ,gap_zu_kunde,gap_typ,gap_score,branchen_basis_luecke,ranking_kunde_position,ranking_kunde_url,ranking_top_wb_slug,ranking_top_wb_position,ranking_top_wb_url,branded_filter_grund,branded_unscharf,aggregator_filter_grund,lookup_fehlgeschlagen,datenstand_iso
 ```
 
 | Spalte | Datentyp | Pflicht | Beschreibung |
@@ -35,6 +35,7 @@ keyword,keyword_normalisiert,sistrix_volumen,ahrefs_volumen,volumen_diskrepanz,d
 | `seed_keyword` | string oder leer | nein | bei Long-Tail-Variationen: aus welchem Seed-Keyword expandiert |
 | `intent_hypothese` | enum | ja | `branded | transactional | commercial | informational | navigational | unklar` |
 | `intent_quelle` | enum | ja | **`ahrefs_flags`** (primary, aus Ahrefs `is_*`-Flags) oder **`heuristik`** (fallback, wenn Ahrefs-Daten fehlen) oder **`manuelle_kuration`** (reserviert für Folge-Skill `03-03-seo-keyword-kategorisierung`) |
+| `keyword_geo_typ` | enum | ja | `lokal` (Keyword löst Local Pack aus oder enthält Orts-Zusatz), `ueberregional` (kein Local Pack, rein organisch), `unklar` (kein SERP-Check durchgeführt oder Datenlage eindeutig) |
 | `gap_zu_kunde` | true / false | ja | hat der Kunde eine starke Position (≤ 30) auf diesem Keyword? false = Gap |
 | `gap_typ` | enum oder leer | nein | `hart` (Kunde nicht in Top-100), `weich` (Kunde > 30, WB ≤ 10), leer wenn kein Gap |
 | `gap_score` | float oder leer | nein | Score-Wert für Gap-Priorisierung — Berechnung siehe `wettbewerbs-gap-logik.md` |
@@ -307,7 +308,7 @@ Aus den Ahrefs-Parent-Topics und der Intent-Verteilung zeichnen sich folgende Cl
 
 Vor dem Schreiben prüft der Skill:
 
-1. Jede Zeile in der CSV hat `keyword`, `keyword_normalisiert`, `quellen`, `intent_hypothese`, `intent_quelle`, `gap_zu_kunde`, `datenstand_iso`
+1. Jede Zeile in der CSV hat `keyword`, `keyword_normalisiert`, `quellen`, `intent_hypothese`, `intent_quelle`, `keyword_geo_typ`, `gap_zu_kunde`, `datenstand_iso`
 2. `gap_zu_kunde: true` → `gap_typ` muss `hart` oder `weich` sein
 3. `gap_zu_kunde: false` → `gap_typ` muss leer sein
 4. `seed_keyword` darf nur gefüllt sein, wenn `quellen` ein `*_longtail`-, `*_suggestions`-, `ahrefs_matching`- oder `ahrefs_related`-Element enthält

@@ -94,7 +94,7 @@ Vor dem ersten echten Datenabruf beide Pflicht-MCPs mit einem billigen Test-Call
 
 Bei Fehler → Abbruch mit Reconnect-Hinweis statt erstem teurem Daten-Call:
 
-```
+```text
 ✗ Pflicht-MCP 'Sistrix' nicht erreichbar.
 Bitte in /mcp verbinden (ggf. neu authentifizieren) und Skill erneut aufrufen.
 ```
@@ -134,7 +134,7 @@ Lokaler Arbeits-Cache für Zwischenergebnisse (Sistrix-/Ahrefs-Roh-JSONs, CSV-Ge
 
 Folge `contracts.md` Abschnitt 1. Wenn `meta.json` aus Schritt 0 fehlt oder nicht lesbar:
 
-```
+```text
 ✗ Kein MTA-Projekt gefunden.
 Bitte zuerst 01-01-mta-projekt-init aufrufen.
 ```
@@ -150,7 +150,7 @@ fi
 
 Wenn vorhanden mit `status: bestaetigt` → Modus **Voll** (Kunde + alle WBs). Wenn vorhanden mit `status: vorgeschlagen` → Warnung:
 
-```
+```text
 ⏸ wettbewerber/liste.md hat status: vorgeschlagen.
 Empfehlung: erst Liste bestätigen, dann diesen Skill laufen lassen, damit der Vergleich korrekt ist.
 
@@ -276,7 +276,7 @@ Schreibe alle Sistrix-erfassten Keywords aller Akteure in eine flache CSV. Sistr
 
 Spalten (siehe `reference/ausgabe-schema.md` Abschnitt "CSV-Schema"):
 
-```
+```text
 akteurs_slug, akteurs_typ, akteurs_name, domain, keyword, position, suchvolumen, ranking_url, sistrix_competition, kwid, datenstand_iso, ahrefs_volume, ahrefs_kd, ahrefs_sum_traffic, intent_branded, intent_transactional, intent_commercial, intent_informational
 ```
 
@@ -299,7 +299,7 @@ Parallel-CSV mit Ahrefs-eigenen Top-Keywords pro Akteur. Begründung für separa
 
 Spalten (siehe `reference/ausgabe-schema.md` Abschnitt "Ahrefs-CSV-Schema"):
 
-```
+```text
 akteurs_slug, akteurs_typ, akteurs_name, domain, keyword, ahrefs_volume, ahrefs_kd, best_position, best_position_url, ahrefs_sum_traffic, intent_branded, intent_transactional, intent_commercial, intent_informational, datenstand_iso
 ```
 
@@ -455,7 +455,7 @@ Nach Regeln aus `contracts.md` Abschnitt 3:
 
 ### Schritt 11: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 03-01-seo-sichtbarkeit-und-rankings abgeschlossen.
 Modus: <Voll-Hybrid | Hybrid-Kunden-only | Reduced | Reduced-Kunden-only>
 

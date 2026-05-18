@@ -39,7 +39,7 @@ Jeder Folge-Skill braucht die Drive-Folder-ID der aktiven MTA. Suchreihenfolge:
 
 Pflicht: **Jeder Folge-Skill prüft zuerst, ob `meta.json` im Drive-Folder existiert.** Wenn nicht (z.B. weil der Cache stale ist und der Folder gelöscht wurde), Abbruch mit:
 
-```
+```text
 ✗ Kein gültiger MTA-Folder für '<slug>'.
 Bitte 01-01-mta-projekt-init mit der Drive-URL des MTA-Ordners aufrufen.
 ```
@@ -300,7 +300,7 @@ Beispiel positioniert sich als ...
 
 Jeder Skill schließt im Chat **strikt** mit dieser Struktur:
 
-```
+```text
 ✓ <skill-name> abgeschlossen.
 
 Outputs (auf Drive):
@@ -410,7 +410,7 @@ Skills mit **kundenspezifischer Bewertungs- oder Klassifikations-Logik** müssen
 2. Generiert eine `<output-ordner>/<skill-slug>-schema.md`-Datei mit Vorschlag-Status, **schreibt sie nach Drive**.
 3. Bricht ab, gibt im Chat aus:
 
-```
+```text
 Schema für <skill-name> vorgeschlagen.
 Datei: <relativer pfad zur schema-datei> (auf Drive)
 Bitte reviewen, anpassen, dann Status auf `bestaetigt` setzen und Skill erneut aufrufen.
@@ -546,7 +546,7 @@ Jede `SKILL.md` listet unter `## Voraussetzungen` ihre MCPs getrennt nach:
 
 Bevor ein Skill teure Logik startet, prüft er die Pflicht-MCPs mit **einem billigen Test-Call** (z.B. Sistrix `credits`, Ahrefs `subscription-info`, Apify `search-actors` mit Limit 1). Schlägt er fehl:
 
-```
+```text
 ✗ Pflicht-MCP '<name>' nicht erreichbar.
 Bitte in /mcp verbinden (ggf. neu authentifizieren) und Skill erneut aufrufen.
 Optional fehlend: <liste> → Skill liefe im Reduced-Modus.
@@ -579,7 +579,7 @@ Die Stufe-4-Synthese ist eine **Kette** — jeder Skill liest den Output des Vor
 
 ### Verbindliche Reihenfolge
 
-```
+```text
 04-01-positionierungs-analyse
 04-02-kanal-chancen-analyse
   → 04-03-ziele-aus-potenzialen
@@ -594,7 +594,7 @@ Jeder dieser Skills **darf erst starten, wenn der Vorgänger fertig ist** — ke
 
 Jeder Synthese-Skill prüft zu Beginn, ob seine Pflicht-Inputs existieren — und bei Schema-Inputs zusätzlich `status: bestaetigt`. Fehlt ein Pflicht-Input → **Abbruch mit klarer Meldung**:
 
-```
+```text
 ✗ <skill> kann nicht laufen: <pflicht-input> fehlt (oder status ≠ bestaetigt).
 Bitte zuerst <vorgänger-skill> ausführen.
 ```

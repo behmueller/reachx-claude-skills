@@ -66,9 +66,9 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
   - `wettbewerber/liste.md` mit `status: bestaetigt` (für die Akteure)
 - **Pflicht-MCP: Apify** (für Portal-spezifische Scraper). Credential-Check vor dem ersten Scrape-Aufruf (contracts.md Abschnitt 11):
   ```bash
-  [ -n "$APIFY_TOKEN" ] || { echo "✗ APIFY_TOKEN nicht gesetzt."; exit 1; }
+  [ -n "$APIFY_TOKEN" ] || { echo "✗ APIFY_TOKEN nicht gesetzt — Abbruch. Bitte APIFY_TOKEN setzen und Skill erneut starten."; exit 1; }
   ```
-  Kein blindes Starten ohne Health-Check. Schlägt der Check fehl: sauberer Abbruch. Apify-Verbindungen überleben PC-Standby nicht — bei `Session ID not found` nach dem ersten Run sofort Reconnect-Hinweis ausgeben, nicht jeden weiteren Portal-Scrape einzeln scheitern lassen.
+  Kein blindes Starten ohne Health-Check. Schlägt der Check fehl: **sauberer Abbruch** — kein Basis-Modus, kein Fortfahren ohne Apify. Apify-Verbindungen überleben PC-Standby nicht — bei `Session ID not found` nach dem ersten Run sofort Reconnect-Hinweis ausgeben, nicht jeden weiteren Portal-Scrape einzeln scheitern lassen.
 - Web-Search-Zugang (für Profil-URL-Auflösung, wo direkter Scrape nicht praktikabel ist)
 
 ## Ablauf
@@ -372,7 +372,7 @@ Sag mir, welcher als nächster.
 
 - **Portal hat sich umbenannt / wurde abgeschaltet** → Status `recherche_fehlgeschlagen` mit Fehler-Typ `portal_unreachable`, Hinweis im Schluss-Format, dass `identifikation-schema.md` aktualisiert werden sollte, plus Pflege des `branchenportale-mapping.md` im `02-02-wettbewerber-identifikation`-Skill (TODO für Skill-Wartung).
 
-- **Apify-Token fehlt** → klare Fehlermeldung, kein Fallback. Wenn `web-search` allein funktioniert, kann der Skill im "Basis-Modus" laufen (nur URL-Auffindung, keine Score-Daten) — aber explizit ausweisen.
+- **Apify-Token fehlt** → sauberer Abbruch mit Fehlermeldung (siehe Voraussetzungen), kein Basis-Modus, kein Fortfahren ohne Apify.
 
 - **Sehr großer Lauf (mehr als 10 Akteure × 8 Portale = 80+ Tasks)** → Im Vorfeld den Strategen informieren ("80 Recherche-Tasks geplant, ca. X Minuten + Y Apify-Compute-Units"). Bei sehr vielen Akteuren: Vorschlag, die Recherche-Reichweite auf die Top-WBs zu beschränken.
 

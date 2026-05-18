@@ -193,6 +193,7 @@ Erklärung der vier Matrix-Achsen, der Gewichtung und der Engpass-Kandidaten.
    sie aus Kunden-Wissen korrigieren?
 
 Nach Review: `status: bestaetigt` im Frontmatter setzen, dann läuft Phase B.
+```
 
 ## Folge-Aktion
 
@@ -200,7 +201,6 @@ Nach Review: `status: bestaetigt` im Frontmatter setzen, dann läuft Phase B.
 # Stratege bestaetigt:
 sed -i '' 's/status: vorgeschlagen/status: bestaetigt/' synthese/segment-potenzial-matrix-schema.md
 # Dann erneut 04-07-segment-potenzial-matrix aufrufen — Phase B laeuft automatisch.
-```
 ```
 
 ## Validierungs-Regeln für Phase B

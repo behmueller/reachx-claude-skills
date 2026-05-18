@@ -69,7 +69,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 Wenn weniger als ein Synthese-Output vorhanden ist:
 
-```
+```text
 ✗ Mindestens ein Synthese-Output erforderlich.
 Bitte zuerst mindestens einen Synthese-Skill laufen lassen (04-01-positionierungs-analyse, 04-03-ziele-aus-potenzialen, 04-04-forecast-modell, 04-02-kanal-chancen-analyse, 04-05-90-tage-plan oder 04-06-retainer-kalkulator).
 ```
@@ -166,7 +166,7 @@ Lokal arbeiten wir in `~/.cache/reachx-mta/<slug>/slides/` (Templating-Cache), a
 
 Erwartetes Layout auf Drive:
 
-```
+```text
 [Drive] reports/slides/
 ├── 00-cover.html
 ├── 01-agenda.html
@@ -280,7 +280,7 @@ Folge `contracts.md` Abschnitt 3. Lese `status.md` aus dem MTA-Root via `drive.p
 
 #### 6.4: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 05-01-mta-slide-bausteine abgeschlossen.
 
 Outputs (auf Drive):

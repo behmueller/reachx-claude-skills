@@ -78,7 +78,7 @@ Wenn Stratege Local-Falcon-Credentials konfiguriert hat (`LOCAL_FALCON_API_KEY` 
 
 ### Tool-Wahl-Kaskade
 
-```
+```text
 1. Local Falcon (wenn API-Key gesetzt)
 2. Apify Local-Pack-Scraper
 3. SerpAPI / Web-Search (Reduced-Modus)
@@ -86,7 +86,7 @@ Wenn Stratege Local-Falcon-Credentials konfiguriert hat (`LOCAL_FALCON_API_KEY` 
 
 ### Pro-Query-Output (in CSV)
 
-```
+```csv
 standort_id, keyword, position, akteur_slug, name, adresse, rating, rezensions_anzahl, quelle, scrape_datum
 ```
 

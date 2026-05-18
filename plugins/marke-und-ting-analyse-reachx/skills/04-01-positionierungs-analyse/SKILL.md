@@ -96,7 +96,7 @@ REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
 
 Schema und Outputs liegen auf Drive im `synthese/`-Sub-Folder:
 
-```
+```text
 1. Existiert synthese/positionierung-schema.md auf Drive? (drive.py find_by_name "$SYNTHESE_ID" "positionierung-schema.md")
    - Nein → Phase A (Schema generieren)
    - Ja, status: vorgeschlagen → freundlicher Abbruch mit Hinweis auf Review
@@ -122,7 +122,7 @@ Drive-Bootstrap wie oben. Prüfe via `drive.py list-children`:
 
 Bei fehlenden Voraussetzungen:
 
-```
+```text
 ✗ Voraussetzungen für 04-01-positionierungs-analyse fehlen.
 Bitte zuerst 02-01-kunden-marken-profil und 02-03-wettbewerber-marken-profil laufen lassen.
 Aktuell fehlt: [konkrete Liste]
@@ -204,7 +204,7 @@ Wichtigster strategischer Input für die spätere Bewegungs-Empfehlung. Der Skil
 
 Format der Hypothese im Schema:
 
-```
+```yaml
 differenzierungs_hypothese:
   richtung: "z.B. weg von expertise-zentriert hin zu partnerschaftlich + emotional"
   begruendung: "Briefing nennt 'auf Augenhöhe mit Kunden' als Selbstbild,
@@ -239,7 +239,7 @@ Sektionen:
 
 ### Schritt A.7: Schluss-Format Phase A
 
-```
+```text
 ✓ 04-01-positionierungs-analyse Phase A abgeschlossen.
 
 Outputs (auf Drive):
@@ -326,7 +326,7 @@ SVG-Konstruktions-Details in `reference/positionierung-output-schema.md`.
 
 Algorithmus (einfache Distanz-basierte Clusterung, deterministisch reproduzierbar):
 
-```
+```text
 1. Berechne euklidische Distanz für jedes Akteurs-Paar
 2. Wenn distanz <= cluster_radius (aus Schema): Paar gilt als "nah"
 3. Transitive Hülle bilden: A-nah-B und B-nah-C → A,B,C im selben Cluster
@@ -359,7 +359,7 @@ Strategische Relevanz der White-Spaces wird mit der Differenzierungs-Hypothese a
 
 Aus der Differenzierungs-Hypothese (Schema) plus White-Space-Analyse (Schritt B.6) plus Cluster-Position des Kunden (Schritt B.5) wird die Bewegungs-Empfehlung abgeleitet:
 
-```
+```yaml
 bewegungs_empfehlung:
   ist_position: (x, y)
   ziel_position: (x', y')
@@ -443,7 +443,7 @@ Die Datei ist self-contained (alle Styles im `<svg>`-Element selbst, keine exter
 
 Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "positionierung-mapping.csv" /tmp/mapping.csv "text/csv"`. Spalten:
 
-```
+```text
 akteur_slug, akteur_typ, akteur_name, x_wert, y_wert, konfidenz_x, konfidenz_y,
 quadrant, cluster_id, cluster_groesse, hero_test_score, verstaendlichkeit_score,
 datenstand_iso
@@ -485,7 +485,7 @@ Beide (`reports/index.html`, `status.md`) aus Drive lesen, patchen, via `drive.p
 
 ### Schritt B.13: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 04-01-positionierungs-analyse Phase B abgeschlossen.
 
 Outputs (auf Drive):

@@ -111,7 +111,7 @@ REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
 
 Wenn `META_ID` leer ist:
 
-```
+```text
 ✗ Kein gültiger MTA-Folder.
 Bitte zuerst 01-01-mta-projekt-init aufrufen.
 ```
@@ -132,7 +132,7 @@ Parse das YAML-Frontmatter von `/tmp/liste.md`:
 
 - `status: bestaetigt` → weiter
 - `status: vorgeschlagen` → Abbruch:
-  ```
+  ```text
   ⏸ wettbewerber/liste.md hat status: vorgeschlagen.
   Bitte erst die Liste reviewen und auf status: bestaetigt setzen, dann diesen Skill erneut aufrufen.
   ```
@@ -245,9 +245,15 @@ Pflicht im Frontmatter: pro Zahl/Signal die Quellen-Kennzeichnung (`erhoben` / `
 
 **Reihenfolge (`contracts.md` Abschnitt 3):** zuerst CSV (Schritt 6), dann `.md` (Schritt 7), dann HTML-Report (Schritt 8), dann Dashboard und `status.md` — so sind die inhaltlichen Outputs auch bei vorzeitigem Abbruch vollständig.
 
-### Schritt 8: HTML-Report `reports/03b-wettbewerber-realitaets-check.html`
+### Schritt 8: HTML-Report `reports/<REPORT_SLOT>-wettbewerber-realitaets-check.html`
 
-**Report-Nummer:** `03b` — der Report sortiert sich direkt hinter `03-wettbewerber-liste.html` (Output von `02-02`) und vor `04-wettbewerber-profile.html` (Output von `02-03`) ein. Das ist die Workflow-Reihenfolge. **Beim Lauf vor dem Schreiben gegen `reports/index.html` prüfen** — listet das Dashboard bereits einen `03b`-Report (z. B. weil ein anderer Skill die Nummer belegt hat), die nächste freie Buchstaben-Variante (`03c`) wählen und im Schluss-Format vermerken.
+**Report-Slot bestimmen:** `03b` ist der Standardvorschlag — direkt hinter `03-wettbewerber-liste.html` (Output von `02-02`) und vor `04-wettbewerber-profile.html` (Output von `02-03`). **Pflicht vor dem Render:** `reports/index.html` aus Drive lesen und prüfen, ob `03b` bereits belegt ist. Falls ja, nächste freie Buchstaben-Variante wählen (`03c`, …). Den aufgelösten Slot in einer Shell-Variable festhalten:
+
+```bash
+REPORT_SLOT="03b"   # ggf. auf 03c o.ä. anpassen nach Kollisionsprüfung
+```
+
+Alle nachfolgenden Schreib-, Validierungs- und Publizier-Befehle verwenden `"$REPORT_SLOT"` statt des hartcodierten `03b`.
 
 **Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
 
@@ -274,8 +280,11 @@ Lies `reports/_shell.html` aus Drive und baue daraus den Report:
 Lokal zusammenbauen, validieren, dann hochladen:
 
 ```bash
-python3 "$DRIVE_PY" upsert-text "$REPORTS_ID" "03b-wettbewerber-realitaets-check.html" \
-  ~/.cache/reachx-mta/"$SLUG"/03b-wettbewerber-realitaets-check.html "text/html"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" \
+  ~/.cache/reachx-mta/"$SLUG"/"$REPORT_SLOT"-wettbewerber-realitaets-check.html --shell
+# Exit-Code 0 → hochladen:
+python3 "$DRIVE_PY" upsert-text "$REPORTS_ID" "$REPORT_SLOT-wettbewerber-realitaets-check.html" \
+  ~/.cache/reachx-mta/"$SLUG"/"$REPORT_SLOT"-wettbewerber-realitaets-check.html "text/html"
 ```
 
 ### Schritt 9: Dashboard-Update
@@ -284,7 +293,7 @@ Lies `reports/index.html` aus Drive, modifiziere und schreibe per `upsert-text` 
 
 - Stat-Strip aktualisieren (Klassen-Verteilung ergänzen).
 - "Erledigt"-Sektion erweitern um `02-05-wettbewerber-realitaets-check`.
-- Reports-Liste um `03b-wettbewerber-realitaets-check.html` erweitern.
+- Reports-Liste um `"$REPORT_SLOT"-wettbewerber-realitaets-check.html` erweitern (tatsächliche Nummer aus `$REPORT_SLOT`).
 - "Nächster empfohlener Schritt" auf `02-03-wettbewerber-marken-profil` setzen.
 - Sicherstellen, dass das `<body>`-Tag die Klasse `is-dashboard` trägt.
 
@@ -299,7 +308,7 @@ Lies `reports/index.html` aus Drive, modifiziere und schreibe per `upsert-text` 
 
 ### Schritt 11: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 02-05-wettbewerber-realitaets-check abgeschlossen.
 
 Outputs (auf Drive):

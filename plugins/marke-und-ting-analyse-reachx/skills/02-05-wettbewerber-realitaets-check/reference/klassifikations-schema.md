@@ -100,7 +100,7 @@ Die Override-Regeln bilden die kritische Haltung aus `contracts.md` Abschnitt 13
 
 ### Mindest-Konfidenz
 
-Sind **≥ 3 von 4** Achsen `unbekannt`, ist die Klassifikation nicht belastbar — der Skill setzt die Klasse trotzdem (best effort), markiert den Akteur aber mit `konfidenz: niedrig` und nennt ihn im Schluss-Format. Bei lokalem Kunden zählt die neutrale lokale Achse hier nicht als `unbekannt`.
+Sind **≥ 3 von 4** Achsen `unbekannt`, ist die Klassifikation nicht belastbar — der Skill setzt die Klasse trotzdem (best effort), markiert den Akteur aber mit `konfidenz: niedrig` und nennt ihn im Schluss-Format. Bei nationalem/Online-Kunden (`lokale_achse_aktiv: false`) zählt die auf `neutral` gesetzte lokale Achse hier nicht als `unbekannt`.
 
 ---
 

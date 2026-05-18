@@ -143,7 +143,7 @@ Das TC liefert **keine Spend-Daten**. Wenn der Stratege Spend-Schätzungen will,
 
 Pro Akteur ein Lookup:
 
-```
+```text
 GET https://api.spyfu.com/v1/domain/<domain>/overview
 ?api_key=<KEY>
 &country=de

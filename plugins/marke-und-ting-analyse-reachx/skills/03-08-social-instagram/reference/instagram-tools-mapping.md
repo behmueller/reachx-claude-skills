@@ -13,7 +13,7 @@ Getestete Actors (Stand des Projekteinsatzes). Vor dem Lauf immer den Health-Che
 | `apify/instagram-scraper` | Instagram Scraper Bundle | noch nicht getestet | unbekannt | Profil + Posts in einem Lauf |
 | `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
 
-**Login-Wall:** Öffentliche Profile sind anonym zugänglich. **Private Profile** sind nicht ohne Login erhebbar — `profil_privat: true` setzen und überspringen. Apify-Cookies (Instagram-Session) nur dann setzen, wenn Rate-Limit-Fehler auftreten — nicht als Standard.
+**Login-Wall:** Öffentliche Profile sind anonym zugänglich. **Private Profile** sind nicht ohne Login erhebbar — `privat_account: true` setzen und überspringen. Apify-Cookies (Instagram-Session) nur dann setzen, wenn Rate-Limit-Fehler auftreten — nicht als Standard.
 
 Instagram-Scraping ueber Apify ist in drei Varianten moeglich. Default: 1+2 sequenziell. Fallback: 3 als Bundle.
 

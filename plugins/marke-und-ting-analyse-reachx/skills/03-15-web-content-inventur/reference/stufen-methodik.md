@@ -207,7 +207,7 @@ Pro Branche gibt es typische URL-Pfade, die fast immer auszuschließen sind. Wen
 
 ## Auswahl-Logik pro Akteur (Default-Stufen-Vergabe in Phase A)
 
-```
+```text
 function default_stufe(akteur):
   if akteur.kategorie == "kunde":
     return "light"

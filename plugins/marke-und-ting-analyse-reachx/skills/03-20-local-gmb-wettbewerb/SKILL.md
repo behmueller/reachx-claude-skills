@@ -83,7 +83,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 Nach `contracts.md` Abschnitt 11. Vor dem ersten echten Scrape (nicht nur am Skill-Start) ein billiger Apify-Test-Call (`search-actors` mit Limit 1). Schlägt er fehl:
 
-```
+```text
 ✗ Pflicht-MCP 'apify' nicht erreichbar.
 Bitte in /mcp verbinden (ggf. neu authentifizieren) und Skill erneut aufrufen.
 ```
@@ -127,7 +127,7 @@ Schema-Datei dieses Skills: `audits/local-gmb-wettbewerb-schema.md` im `audits/`
 
 **Phasen-Entscheidung:**
 
-```
+```text
 1. Existiert audits/local-gmb-wettbewerb-schema.md auf Drive?
    (drive.py find_by_name "$AUDITS_ID" "local-gmb-wettbewerb-schema.md")
    - Nein → Phase A (Schema generieren — siehe Schritt 2 zur Basis-Wahl)
@@ -145,7 +145,7 @@ Schema-Datei dieses Skills: `audits/local-gmb-wettbewerb-schema.md` im `audits/`
 
 Bevor der Skill in Phase A ein eigenes Schema generiert, prüft er, ob `03-16-local-gmb-und-seo` bereits ein bestätigtes Schema hinterlassen hat:
 
-```
+```text
 Lies audits/local-gmb-schema.md (drive.py find_by_name "$AUDITS_ID" "local-gmb-schema.md").
 ```
 
@@ -170,7 +170,7 @@ Identisch zum Prinzip in `03-16` (`contracts.md` Abschnitt 13 — Volatilitäts-
 
 Bei Skip-Kandidat ohne Override: schreibe `audits/local-gmb-wettbewerb-schema.md` mit `status: skip_national_online` und Begründung, setze den Skill in `status.md` auf `schritte_done` mit Vermerk "geskippt — kein Local-Bezug", aktualisiere `status.md` und Dashboard, gib im Chat aus:
 
-```
+```text
 ✗ 03-20-local-gmb-wettbewerb geskippt — kein Local-Bezug erkannt.
 
 Begründung:
@@ -269,7 +269,7 @@ Sektionen siehe `reference/wettbewerb-schema-template.md`. Kern: Frontmatter mit
 
 Variante 1 — **Basis aus `03-16` geerbt** (schlanker Review):
 
-```
+```text
 ✓ 03-20-local-gmb-wettbewerb Phase A abgeschlossen.
 
 Outputs (auf Drive):
@@ -373,7 +373,7 @@ Schreibe die Roh-Rankings nach Drive `audits/local-gmb-wettbewerb-rankings.csv` 
 
 Pro Akteur den **Local-Visibility-Score (LVS)** 0–100 aus den drei Blöcken — Formel verbindlich aus `reference/lvs-methodik.md`:
 
-```
+```text
 LVS = (Block_A_score × gA + Block_B_score × gB + Block_C_score × gC) / 100
 ```
 
@@ -425,7 +425,11 @@ Eine Zeile pro Akteur (bei Filialen eine Zeile pro Akteur × Standort plus eine 
 
 ### Schritt B.11: HTML-Report `reports/14b-local-gmb-wettbewerb.html`
 
-**Report-Nummer:** `14b` — sortiert direkt hinter `14-gmb-local-seo.html` (dem `03-16`-Report), mit dem dieser Skill thematisch zusammengehört. **Pflicht vor dem Render:** die gewählte Nummer gegen das aktuelle `reports/index.html` auf Drive prüfen. Kollidiert `14b` (z.B. weil ein anderer Skill sie inzwischen belegt), die nächste freie Nummer im 14er-Block wählen (`14c`, …) und die tatsächlich verwendete Nummer im Schluss-Format und `status.md` nennen.
+**Report-Slot bestimmen:** `14b` ist der Standardvorschlag — direkt hinter `14-gmb-local-seo.html` (dem `03-16`-Report). **Pflicht vor dem Render:** `reports/index.html` aus Drive lesen und prüfen, ob `14b` bereits belegt ist. Falls ja, nächste freie Nummer im 14er-Block wählen (`14c`, …). Den aufgelösten Slot in einer Shell-Variable festhalten:
+
+```bash
+REPORT_SLOT="14b"   # ggf. auf 14c o.ä. anpassen nach Kollisionsprüfung
+```
 
 **Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
 
@@ -434,9 +438,9 @@ Eine Zeile pro Akteur (bei Filialen eine Zeile pro Akteur × Standort plus eine 
 - Vor dem Drive-Upload validieren:
   ```bash
   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" \
-    ~/.cache/reachx-mta/<slug>/14b-local-gmb-wettbewerb.html --shell
+    ~/.cache/reachx-mta/"$SLUG"/"$REPORT_SLOT"-local-gmb-wettbewerb.html --shell
   ```
-  Exit-Code 0 → hochladen via `drive.py upsert-text "$REPORTS_ID" "14b-local-gmb-wettbewerb.html" ... "text/html"`. Exit-Code 1 → nicht hochladen, Markup gegen `report-bausteine.md` korrigieren, erneut validieren.
+  Exit-Code 0 → hochladen via `drive.py upsert-text "$REPORTS_ID" "$REPORT_SLOT-local-gmb-wettbewerb.html" ~/.cache/reachx-mta/"$SLUG"/"$REPORT_SLOT"-local-gmb-wettbewerb.html "text/html"`. Exit-Code 1 → nicht hochladen, Markup gegen `report-bausteine.md` korrigieren, erneut validieren.
 
 Report-Aufbau (Baustein-Zuordnung siehe `reference/wettbewerb-output-schema.md`):
 
@@ -460,7 +464,7 @@ Nach `contracts.md` Abschnitte 3 und 7 — zuerst alle inhaltlichen Outputs nach
 
 ### Schritt B.13: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 03-20-local-gmb-wettbewerb Phase B abgeschlossen.
 
 Outputs (auf Drive):

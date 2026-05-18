@@ -336,7 +336,7 @@ Beim Schreiben der Outputs prüft der Skill:
 4. **`modus` und `brand_radar` konsistent** — `voll_quantitativ` nur bei `brand_radar: verfuegbar`
 5. **CSV-Header matchen exakt** die oben definierten Schemas
 6. **`sichtbarkeits_quote`** liegt in `[0, 1]` und entspricht `prompts_sichtbar / prompts_gesamt`
-7. **Mindestens 1 Auffälligkeit** im Output (auch `kunde_unsichtbar` ist ein valider Befund)
+7. **Auffälligkeiten-Block vorhanden** — der Block `auffaelligkeiten` existiert im Output; 0 Einträge sind valide (z. B. wenn GEO-Sichtbarkeit unauffällig ist). `kunde_unsichtbar` ist stets ein expliziter Befund, falls zutreffend.
 8. **Einordnungs-Block vorhanden** — der Body enthält den „GEO ist ein Multiplikator, kein Budgetposten"-Block
 
 ## Versionierung

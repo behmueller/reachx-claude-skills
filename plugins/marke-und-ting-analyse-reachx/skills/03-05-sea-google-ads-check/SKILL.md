@@ -67,7 +67,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 ### Datenquellen-Klarstellung (für die MTA-Story)
 
-Das **Transparency Center** ist die maßgebliche Datenquelle für Anzeigen-Aktivität: es zeigt Search + Display + Video + Shopping + Demand Gen — alle Anzeigentypen verifizierter Werbetreibender. Ein Akteur gilt erst dann als „inaktiv im SEA", wenn das Transparency Center keine Anzeigen zeigt.
+Das **Transparency Center** ist die maßgebliche Datenquelle für Anzeigen-Aktivität: es zeigt Search + Display + Video + Shopping + Demand Gen — alle Anzeigentypen verifizierter Werbetreibender. Ein Akteur gilt als „inaktiv im SEA", wenn das Transparency Center keine Anzeigen zeigt; zeigt das TC keine Ergebnisse, weil der Akteur dort nicht als Werbetreibender verifiziert ist, wird er als `nicht verifiziert` (statt `inaktiv`) eingestuft und explizit so im Output ausgewiesen.
 
 Ergänzende Tools (Ahrefs Paid-Keywords, SpyFu) sehen nur **Search-Bidding** — sie indexieren keine Display- oder Video-Kampagnen. Ein Akteur, der im TC mit 20 Display-Anzeigen auftaucht, aber bei Ahrefs/SpyFu nicht, gilt trotzdem als aktiv. Im Output explizit dokumentieren, welche Quelle welche Anzeigentypen abdeckt.
 

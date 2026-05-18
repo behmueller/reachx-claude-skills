@@ -19,7 +19,7 @@ Ziel: die adressierbare Markt-Größe des Segments **bottom-up** beziffern — n
 
 **Berechnung pro Szenario:**
 
-```
+```text
 segment_potenzial_umsatz[szenario] =
     relevante_nachfrage[szenario]          # Such-Volumen / adressierbare Kunden im Einzugsgebiet / adressierbare Accounts
   * erreichbare_marketing_reichweite[szenario]   # realistischer Anteil, der über Marketing erreichbar ist (0..1)
@@ -127,7 +127,7 @@ Aus Block 5. **Hoch = schnelle Wirkung.** Mapping über `time_to_impact_monate` 
 
 ## `prioritaet_score` — Aggregation
 
-```
+```text
 prioritaet_score = (
     0.35 * potenzial
   + 0.20 * aufwand
@@ -154,7 +154,7 @@ Die Mengen-Priorisierung darf ein Segment **nicht** nach oben spülen, dessen Wa
 
 Regel: Ist der `engpass_typ` eines Segments **nicht** `marketing_potenzial` und **nicht** `kein_klarer_engpass`, wird der `prioritaet_score` für die **Mengen-Logik** wie folgt gedeckelt:
 
-```
+```text
 prioritaet_score_mengen = min(prioritaet_score, kapazitaets_deckel)
 ```
 

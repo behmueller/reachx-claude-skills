@@ -12,7 +12,7 @@ Definiert die drei Pflicht-Outputs:
 
 UTF-8, mit Header-Zeile, Komma-getrennt, doppelte Anführungszeichen für Werte mit Komma.
 
-Die CSV hat **eine Zeile pro Segment × Auswertungs-Block** — fünf Blöcke pro Segment, plus optional eine `gesamt`-Block-Zeile pro Segment mit den verdichteten Matrix-Achsen. Bei 3 Segmenten also 3 × 6 = 18 Zeilen.
+Die CSV hat **eine Zeile pro Segment × Auswertungs-Block** — fünf inhaltliche Blöcke pro Segment plus eine Pflicht-`gesamt`-Zeile pro Segment mit den verdichteten Matrix-Achsen. Bei 3 Segmenten also 3 × 6 = 18 Zeilen.
 
 ### Spalten (in fester Reihenfolge)
 
@@ -383,7 +383,7 @@ Vor dem Schreiben prüft der Skill:
 
 1. 2-4 Segmente in `segmente[]`, jedes mit allen fünf Blöcken und allen vier Matrix-Achsen
 2. Jeder quantitative Block-Wert hat drei Szenarien (`konservativ` ≤ `realistisch` ≤ `ambitioniert`, Toleranz ±1 %) und einen `quelle`-Typ
-3. `prioritaet_score` = gewichtete Summe der vier Achsen (Toleranz ±1 wegen Rundung)
+3. `prioritaet_score_roh` = gewichtete Summe der vier Achsen (Toleranz ±1 wegen Rundung)
 4. `prioritaet_score_mengen` ≤ `prioritaet_score_roh` (Engpass-Deckelung nie nach oben)
 5. Jedes Segment hat genau einen `engpass_typ` aus der erlaubten Liste und ein `marketing_adressierbar`
 6. `prioritaet_mengen_logik` und `umsetzungs_reihenfolge` haben beide alle Segmente, jeweils eindeutige Ränge

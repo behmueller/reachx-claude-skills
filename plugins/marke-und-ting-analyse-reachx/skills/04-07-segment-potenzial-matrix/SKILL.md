@@ -13,7 +13,7 @@ Dieser Skill liefert die **Segment-Sicht**: Er mappt das in der Kanal-Synthese e
 
 **Position im Workflow** (verbindlich so im Output und in den Slides einordnen):
 
-```
+```text
 04-04-forecast-modell   ──┬──>  04-05-90-tage-plan  ──>  04-06-retainer-kalkulator
                           └──>  04-07-segment-potenzial-matrix   (Zweitsynthese, ergänzend)
 ```
@@ -116,7 +116,7 @@ REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
 
 Phase-Entscheidung:
 
-```
+```text
 1. Existiert synthese/segment-potenzial-matrix-schema.md auf Drive?
    - Nein                       -> Phase A (Schema generieren)
    - Ja, status: vorgeschlagen  -> freundlicher Abbruch mit Hinweis auf Review
@@ -144,7 +144,7 @@ Drive-Bootstrap wie oben. Lies `status.md` aus Drive.
 
 Abbruch-Format bei fehlendem Pflicht-Input:
 
-```
+```text
 ✗ 04-07-segment-potenzial-matrix kann nicht laufen: <pflicht-input> fehlt.
 Bitte zuerst <vorgänger-skill> ausführen.
 ```
@@ -197,7 +197,7 @@ python3 "$DRIVE_PY" upsert-text "$SYNTHESE_ID" "segment-potenzial-matrix-schema.
 
 ### Schritt A.6: Schluss-Format Phase A
 
-```
+```text
 ✓ 04-07-segment-potenzial-matrix Phase A abgeschlossen.
 
 Outputs (auf Drive):
@@ -287,7 +287,7 @@ Für jedes Segment werden die vier Matrix-Achsen (0–100) gesetzt:
 
 Daraus der `prioritaet_score` (gewichtetes Mittel, Default-Gewichte und Branchen-Overrides in `reference/segment-matrix-methodik.md`):
 
-```
+```text
 prioritaet_score = (
     0.35 * potenzial
   + 0.20 * aufwand
@@ -383,7 +383,7 @@ Beide Dateien aus Drive lesen, patchen, via `drive.py upsert-text` zurückschrei
 
 ### Schritt B.11: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 04-07-segment-potenzial-matrix Phase B abgeschlossen.
 
 Outputs (auf Drive):

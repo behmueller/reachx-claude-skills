@@ -65,7 +65,7 @@ Bei erschöpften Apify-Credits: Local-Pack-Snippets per Web-Search. Nur Top-3 zu
 
 ### Tool-Wahl-Kaskade Local-Pack
 
-```
+```text
 1. compass/google-maps-scraper mit Geo-Suche
 2. apify/google-maps-extractor mit Geo-Suche
 3. Web-Search (Reduced-Modus, nur Top-3)

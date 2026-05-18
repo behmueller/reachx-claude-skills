@@ -14,8 +14,10 @@ ausgewertet. Quellen:
 - ~19 MB Claude-Code-Session-Transkripte aus zwei Projektordnern.
 
 Im Projektverlauf wurden Erkenntnisse erarbeitet, aber nicht in die Skills zurückgeführt.
-Release 0.7.0 holt das nach. Die Skills selbst bleiben generisch — „Avadent" kommt in
-keiner `SKILL.md` vor; das Projekt ist nur die Erkenntnis-Quelle.
+Release 0.7.0 holt das nach. Die in 0.7.0 erstellten und geänderten Skills bleiben
+generisch — „Avadent" wird dort nicht genannt, das Projekt ist nur die Erkenntnis-Quelle.
+(Drei ältere Skill-Dateien aus dem First-Party-Strang nennen „Avadent" noch als
+Live-Test-Beispiel — siehe Abschnitt „Bewusst nur teilweise gelöst / offen".)
 
 ## Übergreifende Änderungen
 
@@ -59,3 +61,4 @@ Vollständige Liste der berührten Dateien: siehe Git-Diff von Release 0.7.0.
 
 - **Report-Slot-Kollisionen** — Re-Runs vergaben kollidierende Report-Nummern (`08↔09`, `10` doppelt belegt). 0.7.0 hat **keine** zentrale Report-Registry eingeführt; die Skills prüfen ihre Nummer weiterhin zur Laufzeit gegen `reports/index.html`. Eine echte Registry bleibt ein offener Punkt für ein späteres Release. Verwandter Befund aus dem ersten First-Party-MTA-Lauf (`03-18-web-analytics-ga4`, Avadent): Auch das Dashboard-Update muss die Einfüge-Stelle in `reports/index.html` zur Laufzeit erraten, weil dessen HTML-Struktur nicht garantiert ist — der Skill suchte einen `</li>`-Anker, das Dashboard war aber tabellenbasiert (`<tr>`). Eine Report-Registry sollte daher nicht nur die Nummern vergeben, sondern auch die Einfüge-Struktur des Dashboards verbindlich definieren.
 - **Skill-Discovery-Cache** — frisch installierte Skills erscheinen erst nach einem Session-Neustart. Das ist Harness-Verhalten und nicht per Skill behebbar; es ist nur in `01-01` dokumentiert.
+- **„Avadent" als Beispiel in Alt-Bestand** — `03-04-seo-first-party-gsc` (SKILL.md + reference) sowie je eine reference-Datei von `02-02` und `05-02` nennen „Avadent" noch als Live-Test-Beispiel. Das stammt aus dem First-Party-Strang (Releases 0.5/0.6) und wurde in 0.7.0 bewusst nicht angefasst — sollte bei Gelegenheit generisch gemacht werden.

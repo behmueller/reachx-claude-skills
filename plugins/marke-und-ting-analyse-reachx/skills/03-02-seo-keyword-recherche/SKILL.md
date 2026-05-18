@@ -75,7 +75,7 @@ Pro Seed-Keyword aus den Top-30-Kunden-Keywords und Top-20-Gap-Keywords muss der
 
 **Durchführung**: für die Top-Seed-Keywords einen stichprobenartigen SERP-Check via Ahrefs `keywords-explorer-overview` (Feld `local_pack` oder `serp_features`) oder via manuellem Hinweis in der Schema-Datei. Bei unklarer Datenlage: im Pool-Markdown als „Local-Pack-Status ungeprüft" markieren.
 
-**Lokale Service-Keywords mit Orts-Zusatz** (z. B. „[Leistung] [Stadt]", „[Leistung] in der Nähe") werden als eigene Achse im Pool erfasst — Spalte `keyword_geo_typ: lokal | ueberregional | unklar`.
+**Lokale Service-Keywords mit Orts-Zusatz** (z. B. „[Leistung] [Stadt]", „[Leistung] in der Nähe") werden als eigene Achse im Pool erfasst — Pflicht-Spalte `keyword_geo_typ` mit Werten `lokal | ueberregional | unklar` (Pflichtfeld in der Pool-CSV; Wert `unklar` wenn kein SERP-Check vorliegt).
 
 **Optionaler Ausland-Intent-Block**: Wenn die Branche oder das Briefing auf internationale Konkurrenz hindeutet (z. B. medizinische Leistungen mit Patienten aus Nachbarländern, Anbieter in einer Grenzregion), ergänzt der Skill einen separaten Cluster mit Keywords, die Orts-Namen oder Sprachen-Bezüge aus den relevanten Herkunftsländern enthalten (z. B. türkisch- oder polnischsprachige Suchbegriffe, Keywords mit Orts-Zusatz für diese Länder). Dieses Block wird nur aufgebaut, wenn das Briefing oder `data/kunde.md` einen entsprechenden Hinweis enthält — nicht standardmäßig.
 

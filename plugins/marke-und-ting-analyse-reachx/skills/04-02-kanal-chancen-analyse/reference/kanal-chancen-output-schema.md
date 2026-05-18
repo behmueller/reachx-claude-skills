@@ -60,7 +60,7 @@ datenstand_iso
 
 ### Größen-Grenze
 
-12 Zeilen (alle Kanäle) plus ggf. Skip-Zeilen. Kein Hard-Cap nötig.
+Eine Zeile pro konfiguriertem Kanal (Basis-Set 12 Kanäle; mit GEO, Reddit und Facebook-organisch bis zu 15 Kanäle) plus ggf. Skip-Zeilen. Kein Hard-Cap nötig.
 
 ### Quellen- und Konfidenz-Vermerk (First-Party)
 
@@ -157,7 +157,7 @@ kanal_ranking:
     audit_inputs_verfuegbar: [<liste der gelesenen Dateien>]
   - rang: 2
     # ...
-  # ... (alle 12 Kanäle plus ggf. skip)
+  # ... (alle konfigurierten Kanäle plus ggf. skip)
 
 # === Top-3-Empfehlungen ===
 top_3_empfehlungen:
@@ -271,7 +271,7 @@ statistiken:
 - **Auffälligkeiten**: `quick_win_kanal`
 - **Nächste Aktion**: Content-Hub für `aufmass_workflow`-Cluster aufbauen (siehe SEO-Cluster Top-1)
 
-(... weitere Kanäle in gleicher Struktur — alle 12)
+(... weitere Kanäle in gleicher Struktur — alle konfigurierten Kanäle)
 
 ## Auffälligkeiten
 
@@ -374,7 +374,7 @@ Welche Audits da waren, welche fehlten — als kleine Tabelle. Wenn Modus `duenn
 
 Vor dem Schreiben prüft der Skill:
 
-1. Genau 12 Einträge in `kanal_ranking` (oder weniger bei `skip`-Kanälen — dann max 12 inkl. Skip-Einträge)
+1. Genau so viele Einträge in `kanal_ranking` wie das konfigurierte Kanal-Set enthält (Basis 12; mit GEO, Reddit und Facebook-organisch bis zu 15) — inklusive `skip`-Zeilen für ausgeschlossene Kanäle
 2. Jeder Kanal hat alle fünf Achsen-Scores als int 0-100 oder `skip`
 3. `chancen_score` = gewichtete Summe der fünf Achsen (Toleranz ±1 wegen Rundung)
 4. `top_3_empfehlungen` hat genau 3 Einträge (oder weniger wenn nur 3 nicht-skip-Kanäle)
