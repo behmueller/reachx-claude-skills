@@ -66,6 +66,19 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - **Sistrix-Zugang optional** — wenn vorhanden, wird Sistrix-Long-Tail als DACH-Ergänzung mitgezogen und Sistrix-Volumen zur Cross-Validierung gegen Ahrefs verglichen. Wenn nicht vorhanden: Skill läuft im **Reduced-Modus ohne Sistrix** (keine `sistrix_*`-Spalten gefüllt, kein Cross-Check), Hinweis im Schluss-Format.
 - Empfohlen: `wettbewerber/identifikation-schema.md` mit `status: bestaetigt` — für Branchen-Seed-Keywords. Wenn nicht vorhanden: Skill läuft trotzdem, nutzt nur CSV-Basis + Ahrefs-Expansion
 
+## Geo-vs-generisch-Klassifikation (Standard-Schritt, nicht optional)
+
+Pro Seed-Keyword aus den Top-30-Kunden-Keywords und Top-20-Gap-Keywords muss der Skill feststellen, welchen Such-Typ das Keyword bedient. Das bestimmt, welche SEO-Taktik zieht:
+
+- **Lokal aussteuerbar** — Keyword löst bei SERP-Check einen Local Pack aus (Google Maps-Box oberhalb der organischen Ergebnisse). Beispiele: „Zahnarzt Frankfurt", „Umzugsunternehmen Berlin". Diese Keywords sind über GMB und lokale Landingpages angreifbar, nicht primär über Content-Marketing.
+- **Bundesweit / intent-getrieben** — kein Local Pack sichtbar, rein organische Ergebnisse oder Shopping. Klassische SEO-Content-Taktik.
+
+**Durchführung**: für die Top-Seed-Keywords einen stichprobenartigen SERP-Check via Ahrefs `keywords-explorer-overview` (Feld `local_pack` oder `serp_features`) oder via manuellem Hinweis in der Schema-Datei. Bei unklarer Datenlage: im Pool-Markdown als „Local-Pack-Status ungeprüft" markieren.
+
+**Lokale Service-Keywords mit Orts-Zusatz** (z. B. „[Leistung] [Stadt]", „[Leistung] in der Nähe") werden als eigene Achse im Pool erfasst — Pflicht-Spalte `keyword_geo_typ` mit Werten `lokal | ueberregional | unklar` (Pflichtfeld in der Pool-CSV; Wert `unklar` wenn kein SERP-Check vorliegt).
+
+**Optionaler Ausland-Intent-Block**: Wenn die Branche oder das Briefing auf internationale Konkurrenz hindeutet (z. B. medizinische Leistungen mit Patienten aus Nachbarländern, Anbieter in einer Grenzregion), ergänzt der Skill einen separaten Cluster mit Keywords, die Orts-Namen oder Sprachen-Bezüge aus den relevanten Herkunftsländern enthalten (z. B. türkisch- oder polnischsprachige Suchbegriffe, Keywords mit Orts-Zusatz für diese Länder). Dieses Block wird nur aufgebaut, wenn das Briefing oder `data/kunde.md` einen entsprechenden Hinweis enthält — nicht standardmäßig.
+
 ## Ablauf
 
 ### Schritt 0: MTA-Kontext und Drive-Helper ermitteln

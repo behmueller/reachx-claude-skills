@@ -413,6 +413,15 @@ Aggregat-Output:
 | realistisch | X | Y | Z | W EUR |
 | ambitioniert | X | Y | Z | W EUR |
 
+### Schritt B.5a: Kapazitäts-/Engpass-Prüfung gegen die reale Kunden-Kapazität
+
+Das aus den Markt-Potenzialen abgeleitete Aggregat (Schritt B.5) ist eine **Markt-Obergrenze** — was der Markt theoretisch hergibt. Bevor diese Bandbreite in `04-04-forecast-modell` und die MTA-Empfehlung einfließt, wird sie explizit gegen die **reale Kapazität des Kunden** gespiegelt: Kann der Kunde die abgeleiteten Orders/Leads operativ überhaupt bedienen (Produktions-, Liefer-, Beratungs-, Termin-Kapazität)?
+
+- Kapazitäts-Hinweise aus `data/briefing.md` und `data/kunde.md` ziehen (z. B. Anzahl Mitarbeiter, Produktions-/Termin-Kapazität, "wir können maximal N Aufträge/Monat bedienen", Liefer-Engpässe).
+- Liegt das **realistische** Szenario über der erkennbaren Kapazitätsgrenze: Auffälligkeit `markt_potenzial_ueber_kunden_kapazitaet` setzen und im Body ausweisen, dass das Markt-Potenzial vorhanden, aber nicht voll abrufbar ist.
+- **Wichtig — Quellen-Disziplin (`contracts.md` Abschnitt 13):** Nennt der Kunde keine bezifferte Kapazitätsgrenze, ist eine vom Skill geschätzte Grenze eine `schaetzung_skill`-Heuristik. Sobald diese geschätzte Grenze den Forecast oder die Empfehlung **trägt** (load-bearing), wird sie als **explizite Auffälligkeit** ausgewiesen — der Stratege muss sie im Kunden-Gespräch verifizieren. Eine Schätzung wird niemals als erhobener Wert dargestellt.
+- Vom Kunden genannte Kapazitäts-Aussagen sind `briefing` — also Hypothesen, nicht Fakten (`contracts.md` Abschnitt 13). Im Output entsprechend taggen.
+
 ### Schritt B.6: Plausibilitäts-Check gegen Briefing-KPIs
 
 Wenn Lauf-Modus `plausibilitaets_check` oder `hybrid`:
@@ -436,6 +445,8 @@ Mindestens **6 Auffälligkeiten** (siehe Liste). Wenn weniger als 6 echte Auffä
 | `ramp_up_diskrepanz_zu_briefing_timeline` | Briefing-Timeline kürzer als Top-Kanal-Ramp-up | "Kunde will Ergebnisse in 3 Monaten, SEO als Top-Kanal braucht 6-12 — Hybrid mit SEA als Sofort-Hebel empfehlen" |
 | `lead_zu_kunde_unklar_b2b` | B2B-Funnel-Konfidenz `niedrig` über mehrere Stufen | "Anfrage→Auftrag-Quote 20-40% sehr breit — historische Daten vom Kunden würden die Bandbreite halbieren" |
 | `quelle_branchen_benchmark_unsicher` | >50% der Annahmen aus `branchen_benchmark`-Quelle | "Großteil der Annahmen aus Branchen-Benchmarks (nicht aus Kunden-Daten) — Schema-Verfeinerung mit Kunden-Daten würde Genauigkeit deutlich erhöhen" |
+| `markt_potenzial_ueber_kunden_kapazitaet` | Realistisches Szenario übersteigt die erkennbare Kunden-Kapazität (Schritt B.5a) | "Realistisches Szenario rechnet mit 90 Aufträgen/Monat, Kunde nennt im Briefing eine Kapazität von max. 50 — Markt-Potenzial vorhanden, aber nicht voll abrufbar; Engpass im Kunden-Gespräch klären" |
+| `kapazitaetsgrenze_geschaetzt` | Die Kapazitätsgrenze ist eine `schaetzung_skill`-Heuristik und trägt Forecast/Empfehlung | "Kunde nennt keine Kapazitätsgrenze — die angesetzte Grenze ist eine Skill-Schätzung. Sie trägt das realistische Szenario; vor dem Forecast mit dem Kunden verifizieren" |
 | `briefing_kpi_passt` | Plausibilitäts-Check positiv | "Kunden-Ziel 50 Leads/Monat liegt in realistischer Bandbreite — bestätigt" |
 
 Auffälligkeiten werden im Markdown und HTML-Report prominent gezeigt.
@@ -574,3 +585,6 @@ Alle in `contracts.md` definierten Konventionen sind verbindlich:
 - **Pflicht-Bandbreite, niemals Punktschätzungen** — strikt durchsetzen, auch bei "scheinbar klaren" Annahmen aus dem Briefing
 - **Schreibt NICHT ins `briefing.md` zurück** — Briefing bleibt "was der Kunde gesagt hat", abgeleitete Ziele sind eigene Quelle
 - **Quellen-Transparenz**: jede Zahl im Output hat ein verlinktes `quelle`-Feld
+- **Geteilte Parameter aus einer Quelle (`contracts.md` Abschnitt 12):** Doppelzählungs-Faktor, AOV-Bandbreite und CR-Bandbreiten werden aus dem **bestätigten Annahmen-Schema** (`synthese/ziel-annahmen-schema.md`, `status: bestaetigt`) gezogen — nicht pro Lauf neu angenommen. `04-04-forecast-modell` übernimmt dieselben Werte; so bleiben Ziele und Forecast konsistent
+- **Pflicht-Input-Gate ohne Silent-Fallback (`contracts.md` Abschnitt 12):** Fehlt `synthese/kanal-chancen.md`, bricht der Skill ab — er leitet **niemals** still aus Briefing oder Branchen-Defaults ab
+- **Synthese-Sequenz:** `04-02 → 04-03 → 04-04 → 04-05 → 04-06`, sequenziell, kein Parallel-Start

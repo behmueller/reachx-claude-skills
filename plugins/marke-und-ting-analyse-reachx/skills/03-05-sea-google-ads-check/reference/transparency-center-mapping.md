@@ -37,7 +37,17 @@ Pro Akteur drei mögliche Such-Modi:
 
 **Domain-Match-Heuristik**: das TC erlaubt manchmal nur exakte Domain-Treffer. Vor dem Scrape die normalisierte Domain prüfen — falls keine Treffer, mit Hauptmarken-Name als Fallback suchen.
 
-## Apify-Actor-Optionen
+## Apify-Actor-Optionen — getestete Actor-IDs
+
+Getestete Actors (Stand des Projekteinsatzes). Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit Kunden-Domain) durchführen; bei Fehler Alternativen aus der Liste probieren. Login-Wall-Quellen werden explizit markiert.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/google-ads-transparency-center-scraper` | Google Ads TC Scraper (official) | noch nicht getestet | unbekannt | Als Erste Wahl probieren |
+| `igolaizola/google-ads-transparency-scraper` | Community TC Scraper | noch nicht getestet | unbekannt | Erster Fallback |
+| `compass/google-ads-transparency-center` | TC Compass | noch nicht getestet | unbekannt | Zweiter Fallback |
+
+**Login-Wall:** Das Transparency Center ist öffentlich ohne Login zugänglich — kein authentifizierter Scraper nötig. Sollte ein Actor dennoch Login-Fehler zurückgeben, ist das ein Apify-Sessions-Problem, kein TC-Problem → Session-Reconnect, dann Retry.
 
 ### Erste Wahl: `apify/google-ads-transparency-center-scraper` (falls vorhanden im Store)
 
@@ -133,7 +143,7 @@ Das TC liefert **keine Spend-Daten**. Wenn der Stratege Spend-Schätzungen will,
 
 Pro Akteur ein Lookup:
 
-```
+```text
 GET https://api.spyfu.com/v1/domain/<domain>/overview
 ?api_key=<KEY>
 &country=de

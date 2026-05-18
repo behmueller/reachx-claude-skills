@@ -100,7 +100,7 @@ REPORTS_ID=$(jq -r '.drive.subfolders.reports' /tmp/meta.json)
 
 Prüfung beider Bedingungen erfolgt gegen Drive (via `drive.py list-children "$AUDITS_ID"`):
 
-```
+```text
 1. Existiert audits/keyword-kategorisierung-schema.md im Drive-Audits-Folder?
    - Nein → Phase A (Schema generieren)
    - Ja: Schema-File lesen (drive.py read <id>), Frontmatter parsen
@@ -133,7 +133,7 @@ python3 "$DRIVE_PY" read "$POOL_MD_ID" > /tmp/seo-keyword-pool.md
 
 Wenn `seo-keyword-pool.csv` fehlt:
 
-```
+```text
 ✗ audits/seo-keyword-pool.csv nicht gefunden.
 Bitte zuerst 03-02-seo-keyword-recherche laufen lassen — der baut den Pool, auf dem dieser Skill aufsetzt.
 ```
@@ -213,7 +213,7 @@ Sektionen:
 
 ### Schritt A.7: Schluss-Format Phase A
 
-```
+```text
 ✓ 03-03-seo-keyword-kategorisierung Phase A abgeschlossen.
 
 Outputs:
@@ -298,7 +298,7 @@ Pro Keyword auch:
 
 Pro Cluster aggregierte Metriken:
 
-```
+```text
 cluster_score = sum(volumen_pro_keyword) × abdeckung_kunde_faktor × difficulty_bonus
 ```
 
@@ -333,7 +333,7 @@ Cluster-Auffälligkeiten werden im Markdown und HTML-Report prominent gezeigt �
 
 Vollständiges Schema in `reference/cluster-output-schema.md`. Spalten (Erweiterung über die Pool-CSV hinaus):
 
-```
+```text
 keyword, keyword_normalisiert, sistrix_volumen, ahrefs_volumen, difficulty, ahrefs_cpc, gap_zu_kunde, gap_typ, gap_score,
 primaer_cluster, sekundaer_cluster, intent_typ, funnel_stufe, kategorisierung_quelle, kategorisierungs_konfidenz,
 ranking_kunde_position, ranking_kunde_url, ranking_top_wb_slug, ranking_top_wb_position,
@@ -406,7 +406,7 @@ Standard-Pattern (siehe `contracts.md` Abschnitt 3 und 7): `reports/index.html` 
 
 ### Schritt B.10: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 03-03-seo-keyword-kategorisierung Phase B abgeschlossen.
 
 Outputs:
@@ -446,6 +446,16 @@ Sag mir, welcher als nächster.
 - `reference/kategorisierung-schema-template.md` — Phase-A-Output-Format mit Default-Cluster-Templates pro Branchen-Typ
 - `reference/cluster-und-intent-methodik.md` — Definitionen der Intent-Typen und Funnel-Stufen mit Branchen-Anpassungs-Beispielen
 - `reference/cluster-output-schema.md` — Phase-B-CSV- und Markdown-Schema mit Validierungs-Regeln
+
+## Artefakt-Warnung und Governance-Blockierungen
+
+**Artefakt-Warnung (Pflicht):** Wenn der Cluster-Score eines Clusters allein oder dominant durch ein einzelnes hochvolumiges Keyword getrieben wird (d. h. ein einzelnes Keyword stellt >60 % des Cluster-Suchvolumens), ist der Score methodisch instabil. Dieser Cluster darf **nicht als Top-Hebel** in die Synthese-Empfehlung eingehen, solange der Artefakt nicht explizit geprüft ist. Im Schema Phase A und im Phase-B-Output als Auffälligkeit `cluster_score_artefakt` markieren:
+
+```text
+⚠ Cluster-Score-Artefakt: Cluster '[Name]' — Score zu X% von einem einzelnen Keyword ('[kw]', Volumen Y) getrieben. Kein belastbarer Top-Hebel ohne Validierung.
+```
+
+**Governance-blockierte Leistungsbereiche:** Wenn das Briefing oder `data/briefing.md` explizit nennt, dass bestimmte Leistungsbereiche **nicht beworben werden sollen** (z. B. aus regulatorischen Gründen, strategischer Fokussierung oder Kapazitätsgründen), werden die zugehörigen Cluster in der Schema-Phase als `status: governance_blockiert` ausgewiesen — **nicht** als Quick-Win, **nicht** als Gap. Im Phase-B-Output als eigener Block `Geparkte Cluster` mit Erläuterung. Diese Cluster bleiben in der CSV (`primaer_cluster` erhalten), aber mit eigenem Tag `governance_blockiert: true`, damit `04-02-kanal-chancen-analyse` sie herausfiltern kann.
 
 ## Edge Cases
 

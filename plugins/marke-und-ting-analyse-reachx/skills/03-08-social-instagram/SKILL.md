@@ -63,10 +63,10 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 ## Voraussetzungen
 
 - `01-01-mta-projekt-init` gelaufen → MTA in `~/.cache/reachx-mta/active-mtas.json` registriert, `meta.json` im Drive-MTA-Root
-- Apify-Zugang verfuegbar (siehe `reference/instagram-tools-mapping.md` fuer Actor-Auswahl)
+- **Apify-Zugang (Pflicht)** — Actor-Auswahl in `reference/instagram-tools-mapping.md` (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
+- **Login-Wall-Hinweis:** Öffentliche Instagram-Profile sind anonym erreichbar. **Private Profile** sind hinter Login und nicht erhebbar ohne authentifizierten Scraper — als `privat_account: true` im Output markieren und überspringen. Bei aggressiver Rate-Limitierung kann ein Apify-Cookie (Instagram-Login-Session) helfen; das ist optional und nur dann einsetzen, wenn tatsächlich Rate-Limit-Fehler auftreten.
 - Empfohlen: `wettbewerber/liste.md` (Drive) mit `status: bestaetigt` - sonst Kunden-only-Modus
 - Empfohlen: `data/kunde.md` und `wettbewerber/SLUG.md` (Drive) mit Touchpoint-Inventur (`typ: instagram`) - daraus zieht der Skill die Profil-URLs
-- Optional: Apify-Cookies (Instagram-Login-Session) - bei aggressiver Rate-Limitierung oder Login-Wall noetig
 
 ## Ablauf
 

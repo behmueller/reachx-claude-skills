@@ -55,7 +55,12 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json` vorhanden, mit `website` befüllt
 - Optional, aber stark empfohlen: `01-02-kickoff-transcript-parser` gelaufen → `data/briefing.md` vorhanden (für Abweichungs-Analyse)
-- Apify-Zugang verfügbar (über MCP oder API-Token im Environment)
+- **Pflicht-MCP:** Apify (für Website-Crawl und Screenshot). Vor dem ersten Crawl-Aufruf Health-Check durchführen (contracts.md Abschnitt 11):
+  ```bash
+  # Credential-Check — nur diese eine Variable, keine breite Suche
+  [ -n "$APIFY_TOKEN" ] || { echo "✗ APIFY_TOKEN nicht gesetzt."; exit 1; }
+  ```
+  Schlägt der Check fehl: sauberer Abbruch mit Hinweis — kein Fallback auf eigenes Crawling.
 
 ## Ablauf
 

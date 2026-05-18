@@ -4,6 +4,20 @@ Welcher Apify-Actor für welchen Schritt, Fallback-Reihenfolge, bekannte Eigenhe
 
 **Stand:** Mai 2026
 
+## Getestete Actor-IDs
+
+Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit Kunden-Handle) durchführen; bei Fehler Alternativen aus der Liste probieren.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `clockworks/free-tiktok-scraper` | Free TikTok Scraper | noch nicht getestet | unbekannt | Erste Wahl für kostengünstige Läufe |
+| `apify/tiktok-scraper` | TikTok Scraper (official) | noch nicht getestet | unbekannt | Stabilere Datenqualität, höhere Kosten |
+| `apify/tiktok-profile-scraper` | TikTok Profile Scraper | noch nicht getestet | unbekannt | Nur Profil-Stammdaten (schnell/billig) |
+| `apify/tiktok-search-scraper` | TikTok Search Scraper | noch nicht getestet | unbekannt | Profil-Auflösung aus Markennamen |
+| `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
+
+**Login-Wall:** Öffentliche Profile und Videos sind anonym zugänglich. Private Accounts: `profil_privat: true` setzen und überspringen.
+
 ## Methoden-Glossar
 
 | Methode | Wann nutzen |

@@ -339,6 +339,14 @@ Lokal:        Im Active-MTA-Cache aktualisiert.
 Soll ich mit 02-02 weitermachen?
 ```
 
+## Arbeiten über mehrere Sessions & Re-Runs
+
+Ein vollständiger MTA-Durchlauf erstreckt sich typisch über mehrere Claude-Sessions.
+
+- **Einziger Übergabepunkt zwischen Sessions:** `status.md` und `reports/index.html` auf Drive. Jede Folge-Session frisch starten, MTA-Kontext über den Active-MTA-Cache (`~/.cache/reachx-mta/active-mtas.json`) ermitteln — kein State wird im Kontext der vorherigen Session benötigt.
+- **Neue Skills nach Plugin-Update:** Frisch installierte oder aktualisierte Skills erscheinen erst in einer **neu gestarteten Session** im Skill-Index. Nach einem Plugin-Update immer eine neue Claude-Session starten, bevor ein neuer Skill aufgerufen wird.
+- **Re-Run-Drift:** Wird ein Audit-Skill (Stufe 3) erneut ausgeführt, nachdem Synthese-Skills (Stufe 4) bereits gelaufen sind, stehen die Synthese-Outputs auf veralteter Basis. Der Audit-Skill markiert in `status.md` den Staleness-Hinweis; die Synthese-Kette sollte erneut durchlaufen werden. Ausführliche Regeln hierzu in `contracts.md` Abschnitt 12.
+
 ## Wichtige Konventionen
 
 Dieser Skill ist der erste in der MTA-Skill-Kette und legt die Konventionen fest, an die sich alle weiteren Skills halten. Die vollständigen Vorgaben stehen in **`reference/contracts.md`** — lies sie, wenn du andere MTA-Skills baust oder anpasst.

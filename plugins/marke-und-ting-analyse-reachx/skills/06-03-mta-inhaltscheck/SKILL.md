@@ -131,6 +131,26 @@ Bei "ohne fort": Hinweis im Bericht hinzufügen, dass die Briefing-Verzahnung ni
 
 Hinweis: Aktuell existiert kein nativer Fireflies-MCP-Connector. Der Nutzer kann Transkripte als `.md`/`.txt` exportieren und im Projektordner ablegen.
 
+## Schritt 2a — Synthese-Kennzahlen laden für den Konsistenz-Check (nur MTA-Modus)
+
+Wenn `MTA_MODE=true`, lies die Synthese-Outputs der laufenden MTA aus dem `synthese/`-Sub-Folder auf Drive — sie liefern die **Soll-Kennzahlen**, gegen die die im Deck genannten Zahlen geprüft werden:
+
+```bash
+SYNTHESE_ID=$(jq -r '.drive.subfolders.synthese' /tmp/meta.json)
+for f in ziele.md forecast.md retainer.md; do
+  FID=$(python3 "$DRIVE_PY" list-children "$SYNTHESE_ID" | jq -r --arg n "$f" '.[] | select(.name == $n) | .id')
+  [ -n "$FID" ] && python3 "$DRIVE_PY" read "$FID" > "/tmp/synthese-$f"
+done
+```
+
+Aus den Frontmattern die Kernzahlen extrahieren:
+
+- `synthese/ziele.md` — Aggregat-Bandbreite (konservativ/realistisch/ambitioniert: Umsatz, Leads, Orders)
+- `synthese/forecast.md` — 12-Monats-Aggregat (worst/real/best: Umsatz Jahr 1, Leads, Orders), Steady-State-Monat
+- `synthese/retainer.md` — Monats-Preis-Range, Setup-Range, Gesamtkosten 12 Monate, ROI-Faktor, Break-Even-Monat (je Service-Level × Szenario)
+
+Fehlen einzelne Dateien (Synthese noch nicht komplett): den Konsistenz-Check auf die vorhandenen beschränken und im Bericht vermerken. Im Standalone-Modus entfällt Schritt 2a — dann wird nur die Deck-interne Konsistenz geprüft (siehe Schritt 7).
+
 ## Schritt 3 — Deck einlesen
 
 ```bash
@@ -241,10 +261,24 @@ Pro Dimension sammle:
 - **Begründung** (warum diese Bewertung — welche Kriterien aus der Methodik treffen zu?)
 - **Verbesserungsvorschläge** (konkrete Aktion, ggf. mit Text-Vorschlag für eine fehlende Folie)
 
+### Konsistenz-Check der Synthese-Kennzahlen (Querschnitt)
+
+Zusätzlich zu den sechs Dimensionen wird geprüft, ob die im Deck genannten **Kernzahlen konsistent** sind — sowohl deck-intern als auch (im MTA-Modus) gegen die Synthese-Outputs aus Schritt 2a. Hintergrund: Die Stufe-4-Synthese ist eine Kette (`contracts.md` Abschnitt 12); wenn `ziele.md`, `forecast.md` und `retainer.md` aus unterschiedlichen Lauf-Ständen stammen oder eine Folie eine veraltete Zahl trägt, divergieren die Zahlen im Deck — und das fällt dem Kunden auf.
+
+Geprüft wird:
+
+1. **Ziele vs. Forecast** — stimmt die im Deck genannte Umsatz-/Lead-/Order-Bandbreite auf den Ziele-Folien mit der auf den Forecast-Folien überein? Eine Abweichung **> 20 %** zwischen Ziele-Realistisch und Forecast-Real ist ein Befund.
+2. **Forecast vs. Retainer-ROI** — basiert die ROI-Argumentation auf demselben Forecast-Umsatz, der auf den Forecast-Folien steht? Rechnet das ROI-/Rechenbeispiel mit einer anderen Umsatzzahl als der Forecast, ist das ein Befund.
+3. **Deck vs. Synthese-Outputs (nur MTA-Modus)** — weichen die im Deck genannten Zahlen von den Frontmatter-Kernzahlen in `synthese/ziele.md`, `synthese/forecast.md`, `synthese/retainer.md` (Schritt 2a) ab? Das deutet auf ein Deck, das auf veralteten Synthese-Ständen aufbaut.
+4. **AOV-/Annahmen-Konsistenz** — nutzen mehrere Forecast-Folien denselben AOV/CLV, dieselbe Conversion-Rate? Zwei Forecasts derselben Marke mit unterschiedlichem AOV (z. B. 450 € vs. 964 €) sind ein klassisches Antipattern.
+
+Divergierende Zahlen werden als **konkreter Befund** gemeldet — primär in Dimension 3 (Online-Marketing-Potenzialanalyse) und Dimension 5 (ROI-Argumentation), mit Folien-Referenz und beiden Zahlen. Sind die Synthese-Outputs verfügbar und das Deck weicht ab, gehört der Befund mit der Empfehlung "Deck-Zahlen gegen den aktuellen Synthese-Stand angleichen" in die Top-3-Verbesserungen, wenn der Hebel hoch ist.
+
 Sammle außerdem:
 
 - **Executive Summary** (4–6 Sätze, siehe Format unten)
 - **Top-3-Verbesserungen** (Vorschläge mit dem höchsten Hebel für den Retainer-Verkauf)
+- **Konsistenz-Befunde** (divergierende Kernzahlen aus dem Check oben — falls vorhanden)
 
 ## Schritt 8 — HTML-Bericht generieren
 
@@ -395,7 +429,9 @@ Optional: Hinweis auf die komplementären Skills `/06-02-pyramid-structure-check
 - **Sehr kurzes Deck (< 30 Folien)**: Konzentriere Dich auf Dimension 1, 4, 5, 6 und sage explizit, dass die Analysetiefe verkürzt ist.
 - **Decks ohne Forecast-Folien**: Dimension 3 wird mindestens "Verbesserungswürdig", oft "Schwach". Schlage vor, welche Forecast-Folien pro Kanal ergänzt werden sollten, mit Template-Annahmen aus der Methodik.
 - **Deck ohne Investitions-Sektion**: Dimension 4 wird "Schwach". Sage explizit, dass das Deck keinen Retainer verkauft, sondern ein reiner Status-Bericht ist.
-- **Zwei Forecasts mit widersprüchlichen Annahmen** (z. B. AOV 450 € und AOV 964 € in zwei Forecasts derselben Marke): Antipattern. Notiere als Befund in Dimension 3.
+- **Zwei Forecasts mit widersprüchlichen Annahmen** (z. B. AOV 450 € und AOV 964 € in zwei Forecasts derselben Marke): Antipattern. Notiere als Befund in Dimension 3 (siehe Konsistenz-Check in Schritt 7).
+- **Deck-Zahlen weichen von den Synthese-Outputs ab (MTA-Modus)**: Wenn `synthese/ziele.md`/`forecast.md`/`retainer.md` verfügbar sind und das Deck andere Kernzahlen nennt, ist das ein Befund — das Deck baut auf einem veralteten Synthese-Stand auf. Empfehlung: Deck gegen den aktuellen Synthese-Stand angleichen, ggf. die betroffenen Synthese-Skills neu laufen lassen.
+- **Synthese-Outputs unvollständig**: Fehlen `ziele.md`, `forecast.md` oder `retainer.md` auf Drive, beschränkt sich der Konsistenz-Check auf die vorhandenen plus die deck-interne Prüfung — im Bericht vermerken.
 - **Andere Sprache als Deutsch im Deck**: Erkenne die Sprache aus Body und Notes und schreibe Bericht und Vorschläge in derselben Sprache. Die Eyebrow-Labels im HTML (`MARKE&TING-Analyse · Inhaltscheck`, `01 — Verdichtung`, etc.) bleiben deutsch (REACHX-Branding), Inhalte werden übersetzt.
 - **Kein Schreibrecht im CWD (Standalone-Modus)**: Fallback auf `/tmp/deck-qa-mta-inhalt-{kunden-slug}-{datum}.html` und vermerke das im Chat-Output. Im MTA-Modus irrelevant — die Datei landet auf Drive.
 - **Keine Briefing-Datei verfügbar und Nutzer überspringt**: Bewerte ohne Briefing-Cross-Check und vermerke die Einschränkung im Executive Summary.

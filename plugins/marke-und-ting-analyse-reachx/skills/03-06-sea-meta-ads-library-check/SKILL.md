@@ -68,9 +68,11 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 ## Voraussetzungen
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json`
-- Apify-Zugang verfügbar (für Ad-Library-Scraping — der zentrale Apify-Actor wird in `reference/ad-library-mapping.md` dokumentiert)
+- **Apify-Zugang (Pflicht)** — der zentrale Apify-Actor wird in `reference/ad-library-mapping.md` dokumentiert (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
 - Empfohlen: `wettbewerber/identifikation-schema.md` mit `status: bestaetigt` und `wettbewerber/liste.md` mit `status: bestaetigt` — sonst Kunden-only-Modus
 - Empfohlen: `audits/google-ads.md` falls schon vorhanden — für Cross-Plattform-Vergleich (Akteur SEA-only, Social-only oder beides?)
+
+**Login-Wall-Hinweis:** Die Meta Ad Library ist öffentlich ohne Login zugänglich — kein authentifizierter Scraper nötig. Facebook-Posts (organisches Profil) sind dagegen hinter Login und **nicht erhebbar ohne authentifizierten Scraper** — dieser Skill beschränkt sich auf die Ad Library (Anzeigen), nicht auf Profil-Posts.
 
 ## Ablauf
 

@@ -59,7 +59,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 ## Voraussetzungen
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json`
-- Apify-Zugang verfügbar (für LinkedIn-Ad-Library-Scraping — der zentrale Apify-Actor wird in `reference/linkedin-ad-library-mapping.md` dokumentiert)
+- **Apify-Zugang (Pflicht)** — der zentrale Apify-Actor wird in `reference/linkedin-ad-library-mapping.md` dokumentiert (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
+- **Login-Wall-Hinweis:** Die LinkedIn Ad Library ist öffentlich zugänglich, liefert aber ohne Login einen reduzierten Datensatz. Targeting-Details (Job-Title, Industry) sind oft nur eingeloggt vollständig sichtbar — diese Felder als `null` markieren und im Output Coverage-Lücke dokumentieren. Organische LinkedIn-Posts (Company-Feed) sind hingegen hinter Login und **nicht erhebbar ohne authentifizierten Scraper**.
 - Empfohlen: `wettbewerber/identifikation-schema.md` mit `status: bestaetigt` und `wettbewerber/liste.md` mit `status: bestaetigt` — sonst Kunden-only-Modus
 - Empfohlen: `data/kunde.md` und `wettbewerber/*.md` mit `touchpoints`-Inventur — daraus kommen die LinkedIn-Company-Page-URLs der Akteure (wichtig, weil der Match in der LinkedIn Ad Library über die Company Page erfolgt, nicht über die Domain)
 

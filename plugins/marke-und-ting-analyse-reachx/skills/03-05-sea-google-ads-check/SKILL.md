@@ -60,10 +60,16 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 ## Voraussetzungen
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json`
-- Apify-Zugang verfügbar (für Transparency-Center-Scraping — der zentrale Apify-Actor wird in `reference/transparency-center-mapping.md` dokumentiert)
+- **Apify-Zugang (Pflicht)** — der zentrale Apify-Actor wird in `reference/transparency-center-mapping.md` dokumentiert (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__search-actors` (Limit 1) oder `fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
 - Empfohlen: `wettbewerber/identifikation-schema.md` mit `status: bestaetigt` und `wettbewerber/liste.md` mit `status: bestaetigt` — sonst Kunden-only-Modus
 - Empfohlen: `audits/seo-keyword-cluster.csv` falls schon vorhanden — für Cluster-Cross-Analyse (welche Anzeigen-Themen entsprechen welchem SEO-Cluster?)
 - Optional: SpyFu-API-Zugang (`SPYFU_API_KEY` im Environment) für Spend-Schätzungen — wenn nicht vorhanden: Reduced-Modus ohne Spends
+
+### Datenquellen-Klarstellung (für die MTA-Story)
+
+Das **Transparency Center** ist die maßgebliche Datenquelle für Anzeigen-Aktivität: es zeigt Search + Display + Video + Shopping + Demand Gen — alle Anzeigentypen verifizierter Werbetreibender. Ein Akteur gilt als „inaktiv im SEA", wenn das Transparency Center keine Anzeigen zeigt; zeigt das TC keine Ergebnisse, weil der Akteur dort nicht als Werbetreibender verifiziert ist, wird er als `nicht verifiziert` (statt `inaktiv`) eingestuft und explizit so im Output ausgewiesen.
+
+Ergänzende Tools (Ahrefs Paid-Keywords, SpyFu) sehen nur **Search-Bidding** — sie indexieren keine Display- oder Video-Kampagnen. Ein Akteur, der im TC mit 20 Display-Anzeigen auftaucht, aber bei Ahrefs/SpyFu nicht, gilt trotzdem als aktiv. Im Output explizit dokumentieren, welche Quelle welche Anzeigentypen abdeckt.
 
 ## Ablauf
 

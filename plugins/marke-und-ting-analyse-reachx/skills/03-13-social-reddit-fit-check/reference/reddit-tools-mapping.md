@@ -4,6 +4,19 @@ Welcher Apify-Actor fuer welchen Schritt, Subreddit-Such-Heuristik, Sprache-Erke
 
 **Stand:** Mai 2026
 
+## Getestete Actor-IDs
+
+Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit einem bekannten Subreddit) durchführen; bei Fehler Alternativen aus der Liste probieren.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/reddit-scraper` | Reddit Scraper (official) | noch nicht getestet | unbekannt | Erste Wahl — Subreddit-Crawl, Posts, Kommentare |
+| `apify/reddit-search-scraper` | Reddit Search Scraper | noch nicht getestet | unbekannt | Erste Wahl — Subreddit-Suche, Marken-Erwähnungen |
+| `apify/reddit-comments-scraper` | Reddit Comments Scraper | noch nicht getestet | unbekannt | Optional — Thread-Tiefe |
+| `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
+
+**Login-Wall:** Reddit ist öffentlich ohne Login zugänglich. Keine Auth notwendig. Bei Session-Fehlern: Reconnect, dann Retry.
+
 ## Methoden-Glossar
 
 | Methode | Wann nutzen |

@@ -66,6 +66,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - Empfohlen: `data/kunde.md` (für Kunden-Reife-Achse)
 - Empfohlen: `synthese/positionierung.md` falls bereits vorhanden — fließt in die strategische Story ein
 
+**Synthese-Sequenz (`contracts.md` Abschnitt 12):** `04-02-kanal-chancen-analyse` ist der erste Schritt der Stufe-4-Synthese-Kette und wird sequenziell vor `04-03-ziele-aus-potenzialen` ausgeführt. Verbindliche Reihenfolge: `04-01 → 04-02 → 04-03 → 04-04 → 04-05 → 04-06` — kein Parallel-Start, der Hauptthread orchestriert sequenziell.
+
 ## Ablauf
 
 ### Schritt 1: Projekt-Auffindung und Voraussetzungs-Check
@@ -126,10 +128,20 @@ Erwartete Pfade (alle optional, jeder als File auf Drive zu prüfen):
 - `audits/content-inventur.md`
 - `audits/local-gmb.md`, `audits/local-rankings.csv`
 - `audits/instagram-wettbewerb.md`, `audits/tiktok-wettbewerb.md`, `audits/pinterest-wettbewerb.md`, `audits/linkedin-wettbewerb.md` (oder `03-11-social-linkedin`-Output)
+- `audits/reddit-fit.md` (Reddit-/Community-Kanal, optional — fehlt häufig, dann Reddit-Kanal mit Konfidenz `niedrig`)
+- `audits/geo-sichtbarkeit.md` (KI-/Discovery-Sichtbarkeits-Audit, **optional** — kann fehlen; fehlt er, wird der GEO-Kanal mit Branchen-Default und Konfidenz `niedrig` bewertet, nicht ausgelassen)
 - `data/briefing.md`, `data/kunde.md`
 - `synthese/positionierung.md`
 
 Halte die Inventur als interne Datenstruktur — für jeden Kanal wird notiert, welche Inputs zur Verfügung standen.
+
+**Apify-Konfidenz-Flag für Paid-Kanäle:** Die Scores der Paid-Kanäle (SEA / Google-Ads, Meta-Ads) hängen an den Daten aus dem Google-Ads-Transparency-Center und der Meta-Ad-Library — beide werden via Apify gescrapt. Prüfe bei der Input-Inventur, ob `audits/google-ads.md` bzw. `audits/meta-ads.md` einen Hinweis tragen, dass der Apify-Scrape unvollständig oder gar nicht gelaufen ist (Session-Abbruch, leere Anzeigen-CSV trotz aktiver Domain, expliziter `apify_unvollstaendig`-Vermerk). Trifft das zu:
+
+- Den `potenzial_score` und `kunden_reife_score` des betroffenen Paid-Kanals mit `konfidenz: niedrig` markieren und im Frontmatter pro Kanal das Feld `apify_konfidenz_flag: niedrig_ohne_apify` setzen.
+- Im Output (Auffälligkeiten und strategische Story) explizit darauf hinweisen: **Paid-Kanal-Scores ohne vollständige Display-/Video-Daten aus dem Transparency-Center können 5–10 Punkte zu niedrig liegen** — das Transparency-Center listet ohne sauberen Scrape oft nur Search-Anzeigen, nicht Display und Video. Der Stratege soll den Score in dem Wissen lesen.
+- Den Paid-Kanal **nicht** aus dem Ranking entfernen — nur die Konfidenz und der Hinweis ändern sich.
+
+**Input-Staleness erfassen (`contracts.md` Abschnitt 12):** Beim Lesen jedes Audit-/Synthese-Inputs aus Drive den `generiert_am`-Stempel aus dem Frontmatter mitnehmen. Diese Stempel werden im Output-Frontmatter als `basis_inputs`-Liste festgehalten (siehe Schritt 9). Existiert bereits ein `synthese/kanal-chancen.md` aus einem früheren Lauf: vergleiche die `generiert_am`-Stempel der Inputs mit dessen `generiert_am`. Ist ein Input **neuer** als der bestehende Output, im Schluss-Format einen Staleness-Hinweis ausgeben ("`<input>` wurde nach dem letzten kanal-chancen-Lauf aktualisiert — Re-Run empfohlen"). Pauschal gilt: Wurde ein Stufe-3-Audit re-gerunnt, ist die Stufe-4-Kette potenziell stale.
 
 **First-Party-Daten und das `belastbarkeit`-Gate:** Wenn `audits/ga4-first-party.md` vorliegt, lies aus dem Frontmatter das Feld `belastbarkeit` (`gruen | gelb | rot`) sowie die Blöcke `conversion_baseline` und `kanal_wertigkeit`. Das `belastbarkeit`-Gate steuert verbindlich, mit welcher Konfidenz die GA4-Zahlen in die Achsen-Scores eingehen:
 
@@ -168,8 +180,19 @@ Der Skill bewertet die folgenden **Kanäle** (in fester Reihenfolge im Output):
 8. **TikTok-organisch**
 9. **LinkedIn-organisch**
 10. **Pinterest-organisch**
-11. **YouTube-organisch** (optional, branchenabhängig)
-12. **Website-CRO / Conversion-Optimierung**
+11. **Facebook-organisch**
+12. **YouTube-organisch** (optional, branchenabhängig)
+13. **Reddit / Community** (organische Community-Präsenz, branchenabhängig)
+14. **KI-/Discovery-Sichtbarkeit (GEO)** — Sichtbarkeit in KI-Antworten und Discovery-Feeds
+15. **Website-CRO / Conversion-Optimierung**
+
+**Drei zusätzliche Kanäle gegenüber der Grundliste — Sonderbehandlung beachten:**
+
+- **Facebook-organisch** — wird wie die anderen Social-organisch-Kanäle bewertet. Datenquelle ist das Facebook-Audit, falls vorhanden; fehlt es, gilt der Branchen-Fit-Default und Konfidenz `niedrig`. Facebook-Posts sind häufig login-wall-blockiert — eine dünne Datenlage ist erwartbar und kein Fehler.
+- **Reddit / Community** — Datenquelle ist `audits/reddit-fit.md` (aus dem Reddit-Fit-Check), falls vorhanden. Fehlt die Datei, wird der Kanal mit Branchen-Fit-Default und Konfidenz `niedrig` bewertet — **nicht ausgelassen**.
+- **KI-/Discovery-Sichtbarkeit (GEO)** — bewusst als **Multiplikator-Strang auf SEO und Content** zu kennzeichnen, **kein eigener Budgetposten**. GEO-Sichtbarkeit entsteht aus starkem SEO-/Content-Fundament, nicht aus separatem Spend. Im Output, in der strategischen Story und in der Top-3-Begründung explizit so benennen ("GEO ist ein Hebel auf SEO/Content, kein eigenständiger Kanal mit eigenem Budget"). Datenquelle ist der **optionale** Audit `audits/geo-sichtbarkeit.md` — der Audit kann fehlen. Fehlt er, wird GEO trotzdem bewertet, mit Branchen-Fit-Default und **Konfidenz `niedrig`** — nicht ausgelassen. Der Kanal landet im CSV mit `score`, nicht `skip`.
+
+Keiner der drei Kanäle wird wegen fehlendem Audit übersprungen — sie werden mit niedriger Konfidenz bewertet, weil die bloße Bewertung (auch konservativ) für den Strategen Information ist.
 
 Pro Kanal werden **fünf Achsen** auf einer 0-100-Skala bewertet. Die genauen Scoring-Regeln stehen in `reference/chancen-score-formel.md`. Kurz zusammengefasst:
 
@@ -250,6 +273,22 @@ python3 "$DRIVE_PY" upsert-text "$SYNTHESE_ID" "kanal-chancen.md" /tmp/kanal-cha
 python3 "$DRIVE_PY" upsert-text "$SYNTHESE_ID" "kanal-chancen.csv" /tmp/kanal-chancen.csv "text/csv"
 ```
 
+**Output-Reihenfolge (`contracts.md` Abschnitt 3):** zuerst `kanal-chancen.md` und `kanal-chancen.csv`, dann der HTML-Report (Schritt 10), **zuletzt** `status.md` (Schritt 11) — ein vorzeitig beendeter Lauf hinterlässt so vollständige, nutzbare Outputs.
+
+**`basis_inputs` im Frontmatter (Pflicht, `contracts.md` Abschnitt 12):** Das Frontmatter von `kanal-chancen.md` trägt die Liste aller gelesenen Audit-/Synthese-Inputs mit ihrem `generiert_am`-Stempel — die Datenbasis, auf der die Synthese beruht:
+
+```yaml
+basis_inputs:
+  - datei: audits/seo-cluster-zusammenfassung.md
+    generiert_am: 2026-05-16T14:00:00Z
+  - datei: audits/google-ads.md
+    generiert_am: 2026-05-15T09:30:00Z
+  - datei: audits/ga4-first-party.md
+    generiert_am: 2026-05-16T11:00:00Z
+```
+
+Damit kann jeder nachgelagerte Synthese-Skill (`04-03` ff.) prüfen, ob `kanal-chancen.md` auf veralteten Audits steht.
+
 ### Schritt 10: HTML-Report
 
 **Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
@@ -299,6 +338,10 @@ Empfohlen: weitere Audits laufen lassen und Skill neu aufrufen für robustere Em
 - **Sehr starker Wettbewerber-Cluster auf einem Kanal**: bei 6+ WBs aktiv und Spend-Range hoch → `branchen_uebersaturiert` setzen, `aufwand_score` reduzieren
 - **Konflikt zwischen Briefing-Ziel und Daten**: explizit als `kanal_briefing_widerspruch` herausstellen — Stratege muss im Kunden-Gespräch klären
 - **YouTube/Pinterest nicht relevant für Branche**: Branchen-Fit-Score sehr niedrig, Kanal landet automatisch im Ranking unten — nicht ausschließen, weil die Bewertung selbst Information ist
+- **`audits/geo-sichtbarkeit.md` fehlt**: GEO-Kanal wird trotzdem bewertet — Branchen-Fit-Default, alle Achsen `konfidenz: niedrig`, im CSV `score` (nicht `skip`). GEO bleibt als Multiplikator-Strang auf SEO/Content gekennzeichnet, kein eigener Budgetposten
+- **`audits/reddit-fit.md` fehlt**: Reddit/Community-Kanal wird mit Branchen-Fit-Default und Konfidenz `niedrig` bewertet — nicht ausgelassen
+- **Facebook-Audit fehlt / login-wall-blockiert**: Facebook-organisch wird mit Branchen-Fit-Default und Konfidenz `niedrig` bewertet — dünne Datenlage ist erwartbar, kein Fehler
+- **Apify-Scrape für Paid-Kanäle unvollständig**: `apify_konfidenz_flag: niedrig_ohne_apify` für SEA/Meta-Ads setzen, Achsen-Konfidenz `niedrig`, Hinweis im Output — Paid-Scores können ohne Display-/Video-Daten 5–10 Punkte zu niedrig liegen. Kanal bleibt im Ranking
 - **`reports/_shell.html` fehlt auf Drive**: Hinweis im Schluss-Format, HTML-Report wird trotzdem als minimaler Plain-HTML-Stub geschrieben und hochgeladen
 
 ## Reference-Dateien

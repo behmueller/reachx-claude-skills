@@ -2,6 +2,19 @@
 
 Übersicht über die in Phase B genutzten Recherche-Tools mit Stärken, Schwächen und Fallback-Kaskade.
 
+## Getestete Actor-IDs
+
+Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit Kunden-GMB-URL) durchführen; bei Fehler Alternativen aus der Liste probieren.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `compass/google-maps-scraper` | Google Maps Scraper (Compass) | noch nicht getestet | unbekannt | Erste Wahl GMB-Profil |
+| `apify/google-maps-extractor` | Google Maps Extractor (official) | noch nicht getestet | unbekannt | Fallback GMB-Profil |
+| `apify/google-maps-local-pack-scraper` | Local Pack Scraper | noch nicht getestet | unbekannt | Erste Wahl Local-Pack-Rankings |
+| `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
+
+**Login-Wall:** Google Maps ist öffentlich ohne Login zugänglich. Keine Auth notwendig. Apify-Session-Fehler sind Session-Probleme, kein Maps-Problem → Reconnect, dann Retry.
+
 ## 1. GMB-Profil-Scrape
 
 ### Bevorzugt: Apify `compass/google-maps-scraper`
@@ -65,7 +78,7 @@ Wenn Stratege Local-Falcon-Credentials konfiguriert hat (`LOCAL_FALCON_API_KEY` 
 
 ### Tool-Wahl-Kaskade
 
-```
+```text
 1. Local Falcon (wenn API-Key gesetzt)
 2. Apify Local-Pack-Scraper
 3. SerpAPI / Web-Search (Reduced-Modus)
@@ -73,7 +86,7 @@ Wenn Stratege Local-Falcon-Credentials konfiguriert hat (`LOCAL_FALCON_API_KEY` 
 
 ### Pro-Query-Output (in CSV)
 
-```
+```csv
 standort_id, keyword, position, akteur_slug, name, adresse, rating, rezensions_anzahl, quelle, scrape_datum
 ```
 

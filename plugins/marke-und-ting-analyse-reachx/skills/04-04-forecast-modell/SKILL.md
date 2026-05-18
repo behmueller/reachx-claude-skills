@@ -135,6 +135,15 @@ Drive-Bootstrap wie oben. Lies `status.md` aus Drive.
 - `synthese/ziele.md` muss auf Drive existieren — sonst Abbruch mit Hinweis auf `04-03-ziele-aus-potenzialen`
 - `synthese/ziel-annahmen-schema.md` mit `status: bestaetigt` muss auf Drive existieren — sonst Abbruch
 
+**Kein Silent-Fallback (`contracts.md` Abschnitt 12) — verbindlich:** Fehlt `synthese/ziele.md` oder ist das zugehörige `ziel-annahmen-schema.md` nicht `status: bestaetigt`, bricht `04-04` **hart ab**. Es gibt **keinen** "hybrid"-, "Bottom-up-aus-Briefing"- oder ähnlichen Ersatz-Modus, der ein fehlendes `ziele.md` still kompensiert und seine Zahlen aus dem Briefing rekonstruiert. Genau das hat in der Praxis zwei MTA-Outputs mit ~50 % divergierenden Zahlen erzeugt (Forecast vs. Ziele). `04-04` rechnet **ausschließlich** auf den bestätigten, abgeleiteten Bandbreiten aus `04-03`. Briefing-KPIs fließen nur als zweite Quelle in die Dual-Quellen-Logik (Schritt A.2) ein — sie ersetzen `ziele.md` niemals.
+
+Abbruch-Meldung bei fehlendem Pflicht-Input:
+
+```
+✗ 04-04-forecast-modell kann nicht laufen: synthese/ziele.md fehlt (oder ziel-annahmen-schema.md ≠ status: bestaetigt).
+Bitte zuerst 04-03-ziele-aus-potenzialen ausführen und das Annahmen-Schema bestätigen.
+```
+
 Lies aus diesen Dateien aus Drive (siehe `reference/forecast-annahmen-schema-template.md` für die genauen Felder):
 
 - Aus `synthese/ziele.md` Frontmatter: `aggregat.*`, `kanaele[].konservativ/realistisch/ambitioniert`, `kanaele[].ramp_up_monate_min/max`, `forecast_vorbereitung.uebernahme_in_forecast_schema`
@@ -404,6 +413,8 @@ umsatz[kanal, monat, szenario] = orders x aov[szenario]
 spend[kanal, monat, szenario]  = spend_monat[szenario] x ramp_up_faktor (wenn ramp_up_aligned)
 ```
 
+**Kapazitäts-Deckel:** Trägt `synthese/ziele.md` eine Kapazitätsgrenze des Kunden (Auffälligkeit `markt_potenzial_ueber_kunden_kapazitaet` aus `04-03`), wird die monatliche Order-/Lead-Kurve im Real- und Best-Szenario auf diesen Deckel begrenzt — der Forecast modelliert, was der Kunde operativ bedienen kann, nicht nur, was der Markt hergibt. Den Deckel und seinen Quellen-Typ (`briefing` bei Kunden-Aussage, `schaetzung_skill` bei abgeleiteter Grenze) im Body ausweisen und die Auffälligkeit `forecast_ueber_kunden_kapazitaet` setzen, wenn der ungedeckelte Forecast die Grenze überschreitet.
+
 ### Schritt B.4: Quellen-Verlinkung pro Zelle
 
 Pro Roh-Zeile in der CSV werden die `*_quelle`-Felder gesetzt:
@@ -414,6 +425,17 @@ Pro Roh-Zeile in der CSV werden die `*_quelle`-Felder gesetzt:
 - `quelle_spend` — woher der Spend (z. B. `briefing_aussage` oder `branchen_benchmark`)
 - `quelle_ziel_overlay` — falls Briefing-KPI als Vorrang im Schema gesetzt war: `briefing_aussage`, sonst `abgeleitete_ziele`
 
+### Schritt B.4a: Konsistenz-Cross-Check gegen `ziele.md`
+
+`ziele.md` (aus `04-03`) und der hier gerechnete Forecast leiten dieselben Größen ab — NPat/Aufträge, Leads und Umsatz für Jahr 1. Weichen sie auseinander, fällt das sonst erst im fertigen Deck auf (`contracts.md` Abschnitt 12, Konsistenz-Check zwischen Synthese-Outputs).
+
+Nach der Berechnung (Schritt B.3) für das **Real-Szenario** das 12-Monats-Aggregat des Forecasts gegen das realistische Steady-State-Aggregat aus `synthese/ziele.md` halten:
+
+- Vergleichsgrößen: Umsatz Jahr 1, Leads/Anfragen, Aufträge/NPat.
+- Forecast-Werte sind Ramp-up-gewichtete 12-Monats-Summen, `ziele.md`-Werte sind Steady-State-Jahres-Beiträge — der Vergleich erfolgt auf vergleichbarer Basis (Steady-State-Hochrechnung des Forecasts, nicht Monat-1).
+- Liegt die Abweichung bei einer Kerngröße **über 20 %**, wird sie als explizite Auffälligkeit `forecast_vs_ziele_diskrepanz` ausgewiesen und im Body mit beiden Zahlen plus mutmaßlicher Ursache (Saisonalität, Ramp-up-Funktion, abweichende Annahme) benannt.
+- Geteilte Parameter (Doppelzählungs-Faktor, AOV, CR-Bandbreiten) **müssen** aus dem bestätigten `ziel-annahmen-schema.md` stammen — eine Diskrepanz darf nicht aus neu angenommenen Parametern entstehen. Wird eine Diskrepanz auf abweichende Parameter zurückgeführt, ist das ein Fehler in der Schema-Übernahme (Schritt A.3/A.7), nicht ein zulässiges Ergebnis.
+
 ### Schritt B.5: Auffälligkeiten extrahieren
 
 Mindestens **6 Auffälligkeiten**. Wenn weniger als 6 echte aus den Daten ableitbar sind: ergänze um methodische Hinweise (z. B. niedrige Konfidenz im Schema).
@@ -421,6 +443,8 @@ Mindestens **6 Auffälligkeiten**. Wenn weniger als 6 echte aus den Daten ableit
 | Typ | Auslöser | Beispiel |
 |---|---|---|
 | `ziele_briefing_vs_abgeleitet_diskrepanz` | Briefing-KPI weicht > Schwellwert vom abgeleitet_real ab | "Briefing-Ziel 100 Leads/Monat, abgeleitet realistisch 60 — Erwartungs-Diskrepanz im Kunden-Gespräch erden" |
+| `forecast_vs_ziele_diskrepanz` | Forecast-Kerngröße (NPat/Leads/Umsatz Jahr 1, Real-Szenario) weicht > 20 % von `synthese/ziele.md` ab (Schritt B.4a) | "Forecast rechnet Jahr 1 mit 420k Umsatz, ziele.md realistisch mit 310k — 35 % Abweichung. Ursache prüfen (Ramp-up-Funktion, Saisonalität), Zahlen vor dem Deck angleichen" |
+| `forecast_ueber_kunden_kapazitaet` | Real-Forecast übersteigt die in `ziele.md` ausgewiesene Kapazitätsgrenze (`markt_potenzial_ueber_kunden_kapazitaet`) | "Real-Forecast erreicht 90 Aufträge/Monat im Steady State, Kunden-Kapazität laut ziele.md max. 50 — Forecast auf den Kapazitäts-Deckel kappen oder Engpass im Kunden-Gespräch klären" |
 | `kanal_dominanz_im_forecast` | Ein Kanal trägt > 60% des Real-Szenarios | "SEO macht 72% des realistischen Umsatzes — Klumpenrisiko, wenn ein Cluster wegbricht" |
 | `ramp_up_engpass` | Real-Szenario erreicht Briefing-Timeline-Ziel nicht | "Briefing erwartet Ergebnisse in 3 Monaten, Top-Kanal SEO erreicht Steady State erst Monat 9 — Hybrid mit SEA als Sofort-Hebel" |
 | `worst_case_nicht_break_even` | Selbst Best-Szenario erreicht nicht Break-Even im 12-Monats-Horizont | "Best-Szenario kommt auf 280k Umsatz, Spend plus Retainer 320k — Break-Even erst ab Jahr 2" |
@@ -502,7 +526,7 @@ Beide Dateien aus Drive lesen, patchen, via `drive.py upsert-text` zurückschrei
 - `04-04-forecast-modell` in `schritte_done` (Phase B abgeschlossen)
 - Aus `blockiert` entfernen
 - `naechster_empfohlen`: `04-05-90-tage-plan`
-- Parallel möglich: `04-06-retainer-kalkulator`
+- Parallel möglich: `04-06-retainer-kalkulator`; ergänzend `04-07-segment-potenzial-matrix` (segment-zentrierte Zweitsynthese — nutzt die Forecast-Bandbreiten, blockiert die Kette nicht)
 
 **Dashboard `reports/index.html`** (`drive.py find_by_name "$REPORTS_ID" "index.html"` → `read` → patchen → `drive.py upsert-text "$REPORTS_ID" "index.html" ... "text/html"`):
 
@@ -541,7 +565,8 @@ Top strategische Beobachtungen:
 
 Nächste Schritte:
 1. 04-05-90-tage-plan — operationalisiert die Top-Kanäle aus dem Forecast
-2. (parallel möglich) 04-06-retainer-kalkulator — braucht Spend-Annahmen aus dem Forecast
+2. 04-06-retainer-kalkulator — braucht Spend-Annahmen aus dem Forecast; läuft nach 04-05 (Synthese-Sequenz: 04-03 → 04-04 → 04-05 → 04-06)
+3. (ergänzend, optional) 04-07-segment-potenzial-matrix — segment-zentrierte Zweitsynthese, wenn der Kunde mehrere Leistungs-/Zielgruppen-Segmente hat
 
 Sag mir, welcher als nächster.
 ```
@@ -594,4 +619,9 @@ Alle in `contracts.md` definierten Konventionen sind verbindlich:
 - **Pflicht-Bandbreite, niemals Punktschätzungen** — strikt durchsetzen, jede Zahl als worst/real/best
 - **Quellen-Transparenz**: jede Zelle im Forecast hat eine verlinkte Quelle in der CSV
 - **Dual-Quellen-Logik**: Briefing-KPIs und abgeleitete-ziele werden gleichberechtigt geführt, Vorrang im Schema explizit
+- **Kein Silent-Fallback (`contracts.md` Abschnitt 12):** fehlt `ziele.md` (oder Schema ≠ `bestaetigt`), bricht der Skill ab — **kein** "hybrid"-/"Bottom-up-aus-Briefing"-Modus, der `ziele.md` still ersetzt
+- **Konsistenz-Cross-Check (`contracts.md` Abschnitt 12):** Forecast-Kerngrößen Jahr 1 gegen `ziele.md` prüfen, Abweichung > 20 % als `forecast_vs_ziele_diskrepanz` ausweisen
+- **Geteilte Parameter aus einer Quelle:** Doppelzählungs-Faktor, AOV, CR-Bandbreiten 1:1 aus dem bestätigten `ziel-annahmen-schema.md` übernehmen — nicht neu annehmen
+- **Kapazitäts-Deckel:** Kapazitätsgrenze aus `ziele.md` begrenzt die Order-/Lead-Kurve im Real-/Best-Szenario
 - **Schreibt NICHT ins `briefing.md` oder `ziele.md` zurück** — Forecast ist eigene Quelle, baut auf den beiden auf
+- **Synthese-Sequenz:** `04-03 → 04-04 → 04-05 → 04-06`, sequenziell, kein Parallel-Start

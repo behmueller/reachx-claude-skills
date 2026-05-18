@@ -69,7 +69,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 Wenn weniger als ein Synthese-Output vorhanden ist:
 
-```
+```text
 ✗ Mindestens ein Synthese-Output erforderlich.
 Bitte zuerst mindestens einen Synthese-Skill laufen lassen (04-01-positionierungs-analyse, 04-03-ziele-aus-potenzialen, 04-04-forecast-modell, 04-02-kanal-chancen-analyse, 04-05-90-tage-plan oder 04-06-retainer-kalkulator).
 ```
@@ -166,7 +166,7 @@ Lokal arbeiten wir in `~/.cache/reachx-mta/<slug>/slides/` (Templating-Cache), a
 
 Erwartetes Layout auf Drive:
 
-```
+```text
 [Drive] reports/slides/
 ├── 00-cover.html
 ├── 01-agenda.html
@@ -211,7 +211,7 @@ Pro Slide:
 
 3. **Stuetzpunkte** — 2-4 Bullets oder kurze Saetze, die den Action-Title belegen. Aus den Input-Files extrahieren (Frontmatter-Felder bevorzugt, Body als Fallback).
 
-4. **REACHX-Branding** strikt einhalten — Schriften, Farben, Spacing wie in `reference/branding-snippet.md` definiert.
+4. **REACHX-Branding** strikt einhalten — der CSS-Block wird **verbatim** aus `reference/branding-snippet.md` übernommen, niemals „nach Vorbild" aus dem Gedächtnis nachgebaut, umformuliert oder mit eigenen Regeln ergänzt. Schriften, Farben, Spacing kommen unverändert aus dem Snippet.
 
 5. **Slide-Format** — `width: 1920px; height: 1080px; aspect-ratio: 16/9;` plus `transform: scale(...)` per CSS Media Query fuer Viewport-Anpassung. Print-PDF-Friendly via `@page` und `@media print`.
 
@@ -248,8 +248,8 @@ python3 "$DRIVE_PY" upsert-text "$SLIDES_ID" "index.html" \
 
 **Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
 
-- `{{MAIN_CONTENT}}` wird ausschliesslich aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`, den `<style>`-Block der Shell nicht verändern.
-- Vor dem Drive-Upload validieren: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → nicht hochladen, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren.
+- **Reports werden NIE „nach Vorbild" nachgebaut.** Der `<style>`-Block kommt **verbatim** aus der kanonischen `reports/_shell.html` — niemals aus dem Gedächtnis rekonstruieren, umbauen oder ergänzen. `{{MAIN_CONTENT}}` wird **ausschliesslich** aus den fertigen Bausteinen in `${CLAUDE_PLUGIN_ROOT}/skills/01-01-mta-projekt-init/reference/report-bausteine.md` zusammengesetzt — Markup 1:1 kopieren, keine eigenen CSS-Klassen erfinden, kein inline-`style`.
+- Vor dem Drive-Upload **Pflicht-Validierung**: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate-report.py" <lokaler-html-pfad> --shell`. Exit-Code 0 → hochladen. Exit-Code 1 → **nicht hochladen**, gemeldete Klassen/Platzhalter gegen `report-bausteine.md` korrigieren, erneut validieren. `--shell` prüft zusätzlich byte-genau, dass der `<style>`-Block identisch zur kanonischen Shell ist.
 
 Lies `reports/_shell.html` aus Drive (per `drive.py read <id>`). Nummer nach Workflow-Reihenfolge (vermutlich 14 bis 17, je nach welche Folge-Skills schon Reports geschrieben haben). Inhalte:
 
@@ -280,7 +280,7 @@ Folge `contracts.md` Abschnitt 3. Lese `status.md` aus dem MTA-Root via `drive.p
 
 #### 6.4: Standard-Schlussformat im Chat
 
-```
+```text
 ✓ 05-01-mta-slide-bausteine abgeschlossen.
 
 Outputs (auf Drive):

@@ -77,7 +77,8 @@ Diese Schwelle ist im Schluss-Format explizit dokumentiert, damit der Stratege w
 - `02-02-wettbewerber-identifikation` Phase A + B abgeschlossen:
   - `wettbewerber/identifikation-schema.md` mit `status: bestaetigt` (Drive)
   - `wettbewerber/liste.md` mit `status: bestaetigt` (Drive)
-- Apify-Zugang verfügbar (für TikTok-Scraper-Actors)
+- **Apify-Zugang (Pflicht)** — Actor-Auswahl in `reference/tiktok-tools-mapping.md` (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
+- **Login-Wall-Hinweis:** Öffentliche TikTok-Profile und Videos sind anonym zugänglich. Private Accounts sind hinter Login und nicht erhebbar — als `profil_privat: true` markieren und überspringen.
 - Empfohlen, aber nicht zwingend: `02-01-kunden-marken-profil` und `02-03-wettbewerber-marken-profil` (für die Touchpoint-Inventur mit eventuell schon erfassten TikTok-Usernames)
 
 ## Ablauf

@@ -2,6 +2,16 @@
 
 Fachliche Grundlage für die Wahl der Inventur-Tiefe pro Akteur. Wird in Phase A als Default-Vorschlag genutzt; der Stratege kuratiert im Schema-Review.
 
+## Getestete Actor-IDs
+
+Vor dem Lauf immer den Health-Check (`mcp__apify__fetch-actor-details`) durchführen; bei `Session ID not found` sofort abbrechen. Für Stufe `sitemap_only` wird kein Actor benötigt.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/website-content-crawler` | Website Content Crawler (official) | noch nicht getestet | unbekannt | Erste Wahl für Stufen `light` und `full` |
+| `apify/cheerio-scraper` | Cheerio Scraper | noch nicht getestet | unbekannt | Leichtgewichtiger Fallback für statisches HTML |
+| `apify/puppeteer-scraper` | Puppeteer Scraper | noch nicht getestet | fallback | Für JS-gerenderte Seiten wenn Cheerio unzureichend |
+
 ## Drei Stufen im Überblick
 
 ### `sitemap_only` (günstig)
@@ -197,7 +207,7 @@ Pro Branche gibt es typische URL-Pfade, die fast immer auszuschließen sind. Wen
 
 ## Auswahl-Logik pro Akteur (Default-Stufen-Vergabe in Phase A)
 
-```
+```text
 function default_stufe(akteur):
   if akteur.kategorie == "kunde":
     return "light"
