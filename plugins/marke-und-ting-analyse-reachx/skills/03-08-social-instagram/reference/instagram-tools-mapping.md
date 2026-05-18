@@ -2,7 +2,18 @@
 
 Dokumentiert die Apify-Actor-Optionen fuer `03-08-social-instagram`, das Input-Schema pro Actor, Cookies-Handling bei Login-Wall sowie Rate-Limit-Empfehlungen.
 
-## Apify-Actor-Optionen
+## Apify-Actor-Optionen — getestete Actor-IDs
+
+Getestete Actors (Stand des Projekteinsatzes). Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit Kunden-Handle) durchführen; bei Fehler Alternativen aus der Liste probieren. Login-Wall-Quellen werden explizit markiert.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/instagram-profile-scraper` | Instagram Profile Scraper (official) | noch nicht getestet | unbekannt | Profil-Stammdaten, Erste Wahl |
+| `apify/instagram-post-scraper` | Instagram Post Scraper (official) | noch nicht getestet | unbekannt | Posts, Erste Wahl |
+| `apify/instagram-scraper` | Instagram Scraper Bundle | noch nicht getestet | unbekannt | Profil + Posts in einem Lauf |
+| `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
+
+**Login-Wall:** Öffentliche Profile sind anonym zugänglich. **Private Profile** sind nicht ohne Login erhebbar — `profil_privat: true` setzen und überspringen. Apify-Cookies (Instagram-Session) nur dann setzen, wenn Rate-Limit-Fehler auftreten — nicht als Standard.
 
 Instagram-Scraping ueber Apify ist in drei Varianten moeglich. Default: 1+2 sequenziell. Fallback: 3 als Bundle.
 

@@ -71,6 +71,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - Empfohlen: `audits/web-tech-tracking.md` — fuer Tech-Voraussetzungen (Tracking, Pixel, Schema-Markup, Pagespeed)
 - Empfohlen: `data/briefing.md` — fuer Kunden-Ziele, Team-Setup und Verantwortlichkeits-Defaults
 
+**Synthese-Sequenz (`contracts.md` Abschnitt 12):** `04-05-90-tage-plan` ist der fuenfte Schritt der Stufe-4-Synthese-Kette. Verbindliche Reihenfolge: `04-01 → 04-02 → 04-03 → 04-04 → 04-05 → 04-06` — der Skill startet **erst**, wenn der Vorgaenger `04-04-forecast-modell` fertig ist. Kein Parallel-Start, der Hauptthread orchestriert sequenziell. Der Pflicht-Input-Check auf `synthese/forecast.md` (Schritt 1) ist ein **harter Abbruch ohne Silent-Fallback** — der Plan wird niemals ohne den bestaetigten Forecast als Basis abgeleitet.
+
 ## Ablauf
 
 ### Schritt 1: Projekt-Auffindung und Voraussetzungs-Check

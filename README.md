@@ -6,7 +6,7 @@ Internes Marketplace-Repository für REACHX-eigene Claude-Skills. Verteilt Skill
 
 Aktuell ein Plugin:
 
-- **`marke-und-ting-analyse-reachx`** — 33 Skills, die die REACHX MARKE&TING-Analyse (MTA) automatisieren. Vom Kickoff-Transkript über Marken-Profile, Wettbewerbs-Recherche, Multi-Channel-Audits (SEO, SEA, Social, Web-Tech, Local) bis zur Synthese (Positionierung, Kanal-Chancen, Forecast, 90-Tage-Plan, Retainer). Inklusive drei Subagents (`mta-rechercheur` auf Sonnet, `mta-stratege` auf Opus, `mta-techniker` auf Haiku), die das Token-Budget des Hauptthreads schlank halten.
+- **`marke-und-ting-analyse-reachx`** — 39 Skills, die die REACHX MARKE&TING-Analyse (MTA) automatisieren. Vom Kickoff-Transkript über Marken-Profile, Wettbewerbs-Recherche und -Realitäts-Check, Multi-Channel-Audits (SEO, SEA, Social, Web-Tech, Local, GEO/KI-Sichtbarkeit) bis zur Synthese (Positionierung, Kanal-Chancen, Segment-Potenzial, Forecast, 90-Tage-Plan, Retainer). Inklusive drei Subagents (`mta-rechercheur` auf Sonnet, `mta-stratege` auf Opus, `mta-techniker` auf Haiku), die das Token-Budget des Hauptthreads schlank halten.
 
 Weitere Plugins können hier in Zukunft hinzukommen (z.B. Outreach-Tools, Reporting-Workflows).
 
@@ -58,7 +58,7 @@ Setup-Anleitung pro MCP siehe `SETUP-KOLLEGEN.md` (folgt in Phase 3).
 Die MTA verbraucht potenziell viele Tokens. Um eine ganze MTA in einer Session machbar zu halten, routet das Plugin Arbeit über drei Subagents:
 
 - **`mta-rechercheur` (Sonnet 4.6)** — alle Audit- und Recherche-Skills. Sonnet reicht für strukturierte Tool-Call-Outputs vollständig aus.
-- **`mta-stratege` (Opus 4.7)** — die sieben strategischen Synthese-Skills: `positionierungs-analyse`, `seo-keyword-kategorisierung`, `kanal-chancen-analyse`, `ziele-aus-potenzialen-ableiten`, `forecast-modell`, `90-tage-plan-generator`, `retainer-kalkulator`. Hier rechtfertigt die kognitive Schwere den Opus-Einsatz.
+- **`mta-stratege` (Opus 4.7)** — die strategischen Synthese-Skills: `positionierungs-analyse`, `seo-keyword-kategorisierung`, `kanal-chancen-analyse`, `ziele-aus-potenzialen-ableiten`, `forecast-modell`, `segment-potenzial-matrix`, `90-tage-plan-generator`, `retainer-kalkulator`. Hier rechtfertigt die kognitive Schwere den Opus-Einsatz.
 - **`mta-techniker` (Haiku 4.5)** — Templating, HTML-Reports, Slide-Bausteine, Drive-Export. Reine Mechanik.
 
 Der Hauptthread orchestriert, ruft die Skills via `Agent`-Tool mit dem passenden `subagent_type`. Die Rohdaten der Audits landen nie im Hauptthread — nur die kompakten Subagent-Schlussberichte. Effekt: Hauptthread-Kontext bleibt schlank, ganze MTA in einer Session machbar.
@@ -73,7 +73,7 @@ reachx-claude-skills/
 │   └── marke-und-ting-analyse-reachx/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
-│       ├── skills/             # 32 SKILL.md-Ordner
+│       ├── skills/             # 39 SKILL.md-Ordner
 │       ├── agents/             # 3 Subagent-Definitionen
 │       ├── hooks/
 │       │   └── hooks.json      # SessionStart-Update-Check

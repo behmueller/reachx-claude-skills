@@ -95,6 +95,16 @@ basiert_auf:
     - audits/local-gmb.md
     # ... (alle erwarteten aber nicht vorhandenen)
 
+# === Input-Staleness (contracts.md Abschnitt 12) ===
+# Liste aller gelesenen Audit-/Synthese-Inputs mit ihrem generiert_am-Stempel.
+# Nachgelagerte Synthese-Skills prüfen damit, ob kanal-chancen.md stale ist.
+basis_inputs:
+  - datei: audits/seo-cluster-zusammenfassung.md
+    generiert_am: <ISO-8601>
+  - datei: audits/google-ads.md
+    generiert_am: <ISO-8601>
+  # ... (jeder gelesene Input mit Stempel)
+
 # === First-Party-Datenlage ===
 # Vermerkt, ob die First-Party-Ist-Daten in die Achsen-Scores eingeflossen sind.
 # Steuert die Konfidenz von potenzial_score und kunden_reife_score.
@@ -140,6 +150,8 @@ kanal_ranking:
     branchen_fit_score: <int>
     branchen_fit_konfidenz: <hoch | mittel | niedrig>
     branchen_fit_overrides: [<liste der angewandten Overrides>]
+    apify_konfidenz_flag: <niedrig_ohne_apify | null>   # nur Paid-Kanäle (sea, meta-ads); gesetzt, wenn der Apify-Transparency-/Ad-Library-Scrape unvollständig war
+    geo_multiplikator_strang: <true | false>            # true nur für den GEO-Kanal — markiert ihn als Hebel auf SEO/Content, kein eigener Budgetposten
     auffaelligkeiten_typen: [<liste>]
     empfohlene_naechste_aktion: <1 Satz>
     audit_inputs_verfuegbar: [<liste der gelesenen Dateien>]

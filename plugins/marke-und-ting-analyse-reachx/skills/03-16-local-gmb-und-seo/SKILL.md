@@ -64,7 +64,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - **Empfohlen**: `02-01-kunden-marken-profil` → `data/kunde.md` mit `touchpoints_gefunden` (GMB-Link, Filialen)
 - **Optional**: `02-04-branchenportal-recherche` → `wettbewerber/portale.md` für NAP-Cross-Check
 - **Optional**: `data/briefing.md` für vom Kunden genannte Standorte
-- Apify-Zugang verfügbar (Google Maps Scraper)
+- **Apify-Zugang (Pflicht für Phase B)** — Actor-Auswahl in `reference/local-tools-mapping.md` (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
 
 ## Ablauf
 
@@ -472,8 +472,9 @@ Local-SEO-Statistik:
 3. Auffälligkeit 3
 
 Nächste Schritte:
-1. 04-02-kanal-chancen-analyse — synthetisiert Local-SEO mit den anderen Audits (sobald genug Audits da sind)
-2. (parallel möglich, falls noch nicht durch) weitere Audit-Skills
+1. 03-20-local-gmb-wettbewerb — vertieft den lokalen Wettbewerbsvergleich (Review-Velocity, GMB-Profil-Reife, Local-Visibility-Score) — empfohlen, wenn die Local-SEO-Konkurrenz genauer eingeordnet werden soll
+2. 04-02-kanal-chancen-analyse — synthetisiert Local-SEO mit den anderen Audits (sobald genug Audits da sind)
+3. (parallel möglich, falls noch nicht durch) weitere Audit-Skills
 
 Sag mir, welcher als nächster.
 ```

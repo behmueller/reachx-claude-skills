@@ -85,6 +85,20 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 | ✓ | ✗ | fehlt / nicht bestätigt | **Reduced-Kunden-only** (nur Sistrix, nur Kunde) |
 | ✗ | — | — | **Abbruch** |
 
+### MCP-Health-Check (Pflicht, vor Schritt 3)
+
+Vor dem ersten echten Datenabruf beide Pflicht-MCPs mit einem billigen Test-Call prüfen (siehe `contracts.md` Abschnitt 11):
+
+- **Sistrix**: `mcp__sistrix__credits` — liefert verbleibende Credits, schlägt sofort fehl wenn MCP tot.
+- **Ahrefs (Hybrid-Modus)**: `mcp__claude_ai_Ahrefs__subscription-info-limits-and-usage` — prüft Auth und zeigt verbleibendes Unit-Budget.
+
+Bei Fehler → Abbruch mit Reconnect-Hinweis statt erstem teurem Daten-Call:
+
+```
+✗ Pflicht-MCP 'Sistrix' nicht erreichbar.
+Bitte in /mcp verbinden (ggf. neu authentifizieren) und Skill erneut aufrufen.
+```
+
 ## Ablauf
 
 ### Schritt 0: MTA-Kontext und Drive-Helper ermitteln
@@ -522,6 +536,10 @@ Sag mir, welcher als nächster.
 - **Kunde hat mehrere Domains** (Hauptmarke + Sub-Brands) → Skill prüft `meta.json.website` als Primär, kann via Stratege-Override zusätzlich Sub-Domains erfassen. Default: nur Primär.
 
 - **`liste.md` enthält Domain, die identisch zur Kunden-Domain ist** → Dedup, Hinweis im Schluss-Format.
+
+- **Sichtbarkeitsindex unter 0,05 (SI-Volatilität)**: Wenn der SI eines Akteurs < 0,05 liegt, darf dieser Wert **nicht als Primär-Signal** in die Strategie-Story eingehen. Ein einzelnes kurz rankendes Keyword kann bei solch kleinen Werten den SI verdoppeln — das ist ein Mess-Artefakt, kein Trend. Für diese Akteure (besonders lokale Dienstleister) sind Local-Pack-Quoten und GMB-Metriken (aus `03-16-local-gmb-und-seo`) das aussagekräftigere Leitsignal; der SI bleibt nur sekundäre Orientierung. Im Frontmatter `si_volatil: true` setzen und in der Auffälligkeiten-Liste dokumentieren. Verweis: `contracts.md` Abschnitt 13 „Aggregat- und Volatilitäts-Disziplin".
+
+- **Trend-Ehrlichkeit**: Prozent-Trends immer gegen einen sinnvollen Basiszeitpunkt rechnen (z. B. Jahresbeginn, Projekt-Start, Vorjahres-Quartal) — **niemals Peak-gegen-Tal**. Bevor ein Wert wie „+70 %" in den Report geht, prüfen ob er auf einem Ausreißer-Peak oder einem echten Vergleichspunkt basiert. Ist er auf ein Artefakt zurückführbar (einzelner Viral-Spike, Sistrix-Crawl-Lücke), als solches kennzeichnen, nicht als strategischen Trend präsentieren.
 
 - **Sehr kleine SI-Werte (unter 0.01)** → werden trotzdem dargestellt, Sparkline mit Log-Skala oder gekennzeichnetem "kleinen-Werte-Bereich". Keine Filterung.
 

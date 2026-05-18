@@ -69,8 +69,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json` vorhanden
 - Tooling-Zugang fuer mindestens **einen** der drei Achsen:
-  - **BuiltWith** via API-Key `BUILTWITH_API_KEY` ODER MCP-Tool `mcp__builtwith__*` ODER Wappalyzer-Fallback via Apify-Actor (`apify/wappalyzer` oder vergleichbar)
-  - **PageSpeed Insights** via Google-API (Endpoint kostenfrei, `PAGESPEED_API_KEY` optional fuer hoehere Rate-Limits)
+  - **BuiltWith** via API-Key `BUILTWITH_API_KEY` ODER MCP-Tool `mcp__builtwith__*` ODER Wappalyzer-Fallback via Apify-Actor (`apify/wappalyzer` oder vergleichbar). Apify-Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor Apify-Actor-Nutzung Health-Check via `mcp__apify__fetch-actor-details`: bei `Session ID not found` sofort abbrechen.
+  - **PageSpeed Insights** via Google-API (Endpoint kostenfrei, `PAGESPEED_API_KEY` optional fuer hoehere Rate-Limits). **Pflicht-Check zu Beginn:** `[ -n "$PAGESPEED_API_KEY" ]` — wenn gesetzt, PSI mit Key nutzen (höheres Quota, ca. 400 Anfragen/100 Sekunden). Wenn **nicht** gesetzt: anonymer Zugang (ca. 25 Anfragen/100 Sekunden) — bei HTTP 429 PSI-Calls auf die **Kunden-Domain begrenzen** (Wettbewerber-Calls überspringen) und im Output `performance_audit_nur_kunde: true` markieren. **Hinweis:** Für CrUX-Real-User-Daten (Origin-Level) gibt es eine eigene CrUX-API (`https://chromeuxreport.googleapis.com/v1/records:queryRecord`) mit separatem `CRUX_API_KEY` — wenn vorhanden, für detailliertere Real-User-Daten nutzen; ansonsten verlässt der Skill sich auf die CrUX-Daten, die PageSpeed Insights mitliefert.
 - Empfohlen: `wettbewerber/liste.md` mit `status: bestaetigt` → voller Vergleich. Sonst Kunden-only-Modus mit Hinweis.
 - Reduced-Modus moeglich: Wenn nur BuiltWith ODER nur PageSpeed verfuegbar ist, laeuft der Skill nur mit der verfuegbaren Achse durch — entsprechende Felder werden im Output als `tech_audit_lief: false` bzw. `performance_audit_lief: false` markiert.
 
@@ -237,8 +237,10 @@ akteurs_slug, akteurs_typ, akteurs_name, domain, strategy,
 performance_score, lcp_lab_ms, fcp_lab_ms, tbt_lab_ms, cls_lab, speed_index_lab_ms,
 crux_daten, lcp_crux_p75_ms, inp_crux_p75_ms, cls_crux_p75,
 top_empfehlung_1, top_empfehlung_2, top_empfehlung_3,
-datenstand_iso
+rerun_empfohlen, datenstand_iso
 ```
+
+`rerun_empfohlen` (bool): `true` wenn der Lauf mit HTTP-429-Fehler abgebrochen wurde oder nur der anonyme Quota ausgeschöpft war. Signal für den Strategen: diese Zeile mit `PAGESPEED_API_KEY` nochmals ziehen.
 
 Beide CSVs sind Roh-Datenbasis — Folge-Skills (`04-02-kanal-chancen-analyse`) lesen primaer aus den CSVs.
 

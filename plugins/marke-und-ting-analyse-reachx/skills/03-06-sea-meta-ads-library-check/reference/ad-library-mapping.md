@@ -35,6 +35,21 @@ Metas öffentliches Werbetreibenden-Verzeichnis: `https://www.facebook.com/ads/l
 | Demographics | nein | nur bei politischen Anzeigen (EU-DSA) |
 | Creative-Formate | Search/Display/Video/Shopping | Image/Video/Carousel/Collection/DPA |
 
+## Apify-Actor-Optionen — getestete Actor-IDs
+
+Getestete Actors (Stand des Projekteinsatzes). Vor dem Lauf immer Health-Check (Limit-1-Aufruf mit einer bekannten Test-Page-ID) durchführen. Login-Wall-Quellen explizit markiert.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/facebook-ads-library-scraper` | Facebook Ads Library Scraper (official) | noch nicht getestet | unbekannt | Als Erste Wahl probieren |
+| `apify/puppeteer-scraper` | Custom Puppeteer | noch nicht getestet | fallback | Fallback mit Custom-Page-Function |
+
+**Login-Wall-Quellen (nicht erhebbar ohne authentifizierten Scraper):**
+- Facebook-Posts (organisches Profil) — hinter Login, nicht Teil dieses Skills
+- Facebook-Stories, Reels (Profilbereich) — hinter Login
+
+Die Ad Library selbst ist ohne Login zugänglich.
+
 ## URL-Patterns
 
 ### Suche per Page-ID (Standard im Skill)

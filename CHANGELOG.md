@@ -9,8 +9,52 @@ Versionierung nach [Semver](https://semver.org/lang/de/).
 
 ### Geplant für 1.0.0
 
-- Live-Test mit echtem Kundenprojekt durchlaufen, ggf. Korrekturen
-- First-Party-Google-Ads-Skill (siehe MTA-SKILLS-PLAN: bekannte Lücken)
+- Weitere Live-MTAs durchlaufen, Skills iterativ nachschärfen
+
+## [0.7.0] — 2026-05-17 — Avadent-Learnings: Skill-Härtung & vier neue Skills
+
+Auswertung der ersten vollständigen Live-MTA (Kundenprojekt). Die dort im Arbeitsverlauf erarbeiteten, aber nicht dokumentierten Erkenntnisse sind jetzt systematisch in die Skills eingeflossen — Härtung aller bestehenden Skills plus vier neue Skills. Das Plugin umfasst jetzt **39 Skills**. Quelle und Begründung jeder Änderung: `LEARNINGS-AVADENT.md` im Plugin-Ordner.
+
+### Hinzugefügt — vier neue Skills
+
+- **`02-05-wettbewerber-realitaets-check`** — verifiziert die in `02-02` gesammelten Akteure gegen erhobene Daten (organische Sichtbarkeit, GMB-Proximity, Paid-Aktivität, Marken-Stärke) und klassifiziert sie regelbasiert in `aktuell_stark` / `latente_bedrohung` / `nachrangig`. Läuft zwischen `02-02` und `02-03`; vom Kunden genannte Wettbewerber werden ab hier verifiziert statt angenommen.
+- **`03-19-geo-ki-sichtbarkeit`** — GEO-Audit (Generative Engine Optimization): Marken-Sichtbarkeit in ChatGPT, Gemini / AI Overviews und Perplexity. Schema-vor-Lauf mit Prompt-Inventar; qualitative Prompt-Probes via WebSearch/WebFetch, optional Ahrefs Brand Radar für quantitatives Share-of-Voice.
+- **`03-20-local-gmb-wettbewerb`** — systematischer Local-GMB-Wettbewerbsvergleich mit Review-Velocity (1/3/6/12-Monats-Buckets), GMB-Profil-Reife und einem robusten Local-Visibility-Score (LVS). Ergänzt das kunden-fokussierte `03-16`.
+- **`04-07-segment-potenzial-matrix`** — segment-zentrierte Zweitsynthese ergänzend zur kanal-zentrierten Synthese; mappt das Potenzial auf 2–4 Kunden-Segmente, je mit Erreichbarkeits- und Kapazitäts-Engpass-Check.
+
+### Hinzugefügt — `contracts.md` v2.2 (drei Querschnitts-Abschnitte)
+
+- **§11 MCP-Abhängigkeiten & Credential-Disziplin** — Pflicht-/Optional-MCP-Trennung, Health-Check vor dem Lauf, Apify-Session-Bruch-Handling, verbindliche Credential-Regel (genau eine Env-Variable, kein Credential-Store-Scan).
+- **§12 Synthese-Sequenz & Input-Staleness** — verbindliche Reihenfolge `04-02 → … → 04-06`, Pflicht-Input-Check statt Silent-Fallback, `basis_inputs`-Staleness-Prüfung, Konsistenz-Cross-Check zwischen Synthese-Outputs.
+- **§13 Kritische Haltung & Daten-Disziplin** — Kunden-Aussagen als Hypothesen, Quellen-Typ pro Zahl (`erhoben` / `briefing` / `benchmark` / `schaetzung_skill`), Plattform-Trennung von Kennzahlen, Volatilitäts-Disziplin (Sistrix-VI bei `SI < 0,05`).
+- §3 ergänzt: Output-Reihenfolge — inhaltliche Outputs vor `status.md`.
+
+### Geändert — Härtung bestehender Skills
+
+- **Agent-Definitionen** — `mta-techniker` (Haiku) erfindet keine Inhalte mehr und schreibt `status.md`/`index.html` nur mit übergebenem Text; `mta-rechercheur` mit MCP-Health-Check & Credential-Disziplin; `mta-stratege` mit Pflicht-Input-Check, Staleness-/Konsistenz-Prüfung und kritischer Haltung.
+- **Stufe 1+2** — `01-01` Hinweise zu Mehr-Session-Betrieb & Re-Run-Drift; `02-02` Region-/Seed-Keyword-Bestätigung in Phase A; `02-03` plattformgetrennte Review-Zahlen; `02-04` datiertes Apify-Actor-Register.
+- **Stufe 3** — Apify-Health-Check, Credential-Disziplin und datierte Actor-IDs in allen Scraper-Skills; `03-01` Sistrix-VI-Volatilität; `03-02` Geo-vs-generisch-Klassifikation; `03-03` Cluster-Artefakt-Warnung; `03-05` Transparency-Center- vs. Ahrefs-Klarstellung; `03-14` PageSpeed-Quota-Handling.
+- **Stufe 4–6** — `04-01` SVG-Auslagerung gegen Render-Stall; `04-02` GEO / Reddit / Facebook-organisch als Kanäle plus Apify-Konfidenz-Flag; `04-03`/`04-04` Pflicht-Input-Check, Kapazitäts-Engpass, Konsistenz-Cross-Check; `05-02` De-Duplication-Pass; `06-03` Konsistenzcheck der Synthese-Kennzahlen.
+
+### Hinweis
+
+Der Versions-Bump `0.4.0 → 0.7.0` in `plugin.json` korrigiert zugleich einen Drift: Die Releases 0.5.0 und 0.6.x lagen im Git/CHANGELOG vor, waren aber in `plugin.json` nicht nachgezogen.
+
+## [0.6.1] — 2026-05-17 — First-Party-Fixes
+
+- Getrennte Credentials für Google Ads und GA4; gRPC-Resolver-Fix in der First-Party-Anbindung.
+
+## [0.6.0] — 2026-05-17 — Synthese liest First-Party-Daten
+
+- `04-02`, `04-03` und `04-04` beziehen GA4-Conversion-Rates und weitere First-Party-Kennzahlen in die Synthese ein.
+
+## [0.5.0] — 2026-05-17 — First-Party-Google-Anbindung
+
+- Neuer Python-Wrapper für Google Ads und Google Analytics; neue Skills `03-17-sea-first-party-google-ads` und `03-18-web-analytics-ga4`.
+
+## [0.4.0] — 2026-05-17 — Report-Konsistenz-Härtung
+
+- Kanonische Report-Bausteine-Bibliothek (`report-bausteine.md`) und Validator `validate-report.py`; jeder Report wird vor dem Upload gegen die kanonische Shell geprüft.
 
 ## [0.3.0] — 2026-05-15 — Token-Tracking pro MTA
 

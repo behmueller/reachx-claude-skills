@@ -49,7 +49,18 @@ Pro Akteur drei mögliche Such-Modi:
 
 **Region-Override-Pattern**: `&dateOption=last-30-days&countries=DE` als zusätzliche Query-Parameter, um direkt den Region-Filter zu setzen. Default für REACHX-MTAs: `countries=DE`, bei DACH-Kunden `countries=DE,AT,CH`.
 
-## Apify-Actor-Optionen
+## Apify-Actor-Optionen — getestete Actor-IDs
+
+Getestete Actors (Stand des Projekteinsatzes). Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit Kunden-Company-Page) durchführen; bei Fehler Alternativen aus der Liste probieren. Login-Wall-Quellen werden explizit markiert.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/linkedin-ad-library-scraper` | LinkedIn Ad Library Scraper (official) | noch nicht getestet | unbekannt | Als Erste Wahl probieren |
+| `igolaizola/linkedin-ad-library-scraper` | Community LinkedIn Ad Library | noch nicht getestet | unbekannt | Erster Fallback |
+| `compass/linkedin-ad-library` | LinkedIn Ad Library Compass | noch nicht getestet | unbekannt | Zweiter Fallback |
+| `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
+
+**Login-Wall:** Die Ad Library ist öffentlich zugänglich — kein Auth-Token nötig. Sollte ein Actor Login-Fehler zurückgeben, ist das ein Apify-Sessions-Problem → Session-Reconnect, dann Retry. **Organische LinkedIn-Posts (Company-Feed)** sind hinter Login und nicht erhebbar ohne authentifizierten Scraper — explizit im Output als nicht erhoben markieren.
 
 ### Erste Wahl: `apify/linkedin-ad-library-scraper` (falls vorhanden im Store)
 

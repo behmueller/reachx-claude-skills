@@ -61,8 +61,16 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - **Stark empfohlen:** `01-02-kickoff-transcript-parser` gelaufen → `briefing.md` vorhanden (für vom Kunden genannte Wettbewerber)
 - **Stark empfohlen:** `02-01-kunden-marken-profil` gelaufen → `kunde.md` vorhanden (für fundierte Seed-Keyword-Generierung)
 - **Idealerweise vorab gelaufen (weiche Anreicherung, KEINE harte Voraussetzung):** der First-Party-Block — `03-04-seo-first-party-gsc` und `03-18-web-analytics-ga4`. Wenn deren Outputs (`audits/gsc-first-party.md` + `audits/gsc-performance.csv`, `audits/ga4-first-party.md` + `audits/ga4-channels.csv`) vorliegen, nutzt 02-02 sie, um Seed-Keywords und Wettbewerber-Kandidaten **datenbasiert statt geraten** abzuleiten — echte GSC-Top-Queries als Seed-Keywords, GA4-Referral-Domains als Akteurs-Kandidaten. Liegen sie nicht vor, läuft 02-02 exakt wie bisher.
-- Sistrix-Zugang verfügbar (über MCP oder API-Token)
-- Apify-Zugang verfügbar (für Google Maps Scraper)
+- **Optionaler MCP: Sistrix** (für Best-Practice-Toplist via `mcp__sistrix__domain_kwcount_seo` / `mcp__sistrix__keyword_domain_seo`). Health-Check vor Phase B:
+  ```bash
+  [ -n "$SISTRIX_API_KEY" ] || echo "⚠ SISTRIX_API_KEY nicht gesetzt — Sistrix nicht verfügbar."
+  ```
+  Wenn Sistrix nicht erreichbar: Skill läuft im **Reduced-Modus** — Best-Practice-Kategorie entfällt oder wird über `WebSearch`/`rag-web-browser` mit manuellen Toplist-Recherchen befüllt. Im Output `konfidenz: niedrig` und Hinweis im Schluss-Format vermerken.
+- **Pflicht-MCP: Apify** (für Google Maps Scraper). Credential-Check vor Phase B:
+  ```bash
+  [ -n "$APIFY_TOKEN" ] || { echo "✗ APIFY_TOKEN nicht gesetzt."; exit 1; }
+  ```
+  Schlägt der Check fehl: sauberer Abbruch. Kein blindes Starten ohne Health-Check (contracts.md Abschnitt 11).
 
 ## Ablauf
 
@@ -212,6 +220,8 @@ Default-Schwellwert nach Branchen-Typ (Tabelle in `reference/identifikation-sche
 Aus `briefing.md.wettbewerber_genannt`: Liste mit `name`, `quelle_turn`, `bedrohungsgrad_aus_briefing` direkt übernehmen.
 
 Wichtig: hier wird **nichts gefiltert** — auch wenn ein vom Kunden genannter Wettbewerber später keine Online-Marketing-Signale zeigt, gehört er in die Liste (Begründung: Kundenrelevanz schlägt Filter).
+
+**Kritische Haltung (contracts.md Abschnitt 13):** Vom Kunden genannte Wettbewerber sind **Hypothesen**, keine verifizierten Fakten. Im Schema-Vorschlag (Phase A) und im Output (Phase B) als `briefing`-Quelle kennzeichnen. Phase B prüft jeden dieser Akteure gegen reale Datenlage (Sistrix-Sichtbarkeit, Local Pack, GMB, Paid-Ads). Ein im Briefing als „Hauptkonkurrent" genannter Akteur kann sich als nachrangig erweisen — und umgekehrt können Akteure mit starken Signalen auftauchen, die der Kunde nicht erwähnt hat. Auch die Bedrohungsgrad-Einstufung des Kunden ist ein erster Hinweis, kein Urteil.
 
 ### Schritt A.7: First-Party-Akteurs-Hinweise sammeln (GA4-Referral)
 
@@ -435,7 +445,7 @@ Lies `reports/index.html` aus Drive, modifiziere und schreibe zurück per `upser
 - Stat-Strip aktualisieren
 - "Erledigt"-Sektion erweitern um `02-02-wettbewerber-identifikation`
 - Reports-Liste um `03-wettbewerber-liste.html` erweitern
-- "Nächster empfohlener Schritt": auf `02-03-wettbewerber-marken-profil` setzen, aber mit Hinweis "wartet auf Review der Liste"
+- "Nächster empfohlener Schritt": auf `02-05-wettbewerber-realitaets-check` setzen, aber mit Hinweis "wartet auf Review der Liste"
 
 ### Schritt B.10: `status.md` aktualisieren
 
@@ -446,7 +456,7 @@ Lies `reports/index.html` aus Drive, modifiziere und schreibe zurück per `upser
 - Eintrag in `blockiert`:
   ```yaml
   blockiert:
-    - skill: 02-03-wettbewerber-marken-profil
+    - skill: 02-05-wettbewerber-realitaets-check
       wartet_auf: "Strategen-Review von wettbewerber/liste.md (status: bestaetigt setzen)"
   ```
 - `naechster_empfohlen` auf einen unblockierten Skill setzen (z. B. `03-01-seo-sichtbarkeit-und-rankings`, der nur die Kunden-Website braucht, oder ein anderer Audit-Skill, der die Liste noch nicht zwingend braucht)
@@ -476,8 +486,9 @@ Bitte die Liste prüfen — der wichtigste Eingriffspunkt im MTA, weil alle Folg
 Nach Review: status: bestaetigt im wettbewerber/liste.md setzen.
 
 Nächste Schritte (nach Listen-Bestätigung):
-1. 02-03-wettbewerber-marken-profil — Profile für die markierten Wettbewerber
-2. 02-04-branchenportal-recherche — Erwähnungen auf den identifizierten Portalen
+1. 02-05-wettbewerber-realitaets-check — verifiziert die Akteure gegen echte Daten, klassifiziert nach Bedrohungslage
+2. 02-03-wettbewerber-marken-profil — Profile für die als relevant verifizierten Wettbewerber
+3. 02-04-branchenportal-recherche — Erwähnungen auf den identifizierten Portalen
 
 Parallel jetzt schon möglich:
 - 03-01-seo-sichtbarkeit-und-rankings — braucht die Liste nicht zwingend
@@ -495,6 +506,7 @@ Sag mir, was du als nächstes willst.
 ## Edge Cases
 
 - **Briefing nennt keine Wettbewerber** → Kategorie `kunde_genannt` bleibt leer, kein Fehler. Im Body Hinweis: "Kunde hat im Kickoff keine Wettbewerber genannt — Empfehlung, in einer Folge-Runde gezielt nach Konkurrenten zu fragen."
+- **Sistrix-MCP nicht verfügbar** (kein API-Key oder MCP-Verbindung unterbrochen) → Reduced-Modus: Kategorie `best_practice_ueberregional` wird über manuelle `WebSearch`-Recherche (`<Seed-Keyword> beste Anbieter Deutschland`, `<Seed-Keyword> Marktführer`) und `rag-web-browser` mit Branchen-Toplisten-URLs befüllt. Im Output-Frontmatter `sistrix_toplist: false` setzen und im Schluss-Format `konfidenz: niedrig` für diese Kategorie vermerken. Kein endloses Durchprobieren von Fallback-Methoden — eine Alternative kurz dokumentieren und weitermachen.
 - **Sistrix liefert keine relevanten Treffer für die Seed-Keywords** → Branchen-Nische, Stratege sollte spezifischere oder generischere Keywords vorschlagen. Skill gibt Hinweis und schlägt 1-2 alternative Keyword-Kombinationen vor.
 - **Google Maps liefert nur Aggregatoren / Plattformen** → Wettbewerber sind nicht primär lokal organisiert (z. B. B2B-SaaS). Skip Schritt B.3 mit Notiz im Body.
 - **Internationaler Markt** (`ausdehnung: international`) → Skill warnt: "Sistrix ist DACH-fokussiert, internationale Recherche unvollständig. Stratege sollte zusätzlich Ahrefs/SimilarWeb-Daten manuell prüfen."

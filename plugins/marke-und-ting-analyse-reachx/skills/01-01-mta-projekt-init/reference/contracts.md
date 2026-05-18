@@ -2,7 +2,7 @@
 
 Dieses Dokument legt die gemeinsamen Regeln fest, an die sich **alle Skills im MTA-Workflow** halten müssen. Wenn du einen neuen MTA-Skill baust oder einen bestehenden anpasst, ist das hier die Pflichtlektüre.
 
-**Stand 2026-05-15:** Schema-Version 2.1. Alle MTA-Outputs leben in Google Drive (über die `gws` CLI), nicht mehr lokal. Neu in 2.1: dedizierter `input/`-Sub-Folder für vom Strategen bereitgestellte Quell-Files (z.B. Meeting-Transkripte in `input/transkripte/`). Schema 2.0-Projekte (ohne `input/`) werden beim nächsten `01-01-mta-projekt-init`-Resume-Lauf automatisch ergänzt. Schema 1.0-Projekte (lokaler Filesystem-Pfad) sind gleichbedeutend mit Vorgänger-Status — neue Skills sollten die unterstützen oder zumindest sauber abbrechen.
+**Stand 2026-05-17:** Schema-Version 2.2. Alle MTA-Outputs leben in Google Drive (über die `gws` CLI), nicht mehr lokal. Neu in 2.2: die Querschnitts-Abschnitte 11–13 (MCP-Health-Checks & Credential-Disziplin, Synthese-Sequenz & Input-Staleness, kritische Haltung & Daten-Disziplin) — die `meta.json`-Struktur ist gegenüber 2.1 unverändert, Projekte auf 2.1 brauchen keine Migration. Schema 2.1 führte den dedizierten `input/`-Sub-Folder für vom Strategen bereitgestellte Quell-Files ein (z.B. Meeting-Transkripte in `input/transkripte/`). Schema 2.0-Projekte (ohne `input/`) werden beim nächsten `01-01-mta-projekt-init`-Resume-Lauf automatisch ergänzt. Schema 1.0-Projekte (lokaler Filesystem-Pfad) sind gleichbedeutend mit Vorgänger-Status — neue Skills sollten die unterstützen oder zumindest sauber abbrechen.
 
 Inhaltsverzeichnis:
 
@@ -15,6 +15,10 @@ Inhaltsverzeichnis:
 7. [HTML-Reports — Shell-Nutzung und Dashboard-Update](#7-html-reports)
 8. [Schema-vor-Lauf — für Skills mit kundenspezifischer Logik](#8-schema-vor-lauf)
 9. [Audit-Trail, Konflikte, parallele Kollegen](#9-audit-trail)
+10. [Token-Tracking pro MTA](#10-token-tracking-pro-mta)
+11. [MCP-Abhängigkeiten, Health-Checks und Credential-Disziplin](#11-mcp-abhängigkeiten)
+12. [Synthese-Sequenz und Input-Staleness](#12-synthese-sequenz)
+13. [Kritische Haltung und Daten-Disziplin](#13-kritische-haltung)
 
 ---
 
@@ -144,6 +148,8 @@ Strukturiert nach drei festen Sektionen:
 ```
 
 ### Update-Regeln für Folge-Skills
+
+**Output-Reihenfolge:** Ein Skill schreibt zuerst alle inhaltlichen Outputs nach Drive (Markdown, CSV, dann der HTML-Report), und **erst danach** `status.md`. So hinterlässt auch ein Lauf, der vorzeitig endet (Subagent gekillt, Timeout), vollständige, nutzbare Outputs — und `status.md` meldet einen Skill nie als fertig, dessen Outputs fehlen.
 
 Am Ende **jedes** Skill-Laufs:
 
@@ -525,9 +531,136 @@ Wenn Anthropic die Preise ändert, bearbeite `PRICING_USD_PER_MTOK` in `token-tr
 
 ---
 
+## 11. MCP-Abhängigkeiten, Health-Checks und Credential-Disziplin
+
+Viele MTA-Skills hängen an externen MCP-Servern (Sistrix, Ahrefs, GSC/Search-Console, Apify). Diese Verbindungen sind **nicht zuverlässig** — sie sind bei Session-Start nicht immer verbunden, und Apify-Sessions brechen im Betrieb ab. Jeder MCP-abhängige Skill folgt diesen Regeln.
+
+### Pflicht-MCPs deklarieren
+
+Jede `SKILL.md` listet unter `## Voraussetzungen` ihre MCPs getrennt nach:
+
+- **Pflicht-MCP** — ohne diesen MCP ist der Skill nicht sinnvoll lauffähig → bei Fehlen sauberer Abbruch.
+- **Optionaler MCP** — erweitert den Skill, ist aber ersetzbar → bei Fehlen läuft der Skill im **Reduced-Modus** und dokumentiert die Lücke im Output (`konfidenz: niedrig`, Hinweis im Schluss-Format).
+
+### Health-Check vor dem Lauf
+
+Bevor ein Skill teure Logik startet, prüft er die Pflicht-MCPs mit **einem billigen Test-Call** (z.B. Sistrix `credits`, Ahrefs `subscription-info`, Apify `search-actors` mit Limit 1). Schlägt er fehl:
+
+```
+✗ Pflicht-MCP '<name>' nicht erreichbar.
+Bitte in /mcp verbinden (ggf. neu authentifizieren) und Skill erneut aufrufen.
+Optional fehlend: <liste> → Skill liefe im Reduced-Modus.
+```
+
+Kein blindes Lossscrapen — sonst scheitern erst nach vielen Calls einzelne Schritte, und der Output ist halb-leer.
+
+### Apify-Spezifika
+
+- Apify-MCP-Sessions **überleben PC-Standby / lange Pausen nicht** — typischer Fehler: `Session ID not found`. Der Health-Check direkt vor dem ersten echten Scrape (nicht nur am Skill-Start) fängt das ab.
+- **Parallel-Clients** (Codex, eine zweite Claude-Session) auf demselben Apify-Account-Token invalidieren die Session gegenseitig. Bei wiederholtem Session-Bruch im Schluss-Format darauf hinweisen.
+- Skills mit vielen Apify-Runs (Social, GMB, Ads): bei `Session ID not found` **abbrechen mit Reconnect-Hinweis** statt jeden weiteren Akteur einzeln scheitern zu lassen. Bereits geschriebene Teil-Outputs erwähnen.
+- Getestete Actor-IDs gehören **datiert** in die `reference/`-Datei des Skills (`actor`, `zuletzt_getestet: YYYY-MM-DD`, `status`). Login-Wall-blockierte Quellen (Facebook-Posts, LinkedIn Ad Library, teils Jameda) explizit als „nicht erhebbar ohne authentifizierten Scraper" markieren — kein endloses Actor-Durchprobieren.
+
+### Credential-Disziplin (Pflicht)
+
+Token werden über **genau eine definierte Umgebungsvariable pro Dienst** erkannt — `APIFY_TOKEN`, `SISTRIX_API_KEY`, `PAGESPEED_API_KEY` etc. Erlaubt ist ausschließlich der Test **dieser einen Variable**:
+
+```bash
+[ -n "$APIFY_TOKEN" ] || { echo "✗ APIFY_TOKEN nicht gesetzt."; exit 1; }
+```
+
+**Verboten:** breite Credential-Suche — kein `env | grep -iE 'token|key|secret'`, kein Durchsuchen von `~/.zshrc`, `~/.zprofile`, `~/.netrc`, `~/.claude/settings.json` o.ä. nach Schlüsseln. Das löst zu Recht einen Security-Block des Harness aus. Fehlt die definierte Variable → sofortiger sauberer Abbruch mit Angabe des erwarteten Variablennamens, **keine** Exploration.
+
+---
+
+## 12. Synthese-Sequenz und Input-Staleness
+
+Die Stufe-4-Synthese ist eine **Kette** — jeder Skill liest den Output des Vorgängers als Pflicht-Input. Wird sie parallel oder in falscher Reihenfolge gefahren, bauen Skills auf veralteten Zahlen auf, und die divergierenden Werte fallen erst im fertigen Deck auf.
+
+### Verbindliche Reihenfolge
+
+```
+04-01-positionierungs-analyse
+04-02-kanal-chancen-analyse
+  → 04-03-ziele-aus-potenzialen
+    → 04-04-forecast-modell
+      → 04-05-90-tage-plan
+        → 04-06-retainer-kalkulator
+```
+
+Jeder dieser Skills **darf erst starten, wenn der Vorgänger fertig ist** — kein Parallel-Start. Der Hauptthread orchestriert sequenziell.
+
+### Pflicht-Input-Check statt Silent-Fallback
+
+Jeder Synthese-Skill prüft zu Beginn, ob seine Pflicht-Inputs existieren — und bei Schema-Inputs zusätzlich `status: bestaetigt`. Fehlt ein Pflicht-Input → **Abbruch mit klarer Meldung**:
+
+```
+✗ <skill> kann nicht laufen: <pflicht-input> fehlt (oder status ≠ bestaetigt).
+Bitte zuerst <vorgänger-skill> ausführen.
+```
+
+**Kein „hybrid"-, „Bottom-up-aus-Briefing"- oder ähnlicher Silent-Fallback**, der den fehlenden Vorgänger still kompensiert — das erzeugt zwei MTA-Outputs mit unvereinbaren Zahlen (in der Praxis gesehen: Forecast und Ziele wichen um ~50 % ab).
+
+### Input-Staleness
+
+Jeder Synthese-Output trägt im Frontmatter, worauf er beruht:
+
+```yaml
+basis_inputs:
+  - datei: synthese/kanal-chancen.md
+    generiert_am: 2026-05-17T19:30:00Z
+  - datei: audits/seo-keyword-cluster.csv
+    generiert_am: 2026-05-16T14:00:00Z
+```
+
+Beim Lauf vergleicht der Skill die `generiert_am`-Stempel seiner Inputs mit dem eigenen letzten Output. Ist ein Input **neuer** als der bestehende Output → Staleness-Hinweis im Schluss-Format: „`<input>` wurde nach diesem Output aktualisiert — Re-Run empfohlen."
+
+### Re-Run-Disziplin
+
+Wird ein **Audit re-gerunnt**, nachdem die Synthese schon lief: Der Audit-Skill markiert in `status.md` (Frontmatter `blockiert` oder ein Hinweis in der eigenen Sektion), dass die nachgelagerten Synthese-Skills auf veralteter Basis stehen. Pauschale Regel: Ändert sich Stufe 3, ist die Stufe-4-Kette potenziell stale.
+
+### Konsistenz-Check zwischen Synthese-Outputs
+
+Leiten zwei Skills dieselbe Größe unterschiedlich ab (klassisch: `ziele.md` vs. `forecast-modell.md` für NPat/Umsatz Jahr 1), führt der spätere Skill einen **Cross-Check** durch und weist eine Abweichung **> 20 %** als explizite Auffälligkeit aus. Geteilte Parameter (z.B. Doppelzählungs-Faktor, AOV, CR-Bandbreiten) werden aus **einer** Quelle gezogen — dem bestätigten Annahmen-Schema — nicht pro Skill neu angenommen.
+
+---
+
+## 13. Kritische Haltung und Daten-Disziplin
+
+Die MTA ist ein **prüfendes** Instrument, kein Protokoll der Kundenselbsteinschätzung. Diese Haltung ist für alle Skills verbindlich — besonders für Wettbewerber- und Synthese-Skills.
+
+### Kunden-Aussagen sind Hypothesen
+
+Angaben aus Briefing / Kickoff (Ziele, genannte Wettbewerber, Kapazitäts- und Budget-Einschätzungen, Selbstbild) sind **Hypothesen, keine Fakten**. Sie werden mit erhobenen Daten verifiziert, bevor sie in Bewertung oder Forecast einfließen:
+
+- Vom Kunden genannte Wettbewerber → gegen reale Datenlage prüfen (Sichtbarkeit, Local-Pack, GMB, Paid). Ein genannter „Hauptkonkurrent" kann sich als nachrangig erweisen — und umgekehrt.
+- Kunden-Ziele → gegen Markt-Potenzial plausibilisieren, bevor sie als Zielwert gelten.
+- Zusätzlich immer die **Latente-Bedrohung-Frage** stellen: Wer ist heute schwach, würde aber stark, sobald der Kunde aufdreht?
+
+### Quellen-Kennzeichnung pro Zahl (Pflicht)
+
+Jede Zahl im Output trägt einen erkennbaren Quellen-Typ — im Frontmatter, in Tabellenspalten oder inline:
+
+| Typ | Bedeutung |
+|---|---|
+| `erhoben` | direkt aus Tool/MCP gemessen (Sistrix, Ahrefs, Apify, GSC, PageSpeed) |
+| `briefing` | Kundenangabe aus Briefing/Kickoff — unverifiziert |
+| `benchmark` | Branchen-Referenzwert aus einer Reference-Datei |
+| `schaetzung_skill` | heuristisch vom Skill abgeleitet |
+
+Eine heuristische Schätzung wird **niemals** als erhobener Wert dargestellt. **Load-bearing Heuristiken** — Annahmen, die Forecast, ROI oder eine Top-3-Empfehlung tragen — werden zusätzlich als explizite Auffälligkeit ausgewiesen, damit der Stratege sie im Kundengespräch kennt.
+
+### Aggregat- und Volatilitäts-Disziplin
+
+- **Plattform-Trennung:** Kennzahlen pro Quelle getrennt halten. Eine GMB-Review-Zahl ist nicht die Multi-Plattform-Summe (GMB + Jameda + …). Im Frontmatter Quelle/Plattform pro Wert benennen.
+- **Volatile Kleinwerte:** Metriken, die bei kleinen absoluten Werten stark schwanken, taugen dort nicht als Primär-Signal. Konkret: der Sistrix-Sichtbarkeitsindex bei `SI < 0,05` — ein einzelnes kurz rankendes Keyword verdoppelt den Wert. Für lokale Akteure dort Local-Pack-Quoten / GMB-Metriken als Leitsignal nehmen, den VI nur sekundär.
+- **Trend-Ehrlichkeit:** Prozent-Trends gegen einen sinnvollen Basiszeitpunkt rechnen, nicht Peak-gegen-Tal. Einen „+70 %"-Befund auf Artefakt prüfen, bevor er in den Output geht.
+
+---
+
 ## Versionierung dieses Dokuments
 
 Wenn sich Konventionen ändern, `schema_version` in `meta.json` und in betroffenen Schemas hochzählen. Alte Projekte bleiben auf ihrer Version — Skills sollten Versions-Check machen, bevor sie auf alte Schemas zugreifen.
 
-Aktuelle Version: **2.1** (Drive-basiert mit `input/`-Sub-Folder für Stratege-Quell-Files, seit 2026-05-15)
-Vorgänger: 2.0 (Drive-basiert, 2026-05-14 — automatische Migration via 01-01-Resume), 1.0 (lokal-Filesystem-basiert, bis 2026-05-13)
+Aktuelle Version: **2.2** (Abschnitte 11–13 ergänzt: MCP-Health-Checks/Credential-Disziplin, Synthese-Sequenz/Staleness, kritische Haltung — seit 2026-05-17. Keine `meta.json`-Strukturänderung gegenüber 2.1; Projekte auf 2.1 bleiben kompatibel.)
+Vorgänger: 2.1 (Drive-basiert mit `input/`-Sub-Folder für Stratege-Quell-Files, 2026-05-15), 2.0 (Drive-basiert, 2026-05-14 — automatische Migration via 01-01-Resume), 1.0 (lokal-Filesystem-basiert, bis 2026-05-13)

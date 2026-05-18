@@ -67,7 +67,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 ## Voraussetzungen
 
 - `01-01-mta-projekt-init` gelaufen → MTA registriert, `meta.json` im Drive-MTA-Root
-- Apify-Zugang verfügbar (für Pinterest-Scraping - die zentralen Apify-Actors sind in `reference/pinterest-tools-mapping.md` dokumentiert)
+- **Apify-Zugang (Pflicht)** — die zentralen Apify-Actors sind in `reference/pinterest-tools-mapping.md` dokumentiert (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
+- **Login-Wall-Hinweis:** Öffentliche Pinterest-Profile sind anonym zugänglich. Bei aggressiver Drosselung durch Pinterest kann der Actor Timeouts produzieren — dann Batch-Größe reduzieren und erneut versuchen.
 - Empfohlen: `wettbewerber/liste.md` (Drive) mit `status: bestaetigt` - sonst Kunden-only-Modus
 - Empfohlen: `data/kunde.md` und `wettbewerber/AKTEURSSLUG.md` (Drive) mit `touchpoints`-Inventur - daraus kommen die Pinterest-Usernames. Wenn nicht vorhanden, versucht der Skill die Auflösung via Pinterest-Search.
 

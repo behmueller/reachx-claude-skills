@@ -8,6 +8,18 @@ Apify-Actor-Optionen, URL-Patterns, Datenfelder-Mapping und Fallback-Kaskade fü
 
 Pinterest bietet keine öffentliche API für die Drittanbieter-Nutzung in der hier benötigten Tiefe. Web-Scraping via Apify ist Standard. Login ist bei öffentlichen Profilen meist nicht nötig, kann aber bei großen Profilen oder häufigen Requests von Pinterest gedrosselt werden.
 
+## Getestete Actor-IDs
+
+Vor dem Lauf immer den Health-Check (Limit-1-Aufruf mit Kunden-Profil) durchführen; bei Fehler Alternativen aus der Liste probieren.
+
+| Actor-ID | Alias / Store-Name | zuletzt_getestet | status | Anmerkung |
+|---|---|---|---|---|
+| `apify/pinterest-scraper` | Pinterest Scraper (official) | noch nicht getestet | unbekannt | Erste Wahl |
+| `epctex/pinterest-scraper` | Pinterest Scraper (epctex) | noch nicht getestet | unbekannt | Erster Fallback |
+| `apify/puppeteer-scraper` | Custom Puppeteer | — | fallback | Nur wenn kein spezialisierter Actor verfügbar |
+
+**Login-Wall:** Öffentliche Profile sind anonym zugänglich. Bei Drosselung durch Pinterest Batch-Größe reduzieren (max. 5 Profile gleichzeitig) und erneut versuchen.
+
 ## Apify-Actors
 
 ### Primär-Actor

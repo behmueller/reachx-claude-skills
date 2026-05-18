@@ -79,7 +79,8 @@ Schwelle ist im Output und im Schluss-Format explizit dokumentiert.
 ## Voraussetzungen
 
 - `01-01-mta-projekt-init` gelaufen → MTA registriert, `meta.json` im Drive-MTA-Root
-- Apify-Zugang verfuegbar (MCP-Prefix `mcp__Apify__*` oder `APIFY_TOKEN` im Environment)
+- **Apify-Zugang (Pflicht)** — Actor-Auswahl in `reference/reddit-tools-mapping.md` (mit `zuletzt_getestet`-Datum und `status`). Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Scrape Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben, statt alle Akteure einzeln scheitern zu lassen.
+- **Reddit als GEO-/Discovery-Hebel:** Reddit ist nicht nur ein Leadgen-Kanal — relevante Subreddits sind zunehmend Quellen, auf die LLMs (ChatGPT, Perplexity, Gemini) in ihren Antworten verweisen. Bei der Auswertung der Subreddit-Inventur daher ergänzend prüfen: Werden in den Top-Subreddits Markennamen, Ratgeber-Themen oder Produkt-Kategorien diskutiert, auf die LLMs typischerweise verweisen? Wenn ja: `geo_hebel_relevant: true` im Frontmatter und gesonderte "GEO-Kopplung"-Sektion im Fit-Score-Output (als optionale fünfte Bewertungsachse, nur wenn ein positiver Befund vorliegt).
 - Empfohlen: `wettbewerber/liste.md` (Drive) mit `status: bestaetigt` — sonst Kunden-only-Modus
 - Empfohlen: `data/kunde.md` (Drive) mit Portfolio und USP-Beschreibungen — daraus zieht der Skill Subreddit-Such-Keywords
 - Hinweis: Reddit-API direkt ist rate-limit-anfaellig — Skill nutzt Apify-Actors (siehe `reference/reddit-tools-mapping.md`)

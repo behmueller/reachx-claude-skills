@@ -100,6 +100,29 @@ Sammle Inventur-Tabelle: pro File `lokaler_zielpfad_im_zip`, `drive_id`, `mime_t
 
 **Lücken-Check**: vergleiche gegen Pflicht-Files aus `contracts.md` Abschnitt 5 (z.B. `data/briefing.md`, `data/kunde.md`, etc.) — wenn Schlüssel-Files fehlen, sammle Auffälligkeit `pflicht_outputs_fehlen` für den Schluss-Report.
 
+### Schritt 1a: De-Duplication-Pass — Re-Run-Artefakte entfernen
+
+Bevor exportiert wird, den MTA-Folder-Baum auf **Duplikat-Dateien gleichen Namens** prüfen. Bei wiederholten Skill-Läufen und paralleler Bearbeitung entstehen auf Drive Konflikt-Kopien (`status (1).md`, `kanal-chancen (1).md`, `forecast (2).xlsx`) — diese würden sonst doppelt ins ZIP wandern und den Export verwässern.
+
+Pro Sub-Folder aus der Inventur (Schritt 1) die `name`-Felder auf Kollisionen prüfen — sowohl exakte Namensgleichheit als auch das Drive-Konflikt-Muster `<basisname> (N).<ext>`:
+
+```bash
+# Pro Sub-Folder: Dateien gruppieren, Konflikt-Kopien identifizieren
+python3 "$DRIVE_PY" list-children "$SUB_ID" | jq -r '.[] | "\(.name)\t\(.id)\t\(.modifiedTime)"'
+```
+
+Pro erkannter Duplikat-Gruppe (z. B. `status.md` + `status (1).md`):
+
+- Die **aktuellste** Version behalten — die mit dem jüngsten `modifiedTime`. Bei der `(N)`-Variante ist es meist die Konflikt-Kopie; verlässlicher ist `modifiedTime`.
+- Die veraltete(n) Datei(en) entfernen: `python3 "$DRIVE_PY" delete "<file-id-der-alten-version>"`.
+- Jede Löschung im Schluss-Report unter Auffälligkeit `re_run_duplikat_entfernt` festhalten (Dateiname, behaltene vs. gelöschte Version-ID).
+
+**Vorsicht:** Nur eindeutige Re-Run-Artefakte löschen — Dateien, die sich nur durch den Drive-`(N)`-Suffix oder exakt gleichen Namen unterscheiden. Inhaltlich verschiedene Dateien (z. B. `wettbewerber/alpha.md` und `wettbewerber/beta.md`) sind keine Duplikate. Im Zweifel die Datei behalten und im Schluss-Report als `dedup_unklar` melden, statt blind zu löschen.
+
+Auch den **Kunden-Folder** (Parent des MTA-Folders, siehe Schritt 5) auf alte `mta-<slug>-final-*.zip`-Snapshots prüfen — die werden **nicht** automatisch gelöscht (Versionierung über Timestamp ist gewollt), aber im Schluss-Report wird die Anzahl vorhandener Alt-Snapshots gemeldet, damit der Stratege bei Bedarf aufräumt.
+
+Nach dem De-Duplication-Pass die Inventur aus Schritt 1 mit dem bereinigten Stand neu aufbauen.
+
 ### Schritt 2: Bestätigungs-Stopp
 
 Bevor irgendetwas heruntergeladen oder gezippt wird:
@@ -246,6 +269,8 @@ Optional kann der Skill am Ende alle HTML-Reports im MTA als PDFs rendern (via h
 | `pflicht_outputs_fehlen` | Mind. 1 Stufe-3/4-Pflicht-Output fehlt im MTA-Folder | MTA inhaltlich lückenhaft — Hinweis im Final-Export |
 | `rohdaten_zu_gross` | `assets/` insgesamt > 2 GB | Im ZIP nur Manifest, nicht die Raw-Files |
 | `schema_vorlauf_nicht_bestaetigt` | Mind. 1 Schema-File mit `status: vorgeschlagen` | Stratege sollte vor Übergabe bestätigen |
+| `re_run_duplikat_entfernt` | De-Duplication-Pass (Schritt 1a) hat eine Konflikt-Kopie / Re-Run-Artefakt gelöscht | Veraltete Version entfernt, nur die aktuelle bleibt im Export |
+| `dedup_unklar` | Zwei Dateien mit kollidierendem Namen, Aktualität nicht eindeutig | Beide behalten, Stratege soll manuell prüfen |
 | `upload_fehlgeschlagen` | ZIP-Upload nach Drive scheitert | Lokales ZIP unter `~/.cache/reachx-mta/<slug>/` für manuellen Upload |
 
 ## Bundled Resources

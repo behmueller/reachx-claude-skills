@@ -64,7 +64,11 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - `02-02-wettbewerber-identifikation` Phase A + B abgeschlossen:
   - `wettbewerber/identifikation-schema.md` mit `status: bestaetigt` (für die Portal-Liste)
   - `wettbewerber/liste.md` mit `status: bestaetigt` (für die Akteure)
-- Apify-Zugang verfügbar (für Portal-spezifische Scraper)
+- **Pflicht-MCP: Apify** (für Portal-spezifische Scraper). Credential-Check vor dem ersten Scrape-Aufruf (contracts.md Abschnitt 11):
+  ```bash
+  [ -n "$APIFY_TOKEN" ] || { echo "✗ APIFY_TOKEN nicht gesetzt."; exit 1; }
+  ```
+  Kein blindes Starten ohne Health-Check. Schlägt der Check fehl: sauberer Abbruch. Apify-Verbindungen überleben PC-Standby nicht — bei `Session ID not found` nach dem ersten Run sofort Reconnect-Hinweis ausgeben, nicht jeden weiteren Portal-Scrape einzeln scheitern lassen.
 - Web-Search-Zugang (für Profil-URL-Auflösung, wo direkter Scrape nicht praktikabel ist)
 
 ## Ablauf
@@ -352,6 +356,7 @@ Sag mir, welcher als nächster.
 
 - `reference/portal-scraper-mapping.md` — pro Portal: welche Recherche-Methode (Apify-Actor, Web-Search, Custom-Scrape), URL-Pattern, portal-spezifische Zusatz-Felder
 - `reference/portale-output-schema.md` — Output-Format für `wettbewerber/portale.md` (Frontmatter-Schema + Body-Struktur)
+- `reference/apify-actor-register.md` — **datiert getestete Apify-Actor-IDs** mit `zuletzt_getestet`, `status` und Anmerkung pro Actor; plus Liste der Login-Wall-/Bot-Protection-Portale, die manuellen Fallback erfordern (Methode D). Vor dem Lauf lesen, nach dem Lauf aktualisieren.
 
 **Kein eigenes Akteurs-Schema-File** — Akteure (Kunde, Wettbewerber) werden aus den vorhandenen Datei-Strukturen (`meta.json`, `wettbewerber/liste.md`) gelesen.
 
@@ -361,7 +366,7 @@ Sag mir, welcher als nächster.
 
 - **Akteurs-Liste hat nur den Kunden (keine WBs)** → Recherche trotzdem durchführen — die Kunden-Zeile allein ist wertvoll. Im Schluss-Format ausweisen, dass kein WB-Vergleich möglich war.
 
-- **Portal hat Login-Wall** (z. B. G2 für detaillierte Reviews) → Versuche Methode B (Web-Search nach Profil-URL), erfasse Basis-Daten (URL, sichtbarer Score, Reviews-Count vor Login). Im Body ausweisen, dass tiefer-gehende Daten nur mit manuellem Login zugänglich.
+- **Portal hat Login-Wall oder aktiven Bot-Protector** → Vor dem Scrape-Versuch `reference/apify-actor-register.md` konsultieren. Steht das Portal dort als Methode D, direkt `recherche_fehlgeschlagen` mit Typ `login_wall` setzen und im Schluss-Format den **manuellen Fallback** dokumentieren — kein endloses Durchprobieren weiterer Actors. Für nicht gelistete Portale: einmal Methode B versuchen; schlägt auch das fehl (403/429/Redirect zu Login), sofort auf Methode D wechseln und im `apify-actor-register.md` einen neuen Eintrag mit Datum und Fehlertyp ergänzen.
 
 - **Akteur ist auf einem Portal unter abweichendem Namen gelistet** (z. B. "Beispiel GmbH" auf der Website, aber "Beispiel Solutions" auf G2) → Web-Search mit beiden Schreibweisen, plus `synonyme` aus `data/kunde.md` (falls vorhanden). Bei mehreren Treffern: Mensch-in-der-Schleife — Skill listet alle Kandidaten, fragt den Strategen welcher gemeint ist (oder im autonomen Modus: nimmt den ersten mit passender Branche).
 

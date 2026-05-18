@@ -591,3 +591,4 @@ Alle in `contracts.md` definierten Konventionen sind verbindlich:
 - **GSC-MCP-Auth ist unabhängig von gws** — der search-console-MCP nutzt einen eigenen OAuth-Token, separat von der Drive-Authentifizierung
 - **Klick-Werte unverändert lassen** — GSC-Daten sind Roh-Realität, Normalisierung ist Aufgabe der Synthese-Skills
 - **First-party VOR third-party**: Skill ist absichtlich vor `03-01-seo-sichtbarkeit-und-rankings` positioniert. Wenn beide gelaufen sind, kann `04-02-kanal-chancen-analyse` beide Datenquellen kombinieren.
+- **Credential-Disziplin (contracts.md Abschnitt 11)**: Dieser Skill nutzt keinen API-Key-basierten Zugang — der search-console-MCP nutzt OAuth via macOS Keychain. Kein Scanning von Environment-Variablen oder Shell-Config-Dateien nach Credentials. Fehlt die MCP-Verbindung: freundlicher Skip wie in Schritt 1 beschrieben.

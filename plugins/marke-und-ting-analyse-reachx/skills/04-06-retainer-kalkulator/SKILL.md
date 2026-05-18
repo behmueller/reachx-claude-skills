@@ -68,6 +68,8 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 - Empfohlen: `data/briefing.md` (fuer Budget-Indikationen, Inhouse-Team-Reife, Vertragslaufzeit-Wunsch)
 - Zentrale Reference: `reference/reachx-stundensaetze.md` und `reference/aufwands-bandbreiten.md` sind Pflicht und werden IMMER gelesen (auch in Phase A)
 
+**Synthese-Sequenz (`contracts.md` Abschnitt 12):** `04-06-retainer-kalkulator` ist der letzte Schritt der Stufe-4-Synthese-Kette. Verbindliche Reihenfolge: `04-01 → 04-02 → 04-03 → 04-04 → 04-05 → 04-06` — der Skill startet **erst**, wenn der Vorgaenger `04-05-90-tage-plan` fertig ist. Kein Parallel-Start, der Hauptthread orchestriert sequenziell. Der Pflicht-Input-Check auf `synthese/90-tage-plan.md` und `synthese/forecast.md` (Schritt A.1) ist ein **harter Abbruch ohne Silent-Fallback** — der Retainer wird niemals ohne den bestaetigten Plan und Forecast kalkuliert.
+
 ## Ablauf
 
 Schema-vor-Lauf-Pattern. Bei jedem Aufruf prueft der Skill, ob `synthese/retainer-konfiguration.md` existiert und welchen Status sie hat — daraus ergibt sich, ob Phase A oder Phase B laeuft.

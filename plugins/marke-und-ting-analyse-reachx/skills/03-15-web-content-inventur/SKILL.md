@@ -68,7 +68,7 @@ Der Stop-Hook aggregiert den Verbrauch automatisch nach jedem Prompt — diese M
 
 - `01-01-mta-projekt-init` gelaufen → `meta.json` vorhanden
 - **Stark empfohlen:** `02-02-wettbewerber-identifikation` mit `wettbewerber/liste.md` (`status: bestaetigt`) — sonst läuft der Skill im Kunden-only-Modus mit Hinweis
-- Apify-Zugang verfügbar (für `apify/website-content-crawler`)
+- **Apify-Zugang (Pflicht für Stufen `light` und `full`)** — primärer Actor `apify/website-content-crawler`, dokumentiert in `reference/stufen-methodik.md`. Credential-Prüfung: ausschließlich `[ -n "$APIFY_TOKEN" ]` — kein Scannen von `~/.zshrc` o. ä. (contracts.md Abschnitt 11). Vor dem ersten echten Crawl Apify-Health-Check via `mcp__apify__fetch-actor-details` für den verwendeten Actor: bei `Session ID not found` sofort abbrechen und Reconnect-Hinweis ausgeben. Für Stufe `sitemap_only` werden ausschließlich HTTP-GETs benötigt — kein Apify-Token notwendig.
 - Optional: `FIRECRAWL_API_KEY` als Alternative für strukturierte Page-Daten
 - Empfohlen: `data/kunde.md` (für Portfolio-Kategorien als Cluster-Inspiration)
 

@@ -447,6 +447,16 @@ Sag mir, welcher als nächster.
 - `reference/cluster-und-intent-methodik.md` — Definitionen der Intent-Typen und Funnel-Stufen mit Branchen-Anpassungs-Beispielen
 - `reference/cluster-output-schema.md` — Phase-B-CSV- und Markdown-Schema mit Validierungs-Regeln
 
+## Artefakt-Warnung und Governance-Blockierungen
+
+**Artefakt-Warnung (Pflicht):** Wenn der Cluster-Score eines Clusters allein oder dominant durch ein einzelnes hochvolumiges Keyword getrieben wird (d. h. ein einzelnes Keyword stellt >60 % des Cluster-Suchvolumens), ist der Score methodisch instabil. Dieser Cluster darf **nicht als Top-Hebel** in die Synthese-Empfehlung eingehen, solange der Artefakt nicht explizit geprüft ist. Im Schema Phase A und im Phase-B-Output als Auffälligkeit `cluster_score_artefakt` markieren:
+
+```
+⚠ Cluster-Score-Artefakt: Cluster '[Name]' — Score zu X% von einem einzelnen Keyword ('[kw]', Volumen Y) getrieben. Kein belastbarer Top-Hebel ohne Validierung.
+```
+
+**Governance-blockierte Leistungsbereiche:** Wenn das Briefing oder `data/briefing.md` explizit nennt, dass bestimmte Leistungsbereiche **nicht beworben werden sollen** (z. B. aus regulatorischen Gründen, strategischer Fokussierung oder Kapazitätsgründen), werden die zugehörigen Cluster in der Schema-Phase als `status: governance_blockiert` ausgewiesen — **nicht** als Quick-Win, **nicht** als Gap. Im Phase-B-Output als eigener Block `Geparkte Cluster` mit Erläuterung. Diese Cluster bleiben in der CSV (`primaer_cluster` erhalten), aber mit eigenem Tag `governance_blockiert: true`, damit `04-02-kanal-chancen-analyse` sie herausfiltern kann.
+
 ## Edge Cases
 
 - **Pool ist klein (< 50 Keywords)** → Cluster-Bildung wird hart: heuristisch mindestens 3 Cluster (Branded, Hauptthema, Long-Tail/Sonstige). Im Schema-Vorschlag im Body Hinweis, dass mit kleinem Pool die Cluster eher grob bleiben.

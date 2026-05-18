@@ -307,9 +307,9 @@ Logik pro Achse aus `reference/mapping-methodik.md`:
 
 Pro Akteur das Tupel `(x_wert, y_wert, konfidenz_x, konfidenz_y)` speichern.
 
-### Schritt B.4: 2D-Mapping erzeugen
+### Schritt B.4: 2D-Mapping erzeugen — als eigene SVG-Datei
 
-Visualisierung als **Inline-SVG** im HTML-Report (keine externen JS-Libs):
+Visualisierung als **SVG** (keine externen JS-Libs):
 
 - SVG-Größe: 800×800 px (Quadrat — Achsen sind gleichberechtigt)
 - Quadranten-Grid (4 Quadranten, sichtbare Mittelachsen, Skala -2 bis +2)
@@ -317,6 +317,8 @@ Visualisierung als **Inline-SVG** im HTML-Report (keine externen JS-Libs):
 - **Punkt-Größe = Marken-Stärke-Indikator**: Kombination aus Hero-Test-Gesamt-Score (Größe) und Verständlichkeits-Score
 - **Punkt-Farbe**: Kunde in `#ec644a` (REACHX-Sunrise-Red), WBs in `#000a14` (Night-Sky), Best-Practice-WBs in Grau `#7a8a99`
 - Cluster-Markierung: gestricheltes Polygon um Akteure, die im selben Cluster sind, mit Cluster-Label
+
+**Wichtig — SVG in eine eigene Datei auslagern:** Das 2D-Mapping wird **nicht** inline in den HTML-Report gerendert, sondern als eigenständige Datei `synthese/positionierungs-mapping.svg` geschrieben (siehe Schritt B.10a) und vom HTML-Report nur **referenziert** (`<img src="../synthese/positionierungs-mapping.svg">`) bzw. der SVG-Quelltext aus der Datei eingebettet. Grund: Das rechenintensive Inline-Rendern des Quadranten-Grids mit Punkten, Labels und Cluster-Polygonen direkt im Report-Render-Schritt hat in der Praxis den Subagenten zum Stillstand gebracht (beobachteter 600-Sekunden-Stall). Die SVG-Datei wird **zuerst** erzeugt — vor dem HTML-Report.
 
 SVG-Konstruktions-Details in `reference/positionierung-output-schema.md`.
 
@@ -424,6 +426,19 @@ Body strukturiert nach:
 - **Auffälligkeiten**: sortiert nach strategischer Relevanz
 - **Vorbereitung für Folge-Skills**: Hinweis, welche Erkenntnisse als Argumente für `04-02-kanal-chancen-analyse` und `05-01-mta-slide-bausteine` taugen
 
+### Schritt B.9a: SVG-Datei `synthese/positionierungs-mapping.svg` nach Drive
+
+**Output-Reihenfolge (verbindlich, `contracts.md` Abschnitt 3):** Erst die inhaltlichen Datei-Outputs (Markdown, SVG, CSV), zuletzt der HTML-Report und `status.md`. So bleibt ein vorzeitig beendeter Lauf (Subagent gekillt, Timeout) mit vollständigen, nutzbaren Outputs zurück.
+
+Erzeuge die 2D-Mapping-Grafik aus Schritt B.4 als eigenständige SVG-Datei lokal und lade sie nach Drive:
+
+```bash
+python3 "$DRIVE_PY" upsert-text "$SYNTHESE_ID" "positionierungs-mapping.svg" \
+  /tmp/positionierungs-mapping.svg "image/svg+xml"
+```
+
+Die Datei ist self-contained (alle Styles im `<svg>`-Element selbst, keine externen Referenzen). Der HTML-Report in Schritt B.11 referenziert bzw. bettet sie ein — er rendert das Grid **nicht** erneut. Damit hängt der teure Grid-/Punkt-/Cluster-Render nicht am Report-Render-Schritt.
+
 ### Schritt B.10: CSV `synthese/positionierung-mapping.csv` nach Drive
 
 Lokal generieren, dann `drive.py upsert-text "$SYNTHESE_ID" "positionierung-mapping.csv" /tmp/mapping.csv "text/csv"`. Spalten:
@@ -447,7 +462,7 @@ Numerisches Präfix aus `status.md` ableiten (nächste freie Nummer ab Reports-L
 
 - Stat-Strip oben: Anzahl Akteure, Anzahl Markt-Cluster, Anzahl White-Space-Quadranten, Anzahl Auffälligkeiten
 - Sticky-TOC zu: Mapping, Markt-Cluster, White-Space, Bewegungs-Empfehlung, Auffälligkeiten
-- **2D-Mapping als Inline-SVG** (Hauptsektion, oben prominent): Quadranten-Grid mit Achsen-Beschriftung, Akteurs-Punkte mit Labels, Cluster-Polygone, White-Space-Quadranten leicht hervorgehoben (z. B. dezenter Hintergrund-Farb-Tint). Legende rechts: Kunde / WB / Best-Practice / Cluster
+- **2D-Mapping** (Hauptsektion, oben prominent): die in Schritt B.9a erzeugte `synthese/positionierungs-mapping.svg` einbinden — **nicht** das Grid hier im Report-Render-Schritt neu zeichnen. Den SVG-Quelltext aus der lokalen Datei `/tmp/positionierungs-mapping.svg` 1:1 in den `{{MAIN_CONTENT}}` kopieren (das SVG ist self-contained, kein eigener `<style>`-Block, keine eigenen CSS-Klassen — Validator-konform). Quadranten-Grid mit Achsen-Beschriftung, Akteurs-Punkte mit Labels, Cluster-Polygone, White-Space-Quadranten leicht hervorgehoben. Legende: Kunde / WB / Best-Practice / Cluster
 - **Markt-Cluster-Block**: pro Cluster eine `details.skill`-Karte mit Akteurs-Liste und Cluster-Charakter
 - **White-Space-Block**: vier Quadranten als 2×2-Grid mit Akteurs-Listen und Strategie-Note pro Quadrant
 - **Bewegungs-Empfehlung** als `.suggestion`-Block prominent: Ist-Position, Ziel-Position, Hebel-Liste
@@ -475,6 +490,7 @@ Beide (`reports/index.html`, `status.md`) aus Drive lesen, patchen, via `drive.p
 
 Outputs (auf Drive):
 - synthese/positionierung.md — 2D-Mapping mit Markt-Cluster, White-Space, Bewegungs-Empfehlung
+- synthese/positionierungs-mapping.svg — ausgelagerte 2D-Mapping-Grafik (vom Report referenziert)
 - synthese/positionierung-mapping.csv — Akteur × Achsen-Werte (für reproduzierbare Visualisierung)
 - reports/X-positionierung.html — SVG-2D-Mapping + Strategie-Empfehlungen
 Status aktualisiert in: status.md
@@ -539,5 +555,7 @@ Alle in `contracts.md` definierten Konventionen sind verbindlich:
 - Standard-Schlussformat im Chat
 - `status.md` und Dashboard werden in jedem Lauf aktualisiert (aus Drive lesen, patchen, upsert)
 - HTML-Report aus `reports/_shell.html` (aus Drive geladen)
-- **Inline-SVG, keine externen JS-Libs** — Report muss offline und in Google Drive Preview funktionieren
+- **Output-Reihenfolge** (`contracts.md` Abschnitt 3): zuerst alle inhaltlichen Outputs (`positionierung.md`, `positionierungs-mapping.svg`, `positionierung-mapping.csv`), dann der HTML-Report, **zuletzt** `status.md` — ein vorzeitig beendeter Lauf hinterlässt so vollständige Outputs
+- **2D-Mapping als eigene SVG-Datei** (`synthese/positionierungs-mapping.svg`) — der HTML-Report bindet sie ein, rendert das Grid nicht selbst neu (verhindert 600-s-Stall im Report-Render-Schritt)
+- **SVG, keine externen JS-Libs** — SVG-Datei und Report müssen offline und in Google Drive Preview funktionieren
 - **Achsen-Wahl ist Strategen-Entscheidung** — Skill schlägt vor und begründet, aber der Stratege wählt im Schema-Review (Drive-Web-Editor)

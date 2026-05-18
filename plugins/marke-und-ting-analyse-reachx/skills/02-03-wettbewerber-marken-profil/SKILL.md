@@ -249,6 +249,22 @@ Im Frontmatter:
 
 Body-Struktur ebenfalls identisch (Übersicht, Portfolio, USPs, Zielgruppen, Tonalität, Hero-Test, Touchpoints, Lücken).
 
+**Plattform-Trennung bei Review-Kennzahlen (contracts.md Abschnitt 13):** Bewertungszahlen und Review-Scores **pro Plattform getrennt** erfassen und im Frontmatter die Quelle/Plattform pro Wert explizit benennen. Eine GMB-Review-Zahl ist nicht identisch mit einer Plattform-übergreifenden Gesamtzahl (GMB + Jameda + Trustpilot + …). Falsch: `reviews_count: 127 (gesamt)`. Richtig:
+
+```yaml
+bewertungen:
+  - plattform: Google Maps / GMB
+    score: 4.8
+    anzahl: 94
+    quelle_typ: erhoben
+  - plattform: Jameda
+    score: 4.6
+    anzahl: 33
+    quelle_typ: erhoben
+```
+
+Wenn nur GMB-Daten aus `liste.md` verfügbar sind (z. B. aus dem Google-Maps-Scrape in `02-02`), nur diese ausweisen — keine Addition zu einer Gesamtsumme, die verschiedene Plattformen vermischt.
+
 ### Schritt 6: Bundle-HTML-Report `reports/04-wettbewerber-profile.html`
 
 **Report-Bausteine + Validierung — Pflicht (siehe `contracts.md` Abschnitt 7):**
