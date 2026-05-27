@@ -1,0 +1,10 @@
+{
+  "name": "personio-reports-reachx",
+  "description": "Personio-Personalreports für REACHX. Ein Skill (personio-personalkosten-report) ruft First-Party über ein lokales Wrapper-Skript die echten Mitarbeiterstammdaten aus der Personio REST API ab, leitet daraus Headcount-, FTE-, Personalkosten- und Arbeitgeberkosten-Auswertungen ab und erzeugt einen REACHX-gebrandeten HTML-Report plus eine Excel-Arbeitsmappe. Read-only — der Skill schreibt niemals nach Personio zurück. Gehalts- und Kostendaten verlassen den lokalen Rechner nicht.",
+  "version": "0.1.0",
+  "author": {
+    "name": "REACHX GmbH",
+    "url": "https://reachx.de"
+  },
+  "homepage": "https://github.com/behmueller/reachx-claude-skills"
+}

@@ -8,11 +8,27 @@
   "plugins": [
     {
       "name": "marke-und-ting-analyse-reachx",
-      "description": "Automatisiert die MARKE&TING-Analyse (MTA) — 32 Skills für Marken-Profil, Wettbewerbs-Recherche, Audits (SEO/SEA/Social/Web), Synthese (Positionierung, Kanal-Chancen) und Output (Forecast, 90-Tage-Plan, Retainer).",
+      "description": "Automatisiert die MARKE&TING-Analyse (MTA) — 40 Skills für Marken-Profil, Wettbewerbs-Recherche, Audits (SEO/SEA/Social/Web), Synthese (Positionierung, Kanal-Chancen) und Output (Forecast, 90-Tage-Plan, Retainer).",
       "source": "./plugins/marke-und-ting-analyse-reachx",
-      "version": "0.3.0",
+      "version": "0.8.0",
       "category": "marketing",
       "tags": ["mta", "marketing-analyse", "marken-profil", "seo", "wettbewerbsanalyse", "reachx"]
+    },
+    {
+      "name": "meta-ads-audit-reachx",
+      "description": "Read-only Meta-Ads-Werbekonto-Audit für das Kunden-Onboarding — prüft First-Party über den Meta-Ads-MCP den Performance-Verlauf, das Kampagnen-Setup und strukturelle Probleme und erzeugt einen REACHX-gebrandeten HTML-Report. Nimmt nie Änderungen am Konto vor.",
+      "source": "./plugins/meta-ads-audit-reachx",
+      "version": "0.1.0",
+      "category": "marketing",
+      "tags": ["meta-ads", "facebook-ads", "instagram-ads", "werbekonto-audit", "onboarding", "paid-social", "reachx"]
+    },
+    {
+      "name": "personio-reports-reachx",
+      "description": "Personio-Personalreports für REACHX — ein Skill (personio-personalkosten-report) ruft First-Party über ein lokales Wrapper-Skript die Mitarbeiterstammdaten aus der Personio REST API ab und erzeugt einen REACHX-gebrandeten HTML-Report plus Excel-Arbeitsmappe mit Headcount-, FTE-, Personalkosten- und Arbeitgeberkosten-Auswertung. Read-only, Gehaltsdaten bleiben lokal.",
+      "source": "./plugins/personio-reports-reachx",
+      "version": "0.1.0",
+      "category": "hr",
+      "tags": ["personio", "hr", "personalkosten", "arbeitgeberkosten", "headcount", "personalreport", "reachx"]
     }
   ]
 }

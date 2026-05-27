@@ -1,0 +1,15 @@
+# Abhaengigkeiten fuer die Personio-Report-Skripte.
+# Installation:  pip3 install -r requirements-personio.txt
+
+# personio.py — Lesen der Credential-YAML (~/.config/reachx-mta/personio.yaml).
+# Der API-Zugriff selbst nutzt ausschliesslich die Python-Standardbibliothek
+# (urllib) — keine requests-Abhaengigkeit.
+PyYAML>=6.0
+
+# certifi — verlaessliches CA-Bundle fuer die TLS-Verbindung. Auf macOS bringt
+# die Python.framework-Installation oft keine System-CAs mit; personio.py
+# faellt dann auf dieses Bundle zurueck.
+certifi>=2024.2.2
+
+# build-report.py — Schreiben der Excel-Arbeitsmappe (personalkosten-report.xlsx).
+openpyxl>=3.1.0
