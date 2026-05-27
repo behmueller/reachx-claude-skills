@@ -11,6 +11,30 @@ Versionierung nach [Semver](https://semver.org/lang/de/).
 
 - Weitere Live-MTAs durchlaufen, Skills iterativ nachschärfen
 
+## [0.8.0] — 2026-05-22 — Meta-Ads-Werbekonto-Audit: neues Plugin & MTA-Skill
+
+Ein read-only Audit für Meta-Ads-Werbekonten — gebaut für den Start einer Agentur-Zusammenarbeit, wenn REACHX erstmals Zugriff auf ein Kundenkonto erhält. Die Audit-Logik existiert in zwei Hüllen: als eigenständiges Plugin für den Onboarding-Quick-Check und als MTA-Skill für den Einsatz innerhalb einer laufenden MARKE&TING-Analyse. Beide nutzen den Meta-Ads-MCP und nehmen **unter keinen Umständen Änderungen am Werbekonto** vor.
+
+### Hinzugefügt — neues Plugin `meta-ads-audit-reachx` 0.1.0
+
+- **`meta-ads-account-check`** — eigenständiger read-only Onboarding-Audit eines Meta-Ads-Werbekontos in sechs Modulen: Account-Health (Opportunity Score, Delivery-Fehler), Performance-Verlauf 12 Monate, Kampagnen-Struktur, Tracking-/Datenqualität (Pixel, CAPI, EMQ), Creatives und eine Synthese mit priorisierten Findings, Quick-Wins und Top-3-Hebeln. Erzeugt ein Markdown-Aggregat, eine Kampagnen-CSV und einen REACHX-gebrandeten HTML-Report. Läuft ohne MTA-Infrastruktur, Outputs lokal. Verwendet ausschließlich lesende MCP-Tools; die verändernden `ads_create_*`/`ads_update_*`-Tools sind explizit gesperrt.
+
+### Hinzugefügt — neuer MTA-Skill (Plugin jetzt 40 Skills)
+
+- **`03-21-sea-first-party-meta-ads`** — First-Party-Pendant zu `03-06-sea-meta-ads-library-check`: wertet das echte Meta-Ads-Konto des Kunden aus statt der öffentlichen Ad Library der Wettbewerber. Teil des First-Party-Blocks (HTML-Report `05d`), eingehängt in Drive, `contracts.md`, Token-Tracking und den `mta-rechercheur`-Subagent. Gleiche Audit-Methodik wie der Standalone-Skill; bei fehlendem MCP freundlicher Skip statt Abbruch.
+
+### Geändert — Testlauf-Härtung
+
+Ein Live-Testlauf gegen ein echtes Werbekonto hat MCP-Eigenheiten aufgedeckt, die in beide Skills eingeflossen sind:
+
+- Korrekte Marketing-API-Feldnamen dokumentiert (`amount_spent` statt `spend`, `name` statt `campaign_name`); die verschachtelte `results`/`cost_per_result`-Objektstruktur mit `indicator` erklärt.
+- Neuer Reduced-Modus-Abschnitt in `meta-ads-mcp-nutzung.md`: einzelne MCP-Tools sind kontoabhängig nicht ausgerollt, die `ads_insights_*`-Tools liefern oft keine Daten, einzelne Metriken (`clicks`/`ctr`/`cpc`/`purchase_roas`) kommen als `Not available` — der Skill behandelt das pro Tool/Metrik als dokumentierte Datenlücke statt als Abbruch.
+- `datenluecken`-Block im Output-Frontmatter beider Skills ergänzt.
+
+### Hinweis
+
+`[0.8.0]` markiert den Stand des Plugins `marke-und-ting-analyse-reachx`. Das neue Plugin `meta-ads-audit-reachx` startet eigenständig bei `0.1.0`. Der Eintrag korrigiert zugleich einen Versions-Drift im Marketplace-Manifest: Der `marke-und-ting-analyse-reachx`-Eintrag in `marketplace.json` stand noch auf `0.3.0` und ist jetzt mit `plugin.json` (`0.8.0`) synchron.
+
 ## [0.7.0] — 2026-05-17 — Avadent-Learnings: Skill-Härtung & vier neue Skills
 
 Auswertung der ersten vollständigen Live-MTA (Kundenprojekt). Die dort im Arbeitsverlauf erarbeiteten, aber nicht dokumentierten Erkenntnisse sind jetzt systematisch in die Skills eingeflossen — Härtung aller bestehenden Skills plus vier neue Skills. Das Plugin umfasst jetzt **39 Skills**. Quelle und Begründung jeder Änderung: `LEARNINGS-AVADENT.md` im Plugin-Ordner.

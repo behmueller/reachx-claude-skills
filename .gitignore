@@ -9,10 +9,13 @@
 node_modules/
 dist/
 *.log
+__pycache__/
+*.pyc
 
 # Secrets — gehoeren nach ~/.config/reachx-mta/, niemals ins Repo
 google-credentials.yaml
-google-ads.yaml
 google-analytics.yaml
+google-ads.yaml
+personio.yaml
 client_secret*.json
 .env

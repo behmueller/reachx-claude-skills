@@ -1,0 +1,10 @@
+{
+  "name": "meta-ads-audit-reachx",
+  "description": "Read-only Meta-Ads-Werbekonto-Audit für REACHX. Ein Skill (meta-ads-account-check) prüft beim Onboarding eines neuen Kunden über den Meta-Ads-MCP First-Party den Performance-Verlauf (12 Monate), das Kampagnen-Setup, strukturelle Probleme und unentdeckte Performance-Einbrüche — und erzeugt einen REACHX-gebrandeten HTML-Report. Der Skill nimmt NIEMALS Änderungen am Werbekonto vor.",
+  "version": "0.1.0",
+  "author": {
+    "name": "REACHX GmbH",
+    "url": "https://reachx.de"
+  },
+  "homepage": "https://github.com/behmueller/reachx-claude-skills"
+}
